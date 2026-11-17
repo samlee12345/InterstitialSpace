@@ -155,14 +155,13 @@ function reducer(s, a) {
 
     // ── Community ──────────────────────────────────────────
     case 'ADD_EXPERIENCE': {
+      // An experience is a comment plus optional photos; the photos also join the space's gallery.
       const sp = s.spaces.find((x) => x.id === a.spaceId);
+      const ids = Array.from({ length: a.photos }, (_, i) => `${sp.id}-x${s.seq}-${i}`);
       let n = {
         ...s,
-        comments: [...s.comments, { id: `cm-${s.seq}`, spaceId: a.spaceId, userId: a.userId, text: a.text, onSite: a.onSite, photos: a.photos }],
-        spaces: mapById(s.spaces, a.spaceId, (x) => ({
-          ...x,
-          photos: [...x.photos, ...Array.from({ length: a.photos }, (_, i) => ({ id: `${x.id}-x${s.seq}-${i}`, credit: a.userId, onSite: a.onSite }))],
-        })),
+        comments: [...s.comments, { id: `cm-${s.seq}`, spaceId: a.spaceId, userId: a.userId, text: a.text, onSite: a.onSite, photoIds: ids }],
+        spaces: mapById(s.spaces, a.spaceId, (x) => ({ ...x, photos: [...x.photos, ...ids.map((id) => ({ id, credit: a.userId, onSite: a.onSite }))] })),
       };
       n = awardToast(n, a.userId, interactPoints(a.onSite), a.onSite ? 'experience posted (on site)' : 'experience posted (off site, half points)');
       // Photo points are only paid once a space has qualified.
@@ -181,18 +180,21 @@ function reducer(s, a) {
         questionnaire: a.questionnaire, properties: a.properties, diagram: null, removed: false, removal: null, private: false,
         pendingPoints: uploadPoints({ photos: a.photos, scans: a.scans, full: a.full }),
       };
-      const n = { ...s, spaces: [sp, ...s.spaces], moderation: [...s.moderation, { spaceId: a.id, yes: 0, no: 0, voted: [], duplicates: [], mergeVotes: 0 }] };
+      // The uploader's first experience: how it felt, with their photos.
+      const first = { id: `cm-${s.seq}`, spaceId: a.id, userId: a.userId, text: a.questionnaire.feelings, onSite: a.full, photoIds: sp.photos.map((p) => p.id) };
+      const n = { ...s, seq: s.seq + 1, spaces: [sp, ...s.spaces], comments: [...s.comments, first], moderation: [...s.moderation, { spaceId: a.id, yes: 0, no: 0, voted: [], duplicates: [], mergeVotes: 0 }] };
       return toast(n, 'Submitted — pending qualification');
     }
     case 'MERGE_PHOTOS': {
+      // Merging into an existing entry adds an experience: the comment plus the photos.
+      const ids = Array.from({ length: a.photos }, (_, i) => `${a.spaceId}-m${s.seq}-${i}`);
       const n = {
         ...s,
-        spaces: mapById(s.spaces, a.spaceId, (x) => ({
-          ...x,
-          photos: [...x.photos, ...Array.from({ length: a.photos }, (_, i) => ({ id: `${x.id}-m${s.seq}-${i}`, credit: a.userId, onSite: a.full }))],
-        })),
+        seq: s.seq + 1,
+        comments: [...s.comments, { id: `cm-${s.seq}`, spaceId: a.spaceId, userId: a.userId, text: a.text, onSite: a.full, photoIds: ids }],
+        spaces: mapById(s.spaces, a.spaceId, (x) => ({ ...x, photos: [...x.photos, ...ids.map((id) => ({ id, credit: a.userId, onSite: a.full }))] })),
       };
-      return toast(n, 'Photos added to the existing entry');
+      return toast(n, 'Experience and photos added to the existing entry');
     }
 
     // ── Moderation ─────────────────────────────────────────

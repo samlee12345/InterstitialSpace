@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
 import { Button, Choice, ImageBox, Input, Page, RoleGate, Select, Steps } from '../components/ui.jsx';
 import { fmtPoints, uploadPoints } from '../lib/points.js';
@@ -8,11 +8,13 @@ const STEPS = ['Photos', 'Location', 'Same place?', 'Questionnaire', 'Optional d
 const NEAR = 's4'; // the existing entry used for the "within 50 m" simulation
 
 export default function SpaceNew() {
+  // Prefilled when someone searched for a place that wasn't on the map yet.
+  const searchName = new URLSearchParams(useLocation().search).get('name') || '';
   const { dispatch, user, get, cfg } = useDemo();
   const nav = useNavigate();
   const [step, setStep] = useState(0);
   const [f, setF] = useState({
-    photos: 0, geotag: 'yes', where: 'near', name: '', type: 'gateway threshold',
+    photos: 0, geotag: 'yes', where: 'near', name: searchName, type: 'gateway threshold', mergeText: '',
     feelings: '', transition: '', materiality: '', sensory: '',
     activity: '', materials: '', scans: 0, context: 0,
   });
@@ -30,8 +32,10 @@ export default function SpaceNew() {
   };
 
   const merge = () => {
-    dispatch({ type: 'MERGE_PHOTOS', spaceId: NEAR, photos: f.photos, userId: user.id, full });
-    nav(`/space/${NEAR}`);
+    if (!f.mergeText.trim()) return setErr('Say something about the space. Every experience needs a comment.');
+    setErr('');
+    dispatch({ type: 'MERGE_PHOTOS', spaceId: NEAR, photos: f.photos, userId: user.id, full, text: f.mergeText.trim() });
+    return nav(`/space/${NEAR}`, { state: { banner: { title: 'Experience added', text: `Your comment and ${f.photos} photo${f.photos === 1 ? '' : 's'} were added to this space, marked “Yours”.` } } });
   };
   const submit = () => {
     const id = `s-${Date.now()}`;
@@ -90,8 +94,9 @@ export default function SpaceNew() {
             <span className="small muted">{near.photos.length} photos, {near.votes} votes</span>
           </div>
           <div className="stack-sm">
-            <Button variant="primary" onClick={merge}>Yes, add my photos to this entry</Button>
-            <span className="small muted">Skips the questionnaire. Your photos are credited to you.</span>
+            <Input label="What is it like? (needed to add your photos)" textarea value={f.mergeText} onChange={set('mergeText')} />
+            <Button variant="primary" onClick={merge}>Yes, add my experience to this entry</Button>
+            <span className="small muted">Skips the questionnaire. Your comment and photos are credited to you.</span>
             <Button onClick={() => setStep(3)}>No, it’s a different place. Create a new entry</Button>
           </div>
         </div>

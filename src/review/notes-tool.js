@@ -30,7 +30,20 @@ let started = false;
 
 const pageKey = () => PREFIX + page;
 const loadNotes = () => { notes = store.get(pageKey(), []); };
-const saveNotes = () => store.set(pageKey(), notes);
+const announce = () => window.dispatchEvent(new CustomEvent('isp-notes-change'));
+const saveNotes = () => { store.set(pageKey(), notes); announce(); };
+
+// Note counts for every page key, e.g. { '/browse': 2, '/space/s2~tabs': 1 }.
+export function notesCounts() {
+  const out = {};
+  try {
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const k = localStorage.key(i);
+      if (k.startsWith(PREFIX)) out[k.slice(PREFIX.length)] = (store.get(k, []) || []).length;
+    }
+  } catch { /* ignore */ }
+  return out;
+}
 
 // ── Element fingerprint: nearest labelled section + tag + start of its text ──
 function fingerprint(el) {
@@ -87,7 +100,7 @@ function activate() {
     observer = new MutationObserver(() => schedule(true));
     observer.observe(root, { childList: true, subtree: true, characterData: true });
   }
-  window.dispatchEvent(new CustomEvent('isp-notes-change'));
+  announce();
 }
 
 function deactivate() {
@@ -100,7 +113,7 @@ function deactivate() {
   if (observer) { observer.disconnect(); observer = null; }
   ['nt-toolbar', 'nt-rail'].forEach((id) => document.getElementById(id)?.remove());
   document.querySelectorAll('.nt-marker').forEach((m) => m.remove());
-  window.dispatchEvent(new CustomEvent('isp-notes-change'));
+  announce();
 }
 
 export const notesActive = () => isActive;

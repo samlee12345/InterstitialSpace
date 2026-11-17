@@ -180,6 +180,29 @@ const seed = {
   diagramUploads: [],
 };
 
+// Every photo belongs to an experience (a comment plus optional photos).
+// Photographers with no comment on a space get a short placeholder one.
+const PHOTO_TEXT = [
+  'Took these on my way through in the morning.',
+  'Busiest in the late afternoon; these show it then.',
+  'Shared these so the AI has enough to draw a diagram.',
+  'There is always someone sitting here. Photos from today.',
+  'The shade moves fast here. Photos from midday.',
+];
+seed.spaces.forEach((sp, si) => {
+  const byUser = {};
+  sp.photos.forEach((ph) => { (byUser[ph.credit] = byUser[ph.credit] || []).push(ph.id); });
+  Object.entries(byUser).forEach(([userId, ids], ui) => {
+    let c = seed.comments.find((x) => x.spaceId === sp.id && x.userId === userId);
+    if (!c) {
+      c = { id: `cm-${sp.id}-${userId}`, spaceId: sp.id, userId, text: PHOTO_TEXT[(si + ui) % PHOTO_TEXT.length], onSite: true };
+      seed.comments.push(c);
+    }
+    c.photoIds = ids;
+  });
+});
+seed.comments.forEach((c) => { c.photoIds = c.photoIds || []; });
+
 // When each seeded redesign was published (drives the one-a-week limit).
 ['2026-08-02', '2026-10-05', '2026-09-14', '2026-07-21', '2026-10-30'].forEach((d, i) => { seed.redesigns[i].createdAt = Date.parse(d); });
 // Where each seeded notification leads.

@@ -124,7 +124,7 @@ createRoot(document.getElementById('root')).render(
     <MemoryRouter>
       <DemoProvider>
         <Sandbox />
-        <NotesBridge />
+        <NotesBridge page="sandbox" />
       </DemoProvider>
     </MemoryRouter>
   </React.StrictMode>,

@@ -11,7 +11,7 @@ export const SPACE_CARD_VARIANTS = {
   row: { name: 'Compact row', note: 'Small photo on the left, text on the right. Fits twice as many spaces in the list beside the map.' },
 };
 
-const typeLabel = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+export const typeLabel = (t) => t.charAt(0).toUpperCase() + t.slice(1);
 
 function Stat({ icon, n, label }) {
   return (
@@ -107,26 +107,34 @@ export function SpaceCard({ space, faded, active, onHover, headingLevel = 3, var
 }
 
 // Map placeholder: pins are placed from each space's lat/lng and show the vote count.
-export function MapBox({ spaces, hiddenIds = [], activeId, onHover, sticky }) {
-  const lats = spaces.map((s) => s.lat);
-  const lngs = spaces.map((s) => s.lng);
+// `area` sets the map's extent (defaults to the pins), so an empty filter keeps the same map.
+// Pins closer than a pin's width are nudged apart so both stay clickable.
+export function MapBox({ spaces, area, hiddenIds = [], activeId, onHover, sticky, className = '', label = 'Map placeholder: Jaipur. Dashed pins are pending.', children }) {
+  const extent = area?.length ? area : spaces;
+  const lats = extent.map((s) => s.lat);
+  const lngs = extent.map((s) => s.lng);
   const [minLat, maxLat, minLng, maxLng] = [Math.min(...lats), Math.max(...lats), Math.min(...lngs), Math.max(...lngs)];
-  const pos = (s) => ({
-    left: `${8 + ((s.lng - minLng) / (maxLng - minLng || 1)) * 84}%`,
-    top: `${90 - ((s.lat - minLat) / (maxLat - minLat || 1)) * 78}%`,
+  const placed = [];
+  const pos = spaces.map((s) => {
+    let x = 8 + ((s.lng - minLng) / (maxLng - minLng || 1)) * 84;
+    let y = 90 - ((s.lat - minLat) / (maxLat - minLat || 1)) * 72;
+    // Nudge down-right until clear of earlier pins (in % of the map).
+    for (let i = 0; i < 6 && placed.some((p) => Math.abs(p.x - x) < 4.5 && Math.abs(p.y - y) < 5); i += 1) { x += 3.5; y += 4; }
+    placed.push({ x, y });
+    return { left: `${x}%`, top: `${y}%` };
   });
   return (
-    <div className={`map ${sticky ? 'map-sticky' : ''}`}>
-      <span className="map-label">Map placeholder: Jaipur. Dashed pins are pending.</span>
-      {spaces.map((s) =>
+    <div className={`map ${sticky ? 'map-sticky' : ''} ${className}`}>
+      {label && <span className="map-label">{label}</span>}
+      {spaces.map((s, i) =>
         hiddenIds.includes(s.id) ? (
-          <span key={s.id} className="pin faded" style={pos(s)} aria-hidden="true">?</span>
+          <span key={s.id} className="pin faded" style={pos[i]} aria-hidden="true">?</span>
         ) : (
           <Link
             key={s.id}
             to={`/space/${s.id}`}
             className={`pin ${s.status !== 'approved' ? 'pin-pending' : ''} ${activeId === s.id ? 'pin-active' : ''}`}
-            style={pos(s)}
+            style={pos[i]}
             title={s.name}
             aria-label={`${s.name}, ${s.votes} votes`}
             onMouseEnter={() => onHover?.(s.id)}
@@ -136,9 +144,18 @@ export function MapBox({ spaces, hiddenIds = [], activeId, onHover, sticky }) {
           </Link>
         ),
       )}
+      {children}
     </div>
   );
 }
+
+// Text search across a space's name, type and what people said about it.
+export const matchesSearch = (space, q) => {
+  const t = q.trim().toLowerCase();
+  if (!t) return true;
+  const hay = [space.name, space.type, ...Object.values(space.questionnaire || {}), ...Object.values(space.properties || {})].join(' ').toLowerCase();
+  return t.split(/\s+/).every((w) => hay.includes(w));
+};
 
 export function RedesignCard({ redesign, blurred }) {
   const { get, cfg } = useDemo();

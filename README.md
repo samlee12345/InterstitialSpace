@@ -48,7 +48,8 @@ notes tool, ported from the portfolio. Press N again, click any text, type a
 note, then ⌘↵. Notes are kept per page in your browser and survive reloads.
 "Copy all pages" puts every note on the clipboard, labelled by page and
 section, so testers can paste them into a message. Notes never leave the
-tester's browser.
+tester's browser. Each view keeps its own notes (for example the Tabs view of
+a space page), and the Demo bar shows the count per page and per view.
 
 ## How it is put together
 
@@ -66,13 +67,19 @@ tester's browser.
 - Account pages (Portfolio, Earnings, My purchases, Create new space, Points &
   membership, Profile, plus Moderation, Flag queue and Host a contest for those
   roles) are in the dropdown under your name, top right.
-- Each screen has a small tag at the top right: CLICKABLE or SIMULATED.
+- Demo-only information lives in the Demo bar, not on the pages: whether a
+  page is Clickable or Simulated, view switches, and the placeholder notice.
 - Confirmations: small pop-ups appear bottom left for six seconds. A
   submission (redesign, diagram, contest entry, experience) also shows a
   banner at the top of the space page, and the contribution is marked "Yours".
-- The Demo bar (bottom right) opens the role switcher, the space-page view
-  switch, "Make the next payment fail", "Skip ahead one week" and "Reset demo
-  data". It starts collapsed so it does not cover the page.
+- **Demo bar.** The "Demo" pill (bottom right) opens a drawer; the page makes
+  room for it instead of being covered. It has the role switcher, **Pages to
+  review** (every page and view, marked Clickable or Simulated, with your
+  note count; opening one switches to a role that can see it; variations such
+  as Landing: Classic / Map first and Space page: One page / Tabs are nested
+  under their page), and controls: "Make the next payment fail", "Skip ahead
+  one week", notes, the sandbox and "Reset demo data". The page list is in
+  `src/demo/pages.js`.
 
 Two routes were added to the list in the brief, because uploads start from a
 space: `/space/:id/upload-redesign` and `/space/:id/upload-diagram`.

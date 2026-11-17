@@ -1165,70 +1165,610 @@
       "spaceId": "s1",
       "userId": "u-c2",
       "text": "We sit here every evening. It needs shade in May and June.",
-      "onSite": true
+      "onSite": true,
+      "photoIds": [
+        "s1-ph4",
+        "s1-ph9"
+      ]
     },
     {
       "id": "cm2",
       "spaceId": "s1",
       "userId": "u-c3",
       "text": "The lower steps are slippery after rain.",
-      "onSite": false
+      "onSite": false,
+      "photoIds": [
+        "s1-ph5",
+        "s1-ph10"
+      ]
     },
     {
       "id": "cm3",
       "spaceId": "s1",
       "userId": "u-a2",
       "text": "The landing proportions are worth keeping exactly as they are.",
-      "onSite": true
+      "onSite": true,
+      "photoIds": [
+        "s1-ph1",
+        "s1-ph6",
+        "s1-ph11"
+      ]
     },
     {
       "id": "cm4",
       "spaceId": "s2",
       "userId": "u-c1",
       "text": "Children play here after school. Please keep it open to the lane.",
-      "onSite": true
+      "onSite": true,
+      "photoIds": [
+        "s2-ph2",
+        "s2-ph7"
+      ]
     },
     {
       "id": "cm5",
       "spaceId": "s2",
       "userId": "u-c2",
       "text": "A water tap would change everything.",
-      "onSite": true
+      "onSite": true,
+      "photoIds": [
+        "s2-ph3",
+        "s2-ph8"
+      ]
     },
     {
       "id": "cm6",
       "spaceId": "s3",
       "userId": "u-c3",
       "text": "Best place to watch the bazaar. Nowhere to sit that is not a step.",
-      "onSite": true
+      "onSite": true,
+      "photoIds": [
+        "s3-ph3",
+        "s3-ph8"
+      ]
     },
     {
       "id": "cm7",
       "spaceId": "s3",
       "userId": "u-c1",
       "text": "Too dark at night.",
-      "onSite": false
+      "onSite": false,
+      "photoIds": [
+        "s3-ph1",
+        "s3-ph6",
+        "s3-ph11"
+      ]
     },
     {
       "id": "cm8",
       "spaceId": "s4",
       "userId": "u-c2",
       "text": "People wait here for buses with no bench.",
-      "onSite": true
+      "onSite": true,
+      "photoIds": [
+        "s4-ph1",
+        "s4-ph6"
+      ]
     },
     {
       "id": "cm9",
       "spaceId": "s8",
       "userId": "u-c1",
       "text": "This niche is used by a tea seller every morning.",
-      "onSite": true
+      "onSite": true,
+      "photoIds": [
+        "s8-ph1",
+        "s8-ph6"
+      ]
     },
     {
       "id": "cm10",
       "spaceId": "s10",
       "userId": "u-c2",
       "text": "The well platform is where the lane meets. It deserves attention.",
-      "onSite": true
+      "onSite": true,
+      "photoIds": [
+        "s10-ph4",
+        "s10-ph9"
+      ]
+    },
+    {
+      "id": "cm-s1-u-a4",
+      "spaceId": "s1",
+      "userId": "u-a4",
+      "text": "Busiest in the late afternoon; these show it then.",
+      "onSite": true,
+      "photoIds": [
+        "s1-ph2",
+        "s1-ph7",
+        "s1-ph12"
+      ]
+    },
+    {
+      "id": "cm-s1-u-c1",
+      "spaceId": "s1",
+      "userId": "u-c1",
+      "text": "Shared these so the AI has enough to draw a diagram.",
+      "onSite": true,
+      "photoIds": [
+        "s1-ph3",
+        "s1-ph8"
+      ]
+    },
+    {
+      "id": "cm-s2-u-a4",
+      "spaceId": "s2",
+      "userId": "u-a4",
+      "text": "Busiest in the late afternoon; these show it then.",
+      "onSite": true,
+      "photoIds": [
+        "s2-ph1",
+        "s2-ph6"
+      ]
+    },
+    {
+      "id": "cm-s2-u-c3",
+      "spaceId": "s2",
+      "userId": "u-c3",
+      "text": "The shade moves fast here. Photos from midday.",
+      "onSite": true,
+      "photoIds": [
+        "s2-ph4",
+        "s2-ph9"
+      ]
+    },
+    {
+      "id": "cm-s2-u-a2",
+      "spaceId": "s2",
+      "userId": "u-a2",
+      "text": "Took these on my way through in the morning.",
+      "onSite": true,
+      "photoIds": [
+        "s2-ph5"
+      ]
+    },
+    {
+      "id": "cm-s3-u-c2",
+      "spaceId": "s3",
+      "userId": "u-c2",
+      "text": "There is always someone sitting here. Photos from today.",
+      "onSite": true,
+      "photoIds": [
+        "s3-ph2",
+        "s3-ph7"
+      ]
+    },
+    {
+      "id": "cm-s3-u-a2",
+      "spaceId": "s3",
+      "userId": "u-a2",
+      "text": "Took these on my way through in the morning.",
+      "onSite": true,
+      "photoIds": [
+        "s3-ph4",
+        "s3-ph9"
+      ]
+    },
+    {
+      "id": "cm-s3-u-a4",
+      "spaceId": "s3",
+      "userId": "u-a4",
+      "text": "Busiest in the late afternoon; these show it then.",
+      "onSite": true,
+      "photoIds": [
+        "s3-ph5",
+        "s3-ph10"
+      ]
+    },
+    {
+      "id": "cm-s4-u-c3",
+      "spaceId": "s4",
+      "userId": "u-c3",
+      "text": "The shade moves fast here. Photos from midday.",
+      "onSite": true,
+      "photoIds": [
+        "s4-ph2",
+        "s4-ph7"
+      ]
+    },
+    {
+      "id": "cm-s4-u-a2",
+      "spaceId": "s4",
+      "userId": "u-a2",
+      "text": "Took these on my way through in the morning.",
+      "onSite": true,
+      "photoIds": [
+        "s4-ph3",
+        "s4-ph8"
+      ]
+    },
+    {
+      "id": "cm-s4-u-a4",
+      "spaceId": "s4",
+      "userId": "u-a4",
+      "text": "Busiest in the late afternoon; these show it then.",
+      "onSite": true,
+      "photoIds": [
+        "s4-ph4"
+      ]
+    },
+    {
+      "id": "cm-s4-u-c1",
+      "spaceId": "s4",
+      "userId": "u-c1",
+      "text": "Shared these so the AI has enough to draw a diagram.",
+      "onSite": true,
+      "photoIds": [
+        "s4-ph5"
+      ]
+    },
+    {
+      "id": "cm-s5-u-c3",
+      "spaceId": "s5",
+      "userId": "u-c3",
+      "text": "The shade moves fast here. Photos from midday.",
+      "onSite": true,
+      "photoIds": [
+        "s5-ph1",
+        "s5-ph6"
+      ]
+    },
+    {
+      "id": "cm-s5-u-a2",
+      "spaceId": "s5",
+      "userId": "u-a2",
+      "text": "Took these on my way through in the morning.",
+      "onSite": true,
+      "photoIds": [
+        "s5-ph2",
+        "s5-ph7"
+      ]
+    },
+    {
+      "id": "cm-s5-u-a4",
+      "spaceId": "s5",
+      "userId": "u-a4",
+      "text": "Busiest in the late afternoon; these show it then.",
+      "onSite": true,
+      "photoIds": [
+        "s5-ph3",
+        "s5-ph8"
+      ]
+    },
+    {
+      "id": "cm-s5-u-c1",
+      "spaceId": "s5",
+      "userId": "u-c1",
+      "text": "Shared these so the AI has enough to draw a diagram.",
+      "onSite": true,
+      "photoIds": [
+        "s5-ph4",
+        "s5-ph9"
+      ]
+    },
+    {
+      "id": "cm-s5-u-c2",
+      "spaceId": "s5",
+      "userId": "u-c2",
+      "text": "There is always someone sitting here. Photos from today.",
+      "onSite": true,
+      "photoIds": [
+        "s5-ph5",
+        "s5-ph10"
+      ]
+    },
+    {
+      "id": "cm-s6-u-a2",
+      "spaceId": "s6",
+      "userId": "u-a2",
+      "text": "Took these on my way through in the morning.",
+      "onSite": true,
+      "photoIds": [
+        "s6-ph1",
+        "s6-ph6"
+      ]
+    },
+    {
+      "id": "cm-s6-u-a4",
+      "spaceId": "s6",
+      "userId": "u-a4",
+      "text": "Busiest in the late afternoon; these show it then.",
+      "onSite": true,
+      "photoIds": [
+        "s6-ph2",
+        "s6-ph7"
+      ]
+    },
+    {
+      "id": "cm-s6-u-c1",
+      "spaceId": "s6",
+      "userId": "u-c1",
+      "text": "Shared these so the AI has enough to draw a diagram.",
+      "onSite": true,
+      "photoIds": [
+        "s6-ph3"
+      ]
+    },
+    {
+      "id": "cm-s6-u-c2",
+      "spaceId": "s6",
+      "userId": "u-c2",
+      "text": "There is always someone sitting here. Photos from today.",
+      "onSite": true,
+      "photoIds": [
+        "s6-ph4"
+      ]
+    },
+    {
+      "id": "cm-s6-u-c3",
+      "spaceId": "s6",
+      "userId": "u-c3",
+      "text": "The shade moves fast here. Photos from midday.",
+      "onSite": true,
+      "photoIds": [
+        "s6-ph5"
+      ]
+    },
+    {
+      "id": "cm-s7-u-a4",
+      "spaceId": "s7",
+      "userId": "u-a4",
+      "text": "Busiest in the late afternoon; these show it then.",
+      "onSite": true,
+      "photoIds": [
+        "s7-ph1",
+        "s7-ph6"
+      ]
+    },
+    {
+      "id": "cm-s7-u-c1",
+      "spaceId": "s7",
+      "userId": "u-c1",
+      "text": "Shared these so the AI has enough to draw a diagram.",
+      "onSite": true,
+      "photoIds": [
+        "s7-ph2"
+      ]
+    },
+    {
+      "id": "cm-s7-u-c2",
+      "spaceId": "s7",
+      "userId": "u-c2",
+      "text": "There is always someone sitting here. Photos from today.",
+      "onSite": true,
+      "photoIds": [
+        "s7-ph3"
+      ]
+    },
+    {
+      "id": "cm-s7-u-c3",
+      "spaceId": "s7",
+      "userId": "u-c3",
+      "text": "The shade moves fast here. Photos from midday.",
+      "onSite": true,
+      "photoIds": [
+        "s7-ph4"
+      ]
+    },
+    {
+      "id": "cm-s7-u-a2",
+      "spaceId": "s7",
+      "userId": "u-a2",
+      "text": "Took these on my way through in the morning.",
+      "onSite": true,
+      "photoIds": [
+        "s7-ph5"
+      ]
+    },
+    {
+      "id": "cm-s8-u-c2",
+      "spaceId": "s8",
+      "userId": "u-c2",
+      "text": "There is always someone sitting here. Photos from today.",
+      "onSite": true,
+      "photoIds": [
+        "s8-ph2"
+      ]
+    },
+    {
+      "id": "cm-s8-u-c3",
+      "spaceId": "s8",
+      "userId": "u-c3",
+      "text": "The shade moves fast here. Photos from midday.",
+      "onSite": true,
+      "photoIds": [
+        "s8-ph3"
+      ]
+    },
+    {
+      "id": "cm-s8-u-a2",
+      "spaceId": "s8",
+      "userId": "u-a2",
+      "text": "Took these on my way through in the morning.",
+      "onSite": true,
+      "photoIds": [
+        "s8-ph4"
+      ]
+    },
+    {
+      "id": "cm-s8-u-a4",
+      "spaceId": "s8",
+      "userId": "u-a4",
+      "text": "Busiest in the late afternoon; these show it then.",
+      "onSite": true,
+      "photoIds": [
+        "s8-ph5"
+      ]
+    },
+    {
+      "id": "cm-s9-u-c2",
+      "spaceId": "s9",
+      "userId": "u-c2",
+      "text": "There is always someone sitting here. Photos from today.",
+      "onSite": true,
+      "photoIds": [
+        "s9-ph1"
+      ]
+    },
+    {
+      "id": "cm-s9-u-c3",
+      "spaceId": "s9",
+      "userId": "u-c3",
+      "text": "The shade moves fast here. Photos from midday.",
+      "onSite": true,
+      "photoIds": [
+        "s9-ph2"
+      ]
+    },
+    {
+      "id": "cm-s9-u-a2",
+      "spaceId": "s9",
+      "userId": "u-a2",
+      "text": "Took these on my way through in the morning.",
+      "onSite": true,
+      "photoIds": [
+        "s9-ph3"
+      ]
+    },
+    {
+      "id": "cm-s10-u-a2",
+      "spaceId": "s10",
+      "userId": "u-a2",
+      "text": "The shade moves fast here. Photos from midday.",
+      "onSite": true,
+      "photoIds": [
+        "s10-ph1",
+        "s10-ph6",
+        "s10-ph11"
+      ]
+    },
+    {
+      "id": "cm-s10-u-a4",
+      "spaceId": "s10",
+      "userId": "u-a4",
+      "text": "Took these on my way through in the morning.",
+      "onSite": true,
+      "photoIds": [
+        "s10-ph2",
+        "s10-ph7"
+      ]
+    },
+    {
+      "id": "cm-s10-u-c1",
+      "spaceId": "s10",
+      "userId": "u-c1",
+      "text": "Busiest in the late afternoon; these show it then.",
+      "onSite": true,
+      "photoIds": [
+        "s10-ph3",
+        "s10-ph8"
+      ]
+    },
+    {
+      "id": "cm-s10-u-c3",
+      "spaceId": "s10",
+      "userId": "u-c3",
+      "text": "There is always someone sitting here. Photos from today.",
+      "onSite": true,
+      "photoIds": [
+        "s10-ph5",
+        "s10-ph10"
+      ]
+    },
+    {
+      "id": "cm-s11-u-a4",
+      "spaceId": "s11",
+      "userId": "u-a4",
+      "text": "Took these on my way through in the morning.",
+      "onSite": true,
+      "photoIds": [
+        "s11-ph1"
+      ]
+    },
+    {
+      "id": "cm-s11-u-c1",
+      "spaceId": "s11",
+      "userId": "u-c1",
+      "text": "Busiest in the late afternoon; these show it then.",
+      "onSite": true,
+      "photoIds": [
+        "s11-ph2"
+      ]
+    },
+    {
+      "id": "cm-s11-u-c2",
+      "spaceId": "s11",
+      "userId": "u-c2",
+      "text": "Shared these so the AI has enough to draw a diagram.",
+      "onSite": true,
+      "photoIds": [
+        "s11-ph3"
+      ]
+    },
+    {
+      "id": "cm-s11-u-c3",
+      "spaceId": "s11",
+      "userId": "u-c3",
+      "text": "There is always someone sitting here. Photos from today.",
+      "onSite": true,
+      "photoIds": [
+        "s11-ph4"
+      ]
+    },
+    {
+      "id": "cm-s12-u-c1",
+      "spaceId": "s12",
+      "userId": "u-c1",
+      "text": "Busiest in the late afternoon; these show it then.",
+      "onSite": true,
+      "photoIds": [
+        "s12-ph1",
+        "s12-ph6"
+      ]
+    },
+    {
+      "id": "cm-s12-u-c2",
+      "spaceId": "s12",
+      "userId": "u-c2",
+      "text": "Shared these so the AI has enough to draw a diagram.",
+      "onSite": true,
+      "photoIds": [
+        "s12-ph2",
+        "s12-ph7"
+      ]
+    },
+    {
+      "id": "cm-s12-u-c3",
+      "spaceId": "s12",
+      "userId": "u-c3",
+      "text": "There is always someone sitting here. Photos from today.",
+      "onSite": true,
+      "photoIds": [
+        "s12-ph3",
+        "s12-ph8"
+      ]
+    },
+    {
+      "id": "cm-s12-u-a2",
+      "spaceId": "s12",
+      "userId": "u-a2",
+      "text": "The shade moves fast here. Photos from midday.",
+      "onSite": true,
+      "photoIds": [
+        "s12-ph4",
+        "s12-ph9"
+      ]
+    },
+    {
+      "id": "cm-s12-u-a4",
+      "spaceId": "s12",
+      "userId": "u-a4",
+      "text": "Took these on my way through in the morning.",
+      "onSite": true,
+      "photoIds": [
+        "s12-ph5",
+        "s12-ph10"
+      ]
     }
   ],
   "coopDecisions": [

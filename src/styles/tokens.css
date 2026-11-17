@@ -31,6 +31,7 @@
   --color-placeholder: var(--gray-200);
   --color-placeholder-line: var(--gray-400);
   --color-overlay: rgb(21 21 21 / 0.45);
+  --scrim: rgb(21 21 21 / 0.78);
 
   /* Type */
   --font-body: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -47,7 +48,7 @@
   --weight-medium: 500;
   --weight-bold: 700;
   --measure: 68ch;
-  --measure-small: 76ch;
+  --measure-small: 64ch;
 
   /* Spacing */
   --space-1: 0.25rem;
@@ -79,6 +80,9 @@
   --size-icon: 1rem;
   --width-card-tight: 12rem;
   --width-browse-list: 40rem;
+  --width-demo-drawer: 20rem;
+  --width-map-search: 26rem;
+  --height-hero-min: 16rem;
   --height-header: 4.5rem;
   --width-panel: 19rem;
   --width-menu: 20rem;

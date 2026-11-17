@@ -77,7 +77,7 @@ export function Item() {
           <p className="prose">{item.description || 'Measured plan and section with correct proportions, plus a simple 3D model where available. Produced for the Base Library.'}</p>
           <p className="small muted">Files: {item.files.join(', ')}</p>
           <div className="card">
-            <h3>Licence</h3>
+            <h2 className="h-sm">Licence</h2>
             <ul className="small">
               <li>You can use and adapt these files.</li>
               <li>You cannot redistribute them.</li>
@@ -105,20 +105,20 @@ export function Item() {
         <aside className="card">
           {hidden ? (
             <>
-              <h3>No longer for sale</h3>
+              <h2 className="h-sm">No longer for sale</h2>
               <p className="small muted">{item.takenDown ? 'A moderator took this listing down.' : 'The architect unpublished this listing.'} People who bought it keep their copy.</p>
               {owned && <Button to="/purchases">Go to My purchases</Button>}
               {mine && <Button to="/portfolio">Manage in portfolio</Button>}
             </>
           ) : mine ? (
             <>
-              <h3>This is your listing</h3>
+              <h2 className="h-sm">This is your listing</h2>
               <p className="small muted">Buyers pay {cfg.priceLabel}. You receive 80%.</p>
               <Button variant="primary" to="/portfolio">Edit or unpublish in portfolio</Button>
             </>
           ) : owned ? (
             <>
-              <h3>You own this</h3>
+              <h2 className="h-sm">You own this</h2>
               <p className="small muted">Bought {owned.date}. Download it again any time.</p>
               <Button variant="primary" to="/purchases">Go to My purchases</Button>
             </>

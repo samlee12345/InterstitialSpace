@@ -22,15 +22,11 @@ export function Button({ variant = 'default', to, className = '', ...p }) {
   return to ? <Link className={cls} to={to} {...p} /> : <button type="button" className={cls} {...p} />;
 }
 
-// Corner tag: is this screen fully working or a simulation?
-export function ScreenTag({ kind }) {
-  return <div className={`screentag screentag-${kind}`}>{kind === 'clickable' ? 'CLICKABLE' : 'SIMULATED'}</div>;
-}
 
-export function Page({ tag, narrow, wide, children }) {
+// `tag` (clickable / simulated) is kept for reference; the Demo bar shows it now, not the page.
+export function Page({ narrow, wide, children }) {
   return (
-    <main className={`page stack-lg ${narrow ? 'narrow' : ''} ${wide ? 'page-wide' : ''}`} data-screen-label="page">
-      {tag && <ScreenTag kind={tag} />}
+    <main id="main" tabIndex={-1} className={`page stack-lg ${narrow ? 'narrow' : ''} ${wide ? 'page-wide' : ''}`} data-screen-label="page">
       {children}
     </main>
   );
@@ -173,14 +169,44 @@ export function FileDrop({ label, files, onChange, samples = ['drawings.pdf', 'm
   );
 }
 
-export function Tabs({ tabs, active, onChange }) {
+// Tabs: roving focus, arrow keys, Home/End, linked to their panel.
+export function Tabs({ tabs, active, onChange, idBase = 'tabs' }) {
+  const refs = useRef({});
+  const move = (e, i) => {
+    const keys = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 };
+    if (!(e.key in keys)) return;
+    e.preventDefault();
+    const next = tabs[(keys[e.key] + tabs.length) % tabs.length];
+    onChange(next.id);
+    refs.current[next.id]?.focus();
+  };
   return (
     <div className="tabs" role="tablist">
-      {tabs.map((t) => (
-        <button key={t.id} role="tab" type="button" className="tab" aria-selected={active === t.id} onClick={() => onChange(t.id)}>
+      {tabs.map((t, i) => (
+        <button
+          key={t.id}
+          ref={(el) => { refs.current[t.id] = el; }}
+          role="tab"
+          type="button"
+          id={`${idBase}-tab-${t.id}`}
+          aria-controls={`${idBase}-panel`}
+          aria-selected={active === t.id}
+          tabIndex={active === t.id ? 0 : -1}
+          className="tab"
+          onClick={() => onChange(t.id)}
+          onKeyDown={(e) => move(e, i)}
+        >
           {t.label}
         </button>
       ))}
+    </div>
+  );
+}
+
+export function TabPanel({ idBase = 'tabs', id, children }) {
+  return (
+    <div role="tabpanel" id={`${idBase}-panel`} aria-labelledby={`${idBase}-tab-${id}`} tabIndex={0} className="stack-lg tabpanel">
+      {children}
     </div>
   );
 }
@@ -195,16 +221,36 @@ export function Steps({ steps, current }) {
   );
 }
 
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+// Dialog: moves focus in, keeps Tab inside, Escape closes, and focus returns to what opened it.
 export function Modal({ title, onClose, children }) {
+  const ref = useRef(null);
+  const titleId = useId();
   useEffect(() => {
-    const onKey = (e) => e.key === 'Escape' && onClose?.();
+    const opener = document.activeElement;
+    const box = ref.current;
+    (box.querySelector('input, textarea, select') || box.querySelector(FOCUSABLE) || box).focus();
+    const onKey = (e) => {
+      if (e.key === 'Escape') { e.stopPropagation(); onClose?.(); return; }
+      if (e.key !== 'Tab') return;
+      const items = [...box.querySelectorAll(FOCUSABLE)];
+      if (!items.length) return;
+      const [first, last] = [items[0], items[items.length - 1]];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    };
     document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      if (opener && document.contains(opener)) opener.focus();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <div className="overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose?.()}>
-      <div className="modal" role="dialog" aria-modal="true" aria-label={title}>
-        <h2>{title}</h2>
+      <div ref={ref} className="modal" role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1}>
+        <h2 id={titleId}>{title}</h2>
         {children}
       </div>
     </div>

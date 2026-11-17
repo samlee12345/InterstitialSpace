@@ -1,16 +1,19 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
-import { Badge, Banner, Button, Empty, ImageBox, Input, Mine, Modal, Page, PointsBadge, StatusBadges, Tabs } from '../components/ui.jsx';
-import { Crumbs, RedesignCard, contestStatus } from '../components/domain.jsx';
+import { Badge, Banner, Button, Empty, ImageBox, Input, Mine, Modal, Page, PointsBadge, StatusBadges, TabPanel, Tabs } from '../components/ui.jsx';
+import { RedesignCard, contestStatus, typeLabel } from '../components/domain.jsx';
 import { POINTS } from '../lib/points.js';
 
 const TABS = [
-  { id: 'experience', label: 'Experience' },
+  { id: 'experience', label: 'Experiences' },
   { id: 'diagram', label: 'Spatial diagram' },
   { id: 'redesigns', label: 'Redesigns' },
   { id: 'contests', label: 'Contests' },
 ];
+
+// Names in a short sentence: "A, B and 3 others".
+const nameList = (names, max = 2) => (names.length <= max + 1 ? names.join(', ').replace(/, ([^,]*)$/, ' and $1') : `${names.slice(0, max).join(', ')} and ${names.length - max} others`);
 
 // Simulated browser location prompt, so the demo behaves the same on every machine.
 function LocationPrompt({ action, onPick, onClose }) {
@@ -22,16 +25,15 @@ function LocationPrompt({ action, onPick, onClose }) {
         <Button onClick={() => onPick(false)}>Allow — I am somewhere else</Button>
         <Button onClick={() => onPick(false)}>Don’t allow</Button>
       </div>
-      <p className="small muted">Simulated prompt. No real location is read.</p>
     </Modal>
   );
 }
 
-function SectionHead({ title, note, children }) {
+function SectionHead({ id, title, note, children }) {
   return (
     <div className="row between">
       <div className="stack-sm">
-        <h2>{title}</h2>
+        <h2 id={id}>{title}</h2>
         {note && <p className="small muted">{note}</p>}
       </div>
       <div className="row">{children}</div>
@@ -52,49 +54,36 @@ function Diagram({ space }) {
     return () => clearTimeout(t);
   }, [aiPending, space.id, dispatch]);
 
+  let body;
   if (aiPending) {
-    return (
-      <section className="stack" data-screen-label="Spatial diagram">
-        <SectionHead title="Spatial diagram" />
-        <div className="card">
-          <div className="row"><div className="spinner" aria-hidden="true" /><h3>Processing…</h3></div>
-          <p>This space has {space.photos.length} photos, so the AI is drawing a spatial diagram from them. Simulated: a placeholder diagram appears in a few seconds.</p>
-        </div>
-      </section>
+    body = (
+      <div className="card">
+        <div className="row"><div className="spinner" aria-hidden="true" /><h3>Processing…</h3></div>
+        <p>This space has {space.photos.length} photos, so the AI is drawing a spatial diagram from them. Simulated: a placeholder diagram appears in a few seconds.</p>
+      </div>
     );
-  }
-  if (!space.diagram) {
-    return (
-      <section className="stack" data-screen-label="Spatial diagram">
-        <SectionHead title="Spatial diagram">
-          {isArchitect && <Button variant="primary" to={`/space/${space.id}/upload-diagram`}>Upload spatial diagram</Button>}
-        </SectionHead>
-        <Empty title="No spatial diagram yet">
-          <p>
-            The AI attempts a diagram once a space has {cfg.aiDiagramMinPhotos} photos. This one has {space.photos.length}. An architect can upload one instead; with {cfg.manualDiagramMinPhotos} or more photos that makes the space ready for approval.
-          </p>
-        </Empty>
-      </section>
+  } else if (!space.diagram) {
+    body = (
+      <Empty title="No spatial diagram yet">
+        <p>The AI attempts a diagram once a space has {cfg.aiDiagramMinPhotos} photos. This one has {space.photos.length}. An architect can upload one instead; with {cfg.manualDiagramMinPhotos} or more photos that makes the space ready for approval.</p>
+      </Empty>
     );
-  }
-  const d = space.diagram;
-  return (
-    <section className="stack" data-screen-label="Spatial diagram">
-      <SectionHead title="Spatial diagram" note="A measured plan and section of the space as it is today." />
+  } else {
+    const d = space.diagram;
+    const credit = d.source === 'ai'
+      ? `Drawn by AI from ${space.photos.length} photos by ${nameList(d.credits.map((id) => get.user(id)?.name))}`
+      : `Measured and drawn by ${get.user(d.by)?.name}`;
+    body = (
       <div className="split">
-        <div className="stack">
-          <div className="halves">
+        <div className="halves">
+          <figure className="captioned">
             <ImageBox label="Measured plan (placeholder)" />
+            <figcaption title={d.source === 'ai' ? d.credits.map((id) => get.user(id)?.name).join(', ') : undefined}>{credit}</figcaption>
+          </figure>
+          <figure className="captioned">
             <ImageBox label="Section (placeholder)" />
-          </div>
-          {d.source === 'ai' ? (
-            <p className="small">AI diagram drawn from community photos. Photographers credited: {d.credits.map((id) => get.user(id)?.name).join(', ')}.</p>
-          ) : (
-            <p className="small row">
-              <span>Uploaded by <Link to={`/architect/${d.by}`}>{get.user(d.by)?.name}</Link>.</span>
-              <Mine userId={d.by} />
-            </p>
-          )}
+            <figcaption className="row">{d.source === 'architect' ? <><span>Uploaded by an architect</span><Mine userId={d.by} /></> : <span>Section through the main space</span>}</figcaption>
+          </figure>
         </div>
         <aside className="card">
           <h3>Measured model</h3>
@@ -109,6 +98,14 @@ function Diagram({ space }) {
           )}
         </aside>
       </div>
+    );
+  }
+  return (
+    <section className="stack" data-screen-label="Spatial diagram" aria-labelledby="diagram-heading">
+      <SectionHead id="diagram-heading" title="Spatial diagram" note={space.diagram ? 'A measured plan and section of the space as it is today.' : null}>
+        {isArchitect && !space.diagram && !aiPending && <Button variant="primary" to={`/space/${space.id}/upload-diagram`}>Upload spatial diagram</Button>}
+      </SectionHead>
+      {body}
     </section>
   );
 }
@@ -121,8 +118,8 @@ function Redesigns({ space }) {
     .sort((a, b) => rankOf(a.architectId) - rankOf(b.architectId));
   const limit = isArchitect ? uploadLimit(user.id) : null;
   return (
-    <section className="stack" data-screen-label="Redesigns">
-      <SectionHead title={`Redesigns (${list.length})`} note="Proposals by architects, paid per download. Architects ranked higher appear first.">
+    <section className="stack" data-screen-label="Redesigns" aria-labelledby="redesigns-heading">
+      <SectionHead id="redesigns-heading" title={`Redesigns (${list.length})`} note="Proposals by architects, paid per download. Architects ranked higher appear first.">
         {isArchitect && limit.allowed && <Button variant="primary" to={`/space/${space.id}/upload-redesign`}>Upload redesign</Button>}
         {isArchitect && !limit.allowed && <span className="small muted">You can publish one redesign a week. Next: {limit.next.toLocaleDateString()}.</span>}
       </SectionHead>
@@ -148,7 +145,7 @@ function Redesigns({ space }) {
   );
 }
 
-// ── Experiences ─────────────────────────────────────────────
+// ── Experiences: AI summary, then each member's comment with their photos ──
 function Experience({ space, setBanner }) {
   const { state, dispatch, user, get, need } = useDemo();
   const [open, setOpen] = useState(false);
@@ -156,12 +153,11 @@ function Experience({ space, setBanner }) {
   const [photos, setPhotos] = useState(0);
   const [err, setErr] = useState('');
   const [ask, setAsk] = useState(null); // 'post' | 'vote'
-  const [allPhotos, setAllPhotos] = useState(false);
-  // "Most relevant" = contributors with more points first.
+  // Most relevant first: contributors with more points rank higher.
   const posts = state.comments
     .filter((c) => c.spaceId === space.id)
     .sort((a, b) => get.user(b.userId).points - get.user(a.userId).points);
-  const shown = allPhotos ? space.photos : space.photos.slice(0, 8);
+  const q = space.questionnaire;
 
   const pick = (onSite) => {
     if (ask === 'vote') dispatch({ type: 'VOTE_SPACE', spaceId: space.id, userId: user.id, onSite });
@@ -174,11 +170,26 @@ function Experience({ space, setBanner }) {
   };
 
   return (
-    <section className="stack" data-screen-label="Experiences">
-      <SectionHead title={`Experiences (${posts.length})`} note="How people use and feel about this space. Most relevant first: contributors with more points rank higher.">
+    <section className="stack" data-screen-label="Experiences" aria-labelledby="exp-heading">
+      <SectionHead id="exp-heading" title={`Experiences (${posts.length})`} note="How people use and feel about this space, with their photos. Most relevant first.">
         <Button onClick={() => need('vote') && setAsk('vote')}>Vote for this space ({space.votes})</Button>
         {!open && <Button variant="primary" onClick={() => need('comment') && setOpen(true)}>Add your experience</Button>}
       </SectionHead>
+
+      <div className="summary-box">
+        <div className="row between">
+          <h3>What people say it’s like</h3>
+          <span className="xs muted">Summarised by AI from {posts.length} experiences and the questionnaire</span>
+        </div>
+        <dl className="summary-grid">
+          <div><dt>How it feels</dt><dd>{q.feelings}</dd></div>
+          <div><dt>Arriving and leaving</dt><dd>{q.transition}</dd></div>
+          <div><dt>Materials</dt><dd>{q.materiality}</dd></div>
+          <div><dt>Senses</dt><dd>{q.sensory}</dd></div>
+          <div><dt>How it’s used</dt><dd>{space.properties.activity}</dd></div>
+          <div><dt>Climate</dt><dd>{space.properties.climate}</dd></div>
+        </dl>
+      </div>
 
       {open && (
         <form
@@ -204,10 +215,10 @@ function Experience({ space, setBanner }) {
         </form>
       )}
 
-      <div className="split">
-        <ul className="list">
-          {posts.map((c) => (
-            <li key={c.id} className="stack-sm">
+      <ul className="list">
+        {posts.map((c) => (
+          <li key={c.id} className="experience">
+            <div className="stack-sm grow">
               <div className="row">
                 <span className="bold small">{get.user(c.userId).name}</span>
                 <PointsBadge userId={c.userId} />
@@ -215,91 +226,58 @@ function Experience({ space, setBanner }) {
                 {!c.onSite && <span className="xs muted">off site</span>}
               </div>
               <p>{c.text}</p>
-              {c.photos > 0 && <div className="thumbs">{Array.from({ length: c.photos }, (_, i) => <ImageBox key={i} label="Photo" shape="square" />)}</div>}
-            </li>
-          ))}
-          {posts.length === 0 && <li className="muted">No experiences yet. Be the first to add one.</li>}
-        </ul>
-        <aside className="stack">
-          <div className="card">
-            <h3>How it feels</h3>
-            <dl className="dl">
-              <dt>Feelings</dt><dd>{space.questionnaire.feelings}</dd>
-              <dt>Transition</dt><dd>{space.questionnaire.transition}</dd>
-              <dt>Materiality</dt><dd>{space.questionnaire.materiality}</dd>
-              <dt>Sensory</dt><dd>{space.questionnaire.sensory}</dd>
-              <dt>Activity</dt><dd>{space.properties.activity}</dd>
-              <dt>Climate</dt><dd>{space.properties.climate}</dd>
-            </dl>
-          </div>
-        </aside>
-      </div>
-
-      <div className="stack-sm">
-        <h3>Photos ({space.photos.length})</h3>
-        <div className="thumbs">
-          {shown.map((p, i) => (
-            <figure key={p.id} className="stack-sm">
-              <ImageBox label={`${i + 1}`} shape="square" />
-              <figcaption className="xs muted">{p.credit === user?.id ? <span className="bold">Yours</span> : get.user(p.credit)?.name}</figcaption>
-            </figure>
-          ))}
-        </div>
-        {space.photos.length > 8 && <div><Button variant="quiet" onClick={() => setAllPhotos(!allPhotos)}>{allPhotos ? 'Show fewer photos' : `Show all ${space.photos.length} photos`}</Button></div>}
-      </div>
+            </div>
+            {c.photoIds?.length > 0 && (
+              <div className="exp-photos" aria-label={`${c.photoIds.length} photos`}>
+                {c.photoIds.slice(0, 3).map((id, i) => (
+                  <div key={id} className="exp-photo">
+                    <ImageBox label={i === 2 && c.photoIds.length > 3 ? `+${c.photoIds.length - 2}` : 'Photo'} shape="square" />
+                  </div>
+                ))}
+              </div>
+            )}
+          </li>
+        ))}
+        {posts.length === 0 && <li className="muted">No experiences yet. Be the first to add one.</li>}
+      </ul>
       {ask && <LocationPrompt action={ask === 'vote' ? 'vote' : 'post'} onPick={pick} onClose={() => setAsk(null)} />}
     </section>
   );
 }
 
-// ── Contest banner: only rendered when this space has a contest ──
-function ContestBanner({ contest }) {
-  const { get, isArchitect, isMember, user } = useDemo();
-  const mine = user && contest.entries.find((e) => e.architectId === user.id);
+// ── Contest: only rendered when this space has a contest. The whole card opens the contest. ──
+function ContestCard({ contest }) {
+  const { isArchitect, user } = useDemo();
+  const entered = user && contest.entries.some((e) => e.architectId === user.id);
   return (
-    <section className="alert" data-screen-label="Contest">
-      <div className="row between row-top">
-        <div className="stack-sm">
-          <div className="row"><Badge kind={contest.status === 'live' ? 'solid' : ''}>Contest: {contestStatus(contest).toLowerCase()}</Badge></div>
-          <h2>{contest.title}</h2>
-          <p>
-            <span className="display-sm">{contest.prize}</span> prize, co-hosted by {contest.coHost}. {contest.status === 'live' ? `Entries close ${contest.deadline}.` : `Entries closed ${contest.deadline}.`}
-          </p>
-        </div>
-        <div className="row">
-          <Button to={`/contest/${contest.id}`}>Contest details</Button>
-          {isArchitect && contest.status === 'live' && !mine && <Button variant="primary" to={`/contest/${contest.id}?enter=1`}>Submit an entry</Button>}
-        </div>
+    <section className="contest-card" data-screen-label="Contest" aria-labelledby={`contest-${contest.id}`}>
+      <div className="stack-sm grow">
+        <div className="row"><Badge kind={contest.status === 'live' ? 'solid' : ''}>Contest: {contestStatus(contest).toLowerCase()}</Badge>{entered && <Badge>You entered</Badge>}</div>
+        <h2 id={`contest-${contest.id}`}><Link className="stretched" to={`/contest/${contest.id}`}>{contest.title}</Link></h2>
+        <p className="small">
+          <span className="display-sm">{contest.prize}</span> prize, co-hosted by {contest.coHost}. {contest.status === 'live' ? `Entries close ${contest.deadline}.` : `Entries closed ${contest.deadline}.`}
+        </p>
       </div>
-      <h3>Redesigns submitted to this contest ({contest.entries.length})</h3>
-      {isMember ? (
-        <ul className="list small">
-          {contest.entries.map((e) => (
-            <li key={e.id} className="row">
-              <span className="bold">{e.title}</span>
-              <span className="muted">by <Link to={`/architect/${e.architectId}`}>{get.user(e.architectId)?.name}</Link></span>
-              <Mine userId={e.architectId} />
-              {contest.winner === e.id && <Badge kind="solid">Winner</Badge>}
-            </li>
-          ))}
-          {contest.entries.length === 0 && <li className="muted">No entries yet.</li>}
-        </ul>
-      ) : (
-        <p className="small muted">Sign up to see the entries.</p>
+      {isArchitect && contest.status === 'live' && !entered && (
+        <Button variant="primary" className="above-stretch" to={`/contest/${contest.id}?enter=1`}>Submit an entry</Button>
       )}
     </section>
   );
 }
 
-function LayoutSwitch() {
-  const { layout, dispatch } = useDemo();
+function Hero({ space }) {
+  const { get } = useDemo();
   return (
-    <div className="row small" role="group" aria-label="Page layout">
-      <span className="muted">View:</span>
-      {[['single', 'One page'], ['tabs', 'Tabs']].map(([id, label]) => (
-        <Button key={id} variant={layout === id ? 'primary' : 'default'} aria-pressed={layout === id} onClick={() => dispatch({ type: 'SET_LAYOUT', layout: id })}>{label}</Button>
-      ))}
-    </div>
+    <header className="space-hero">
+      <ImageBox label="Photo of the space (placeholder)" shape="hero" />
+      <div className="space-hero-text">
+        <div className="row"><Badge>{typeLabel(space.type)}</Badge><StatusBadges space={space} /><Mine userId={space.uploadedBy} /></div>
+        <h1>{space.name}</h1>
+        <p className="small">
+          Jaipur, {space.lat.toFixed(4)}, {space.lng.toFixed(4)}. Documented by {get.user(space.uploadedBy)?.name}. {space.votes} votes.
+        </p>
+      </div>
+    </header>
   );
 }
 
@@ -308,7 +286,7 @@ export default function Space() {
   const [params, setParams] = useSearchParams();
   const loc = useLocation();
   const nav = useNavigate();
-  const { state, get, role, isArchitect, isPaid, user, layout } = useDemo();
+  const { state, get, role, user, layout, isPaid } = useDemo();
   const space = get.space(id);
   const tab = TABS.some((t) => t.id === params.get('tab')) ? params.get('tab') : 'experience';
   const banner = loc.state?.banner;
@@ -316,16 +294,12 @@ export default function Space() {
   useEffect(() => { if (banner) window.scrollTo(0, 0); }, [banner]);
 
   if (!space) {
-    return (
-      <Page narrow>
-        <Empty title="Space not found"><div><Button to="/browse">Browse spaces</Button></div></Empty>
-      </Page>
-    );
+    return <Page narrow><Empty title="Space not found"><div><Button to="/browse">Browse spaces</Button></div></Empty></Page>;
   }
   if (space.removed) {
     const contributed = user && (space.uploadedBy === user.id || space.photos.some((p) => p.credit === user.id));
     return (
-      <Page narrow tag="simulated">
+      <Page narrow>
         <Empty title="This space was removed">
           <p>The owner asked for it to be removed and the team agreed after reviewing proof of ownership.</p>
           {contributed && <p>You contributed to it. Your work is kept under Profile, Removed spaces.</p>}
@@ -337,35 +311,26 @@ export default function Space() {
   const contests = state.contests.filter((c) => c.spaceId === space.id);
 
   return (
-    <Page tag={isArchitect ? 'clickable' : 'simulated'}>
-      <div className="row between">
-        <Crumbs items={[['/browse', 'Browse spaces'], [null, space.name]]} />
-        <LayoutSwitch />
-      </div>
+    <Page>
+      <nav className="small row" aria-label="Breadcrumb"><Link to="/browse">Browse spaces</Link><span className="muted">/</span><span className="muted">{space.name}</span></nav>
       <Banner banner={banner} onClose={() => setBanner(null)} />
-      <header className="stack">
-        <div className="row"><Badge>{space.type}</Badge><StatusBadges space={space} /><Mine userId={space.uploadedBy} /></div>
-        <h1>{space.name}</h1>
-        <p className="small muted">
-          {space.lat.toFixed(4)}, {space.lng.toFixed(4)}. Documented by {get.user(space.uploadedBy)?.name}. {space.votes} votes. Placeholder entry.
+      <Hero space={space} />
+      {space.status === 'pending' && (
+        <p className="note">
+          Pending qualification: moderators have not yet confirmed this is an interstitial space.
+          {space.readyForApproval ? ' It has a spatial diagram and is ready for their vote.' : ' It needs a spatial diagram before they can vote.'}
         </p>
-        {space.status === 'pending' && (
-          <p className="note">
-            Pending qualification: moderators have not yet confirmed this is an interstitial space.
-            {space.readyForApproval ? ' It has a spatial diagram and is ready for their vote.' : ' It needs a spatial diagram before they can vote.'}
-          </p>
-        )}
-        {space.rejections?.length > 0 && (
-          <div className="note stack-sm">
-            <span className="bold">Moderator reasons (public)</span>
-            {space.rejections.map((r, i) => <span key={i}>{get.user(r.by)?.name}: {r.reason}</span>)}
-          </div>
-        )}
-      </header>
+      )}
+      {space.rejections?.length > 0 && (
+        <div className="note stack-sm">
+          <span className="bold">Moderator reasons (public)</span>
+          {space.rejections.map((r, i) => <span key={i}>{get.user(r.by)?.name}: {r.reason}</span>)}
+        </div>
+      )}
 
       {layout === 'single' ? (
         <>
-          {contests.map((c) => <ContestBanner key={c.id} contest={c} />)}
+          {contests.map((c) => <ContestCard key={c.id} contest={c} />)}
           <Diagram space={space} />
           <hr className="rule" />
           <Redesigns space={space} />
@@ -374,18 +339,20 @@ export default function Space() {
         </>
       ) : (
         <>
-          <Tabs tabs={TABS} active={tab} onChange={(t) => setParams({ tab: t }, { replace: true })} />
-          {tab === 'experience' && <Experience space={space} setBanner={setBanner} />}
-          {tab === 'diagram' && <Diagram space={space} />}
-          {tab === 'redesigns' && <Redesigns space={space} />}
-          {tab === 'contests' && (contests.length > 0 ? (
-            contests.map((c) => <ContestBanner key={c.id} contest={c} />)
-          ) : (
-            <Empty title="No contest for this space">
-              <p>Contests start from spaces the community has documented and voted on.</p>
-              <div className="row"><Button to="/contests">Browse contests</Button>{isPaid && <Button to="/contest/request">Request to host a contest</Button>}</div>
-            </Empty>
-          ))}
+          <Tabs idBase="space" tabs={TABS} active={tab} onChange={(t) => setParams({ tab: t }, { replace: true })} />
+          <TabPanel idBase="space" id={tab}>
+            {tab === 'experience' && <Experience space={space} setBanner={setBanner} />}
+            {tab === 'diagram' && <Diagram space={space} />}
+            {tab === 'redesigns' && <Redesigns space={space} />}
+            {tab === 'contests' && (contests.length > 0 ? (
+              contests.map((c) => <ContestCard key={c.id} contest={c} />)
+            ) : (
+              <Empty title="No contest for this space">
+                <p>Contests start from spaces the community has documented and voted on.</p>
+                <div className="row"><Button to="/contests">Browse contests</Button>{isPaid && <Button to="/contest/request">Request to host a contest</Button>}</div>
+              </Empty>
+            ))}
+          </TabPanel>
         </>
       )}
 

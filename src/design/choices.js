@@ -6,6 +6,7 @@ import { useSyncExternalStore } from 'react';
 export const DEFAULTS = {
   spaceCard: 'label', // see SPACE_CARD_VARIANTS in components/domain.jsx
   landing: 'steps', // see LANDING_VARIANTS in pages/Public.jsx
+  landingLayout: 'classic', // 'classic' (hero then sections) or 'map' (the map is the landing page)
 };
 
 const KEY = 'isp-design-choices';

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
 import { Button, Choice, ImageBox, Input, Page, Select } from '../components/ui.jsx';
-import { MapBox, SpaceCard } from '../components/domain.jsx';
+import { MapBox, SpaceCard, matchesSearch } from '../components/domain.jsx';
 import { useChoices } from '../design/choices.js';
 
 const VISITOR_LIMIT = 10;
@@ -88,12 +88,24 @@ export const LANDING_VARIANTS = {
   spotlight: { name: 'Call out what needs fixing', note: 'Leads with the civic case: residents pointing at spaces that need work. Strongest story for community members.', render: () => <><SpotlightFirst /><CoopBand /></> },
 };
 
-export function Landing() {
-  const { visibleSpaces, isMember } = useDemo();
-  const { landing } = useChoices();
-  const recent = visibleSpaces.slice(0, 4);
+function RecentlyDocumented() {
+  const { visibleSpaces } = useDemo();
   return (
-    <Page tag="simulated">
+    <section className="stack" aria-labelledby="recent-heading">
+      <div className="row between">
+        <h2 id="recent-heading">Recently documented</h2>
+        <Link to="/browse">See all spaces</Link>
+      </div>
+      <div className="grid">{visibleSpaces.slice(0, 4).map((s) => <SpaceCard key={s.id} space={s} />)}</div>
+    </section>
+  );
+}
+
+function ClassicLanding() {
+  const { isMember } = useDemo();
+  const { landing } = useChoices();
+  return (
+    <Page>
       <section className="split">
         <div className="stack">
           <h1 className="display">The stoop, the stepwell, the courtyard in between.</h1>
@@ -106,16 +118,77 @@ export function Landing() {
         <ImageBox label="Photo: steps at Jaipur Darwaza (placeholder)" />
       </section>
       {(LANDING_VARIANTS[landing] || LANDING_VARIANTS.steps).render()}
-      <section className="stack" aria-labelledby="recent-heading">
-        <div className="row between">
-          <h2 id="recent-heading">Recently documented</h2>
-          <Link to="/browse">See all spaces</Link>
-        </div>
-        <div className="grid">{recent.map((s) => <SpaceCard key={s.id} space={s} />)}</div>
-      </section>
-      <p className="small muted">All spaces, people, prices and organisations in this prototype are placeholders.</p>
+      <RecentlyDocumented />
     </Page>
   );
+}
+
+// Map-first landing (like OpenCelliD): the map is the page, with search and a short
+// description on top. Searching for a place that isn't there offers to add it.
+function MapLanding() {
+  const { visibleSpaces, isMember, dispatch } = useDemo();
+  const { landing } = useChoices();
+  const nav = useNavigate();
+  const [q, setQ] = useState('');
+  const [hover, setHover] = useState(null);
+  const results = q.trim() ? visibleSpaces.filter((s) => matchesSearch(s, q)) : [];
+  const pins = q.trim() ? results : visibleSpaces;
+  const add = () => {
+    const to = `/space/new?name=${encodeURIComponent(q.trim())}`;
+    if (isMember) nav(to);
+    else dispatch({ type: 'OPEN_SIGNUP', reason: 'upload', returnTo: to });
+  };
+  return (
+    <>
+      <main id="main" tabIndex={-1} data-screen-label="page" className="map-landing">
+        <MapBox spaces={pins} area={visibleSpaces} activeId={hover} onHover={setHover} className="map-hero" label={null}>
+          <div className="map-search" role="search">
+            <h1>The stoop, the stepwell, the courtyard in between.</h1>
+            <p className="small">A map of everyday in-between spaces in Jaipur, documented by the people who use them. Architects propose redesigns, and the platform is a co-op owned by its members.</p>
+            <form onSubmit={(e) => { e.preventDefault(); if (results.length === 1) nav(`/space/${results[0].id}`); }}>
+              <label htmlFor="map-q" className="small bold">Search for a space</label>
+              <div className="row">
+                <input id="map-q" className="input grow" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Stepwell, Johari Bazaar, shade…" autoComplete="off" />
+              </div>
+            </form>
+            {q.trim() && (
+              <div className="map-results" aria-live="polite">
+                {results.length > 0 ? (
+                  <>
+                    <p className="xs muted">{results.length} {results.length === 1 ? 'space' : 'spaces'} on the map</p>
+                    <ul className="list small">
+                      {results.slice(0, 5).map((s) => (
+                        <li key={s.id} onMouseEnter={() => setHover(s.id)} onMouseLeave={() => setHover(null)}>
+                          <Link to={`/space/${s.id}`} className="bold">{s.name}</Link>
+                          <span className="muted"> {s.votes} votes</span>
+                        </li>
+                      ))}
+                    </ul>
+                    {results.length > 5 && <Link className="small" to="/browse">See all {results.length} in Browse</Link>}
+                  </>
+                ) : (
+                  <div className="stack-sm">
+                    <p className="small">No space called “{q.trim()}” yet.</p>
+                    <div><Button variant="primary" onClick={add}>{isMember ? 'Add this place' : 'Sign up to add this place'}</Button></div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          <span className="map-label map-label-br">Map placeholder: Jaipur. Dashed pins are pending.</span>
+        </MapBox>
+        <div className="page stack-lg">
+          {(LANDING_VARIANTS[landing] || LANDING_VARIANTS.steps).render()}
+          <RecentlyDocumented />
+        </div>
+      </main>
+    </>
+  );
+}
+
+export function Landing() {
+  const { landingLayout } = useChoices();
+  return landingLayout === 'map' ? <MapLanding /> : <ClassicLanding />;
 }
 
 const SORTS = {
@@ -132,13 +205,14 @@ const STATUSES = {
 
 export function Browse() {
   const { visibleSpaces, isMember, state, need } = useDemo();
+  const [q, setQ] = useState('');
   const [status, setStatus] = useState('all');
   const [type, setType] = useState('all');
   const [sort, setSort] = useState('votes');
   const [hover, setHover] = useState(null);
   const limited = !isMember && state.signupDismissed;
   const list = visibleSpaces
-    .filter((s) => STATUSES[status].test(s) && (type === 'all' || s.type === type))
+    .filter((s) => STATUSES[status].test(s) && (type === 'all' || s.type === type) && matchesSearch(s, q))
     .sort(SORTS[sort].fn);
   const hidden = limited ? list.slice(VISITOR_LIMIT).map((s) => s.id) : [];
   const types = ['all', ...new Set(visibleSpaces.map((s) => s.type))];
@@ -149,6 +223,10 @@ export function Browse() {
           <div className="row between">
             <h1>Browse spaces</h1>
             <Button variant="primary" to="/space/new" onClick={(e) => !need('upload') && e.preventDefault()}>Create new interstitial space</Button>
+          </div>
+          <div className="field">
+            <label htmlFor="browse-q">Search</label>
+            <input id="browse-q" className="input" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, area, or what people said: shade, steps, Johari Bazaar…" autoComplete="off" />
           </div>
           <div className="row row-end">
             <fieldset className="segmented">
@@ -170,7 +248,13 @@ export function Browse() {
           )}
           <p className="small muted" aria-live="polite">{list.length} {list.length === 1 ? 'space' : 'spaces'}</p>
           {list.length === 0 ? (
-            <p className="note">No spaces match. <button type="button" className="link-btn" onClick={() => { setStatus('all'); setType('all'); }}>Show all spaces</button></p>
+            <div className="note stack-sm">
+              <span>No spaces match{q.trim() ? ` “${q.trim()}”` : ''}.</span>
+              <div className="row">
+                <button type="button" className="link-btn" onClick={() => { setQ(''); setStatus('all'); setType('all'); }}>Clear search and filters</button>
+                {q.trim() && <Link to={`/space/new?name=${encodeURIComponent(q.trim())}`} onClick={(e) => !need('upload') && e.preventDefault()}>Add “{q.trim()}” as a new space</Link>}
+              </div>
+            </div>
           ) : (
             <div className="grid grid-tight">
               {list.map((s) => (
@@ -179,7 +263,7 @@ export function Browse() {
             </div>
           )}
         </div>
-        {list.length > 0 && <MapBox spaces={list} hiddenIds={hidden} activeId={hover} onHover={setHover} sticky />}
+        <MapBox spaces={list} area={visibleSpaces} hiddenIds={hidden} activeId={hover} onHover={setHover} sticky />
       </div>
     </Page>
   );

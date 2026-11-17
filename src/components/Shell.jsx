@@ -3,7 +3,9 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import { ROLES, useDemo } from '../state/DemoContext.jsx';
 import { Badge, Button, Modal, Toasts } from './ui.jsx';
 import { fmtPoints } from '../lib/points.js';
-import { activateNotes, notesActive, setNotesPage, startNotesTool } from '../review/notes-tool.js';
+import { activateNotes, notesActive, notesCounts, setNotesPage, startNotesTool } from '../review/notes-tool.js';
+import { PAGE_GROUPS, pageFor } from '../demo/pages.js';
+import { setChoice, useChoices } from '../design/choices.js';
 
 const link = ({ isActive }) => (isActive ? 'active' : '');
 
@@ -18,16 +20,19 @@ function roleLinks({ isMember, isArchitect, isModerator, isPaid }) {
   return l;
 }
 
-// A button that opens a small menu. Closes on navigation, Escape or a click outside.
+// A button that opens a small menu (disclosure pattern). Opening moves focus to the
+// first item; Escape closes and returns focus to the button; navigation or a click outside closes.
 function Dropdown({ label, children }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
+  const btn = useRef(null);
   const loc = useLocation();
   useEffect(() => { setOpen(false); }, [loc.pathname, loc.search]);
   useEffect(() => {
     if (!open) return undefined;
+    ref.current?.querySelector('.menu a, .menu button')?.focus();
     const away = (e) => { if (!ref.current?.contains(e.target)) setOpen(false); };
-    const esc = (e) => { if (e.key === 'Escape') setOpen(false); };
+    const esc = (e) => { if (e.key === 'Escape') { setOpen(false); btn.current?.focus(); } };
     document.addEventListener('mousedown', away);
     document.addEventListener('keydown', esc);
     return () => {
@@ -37,7 +42,7 @@ function Dropdown({ label, children }) {
   }, [open]);
   return (
     <div className="menu-wrap" ref={ref}>
-      <Button onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="true">{label}</Button>
+      <button ref={btn} type="button" className="btn btn-default" onClick={() => setOpen(!open)} aria-expanded={open}>{label}</button>
       {open && <div className="menu stack-sm">{children}</div>}
     </div>
   );
@@ -122,18 +127,115 @@ function Header() {
   );
 }
 
+const DRAWER_KEY = 'isp-demo-drawer';
+
+// Notes for a page key, summed across its views or for one view.
+function countFor(counts, page, viewId) {
+  return Object.entries(counts).reduce((n, [key, c]) => {
+    const [path, suffix = ''] = key.split('~');
+    if (!page.match(path)) return n;
+    if (viewId === undefined || suffix === viewId) return n + c;
+    return n;
+  }, 0);
+}
+
+function useNotesCounts() {
+  const [counts, setCounts] = useState(notesCounts);
+  useEffect(() => {
+    const sync = () => setCounts(notesCounts());
+    window.addEventListener('isp-notes-change', sync);
+    window.addEventListener('storage', sync);
+    return () => { window.removeEventListener('isp-notes-change', sync); window.removeEventListener('storage', sync); };
+  }, []);
+  return counts;
+}
+
+function PageList({ close }) {
+  const { state, dispatch, role } = useDemo();
+  const { landingLayout } = useChoices();
+  const loc = useLocation();
+  const nav = useNavigate();
+  const counts = useNotesCounts();
+  const currentView = (page) => (page.id === 'space' ? (state.layout === 'tabs' ? 'tabs' : '') : page.id === 'landing' ? (landingLayout === 'map' ? 'map' : '') : '');
+  const go = (page, view) => {
+    if (page.role && page.role !== role) dispatch({ type: 'SET_ROLE', role: page.role });
+    if (view?.layout) dispatch({ type: 'SET_LAYOUT', layout: view.layout });
+    if (view?.choice) setChoice(...view.choice);
+    nav(page.to);
+    if (window.matchMedia('(max-width: 64rem)').matches) close();
+  };
+  return (
+    <div className="stack">
+      {PAGE_GROUPS.map((g) => (
+        <section key={g.group} className="stack-sm" aria-label={g.group}>
+          <h3 className="demo-h">{g.group}</h3>
+          <ul className="demo-pages">
+            {g.pages.map((p) => {
+              const here = p.match(loc.pathname);
+              const total = countFor(counts, p);
+              return (
+                <li key={p.id}>
+                  <button type="button" className="demo-page" aria-current={here && !p.views ? 'page' : undefined} onClick={() => go(p, p.views?.[0])}>
+                    <span className="grow">{p.label}</span>
+                    {total > 0 && <span className="demo-notes" title={`${total} notes`}>{total}</span>}
+                    <span className={`demo-kind demo-kind-${p.kind}`}>{p.kind === 'clickable' ? 'Clickable' : 'Simulated'}</span>
+                  </button>
+                  {p.views && (
+                    <ul className="demo-views">
+                      {p.views.map((v) => {
+                        const n = countFor(counts, p, v.id);
+                        return (
+                          <li key={v.id || 'default'}>
+                            <button type="button" className="demo-page demo-view" aria-current={here && currentView(p) === v.id ? 'page' : undefined} onClick={() => go(p, v)}>
+                              <span className="grow">{v.label}</span>
+                              {n > 0 && <span className="demo-notes" title={`${n} notes`}>{n}</span>}
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ))}
+    </div>
+  );
+}
+
 function DemoPanel() {
   const { state, dispatch, role } = useDemo();
-  const [open, setOpen] = useState(false);
+  const [open, setOpenRaw] = useState(() => { try { return localStorage.getItem(DRAWER_KEY) === '1'; } catch { return false; } });
+  const setOpen = (v) => { setOpenRaw(v); try { localStorage.setItem(DRAWER_KEY, v ? '1' : '0'); } catch { /* ignore */ } };
   const nav = useNavigate();
-  return (
-    <aside className="demo" aria-label="Demo controls">
-      <button type="button" className="demo-head" onClick={() => setOpen(!open)} aria-expanded={open}>
-        <span>Demo: {ROLES.find((r) => r.id === role).label}</span>
-        <span>{open ? 'Hide' : 'Switch role'}</span>
+  const counts = useNotesCounts();
+  const totalNotes = Object.values(counts).reduce((a, b) => a + b, 0);
+  // While the drawer is open, the page makes room for it instead of being covered.
+  useEffect(() => {
+    document.body.classList.toggle('demo-open', open);
+    return () => document.body.classList.remove('demo-open');
+  }, [open]);
+  const roleLabel = ROLES.find((r) => r.id === role).label;
+
+  if (!open) {
+    return (
+      <button type="button" className="demo-pill" onClick={() => setOpen(true)} aria-expanded="false" aria-controls="demo-drawer">
+        <span>Demo: {roleLabel}</span>
+        {totalNotes > 0 && <span className="demo-notes">{totalNotes}</span>}
       </button>
-      {open && (
-        <div className="demo-body">
+    );
+  }
+  return (
+    <aside id="demo-drawer" className="demo-drawer" aria-label="Demo controls">
+      <div className="demo-drawer-head">
+        <h2 className="demo-title">Demo controls</h2>
+        <button type="button" className="btn btn-quiet" onClick={() => setOpen(false)} aria-expanded="true">Close</button>
+      </div>
+      <div className="demo-drawer-body">
+        <section className="stack-sm" aria-labelledby="demo-role-h">
+          <h3 id="demo-role-h" className="demo-h">Viewing as</h3>
           <div className="demo-roles">
             {ROLES.map((r) => (
               <button key={r.id} type="button" className="demo-role" aria-pressed={role === r.id} onClick={() => dispatch({ type: 'SET_ROLE', role: r.id })}>
@@ -141,10 +243,17 @@ function DemoPanel() {
               </button>
             ))}
           </div>
-          <label className="row small">
-            <input type="checkbox" checked={state.layout === 'tabs'} onChange={(e) => dispatch({ type: 'SET_LAYOUT', layout: e.target.checked ? 'tabs' : 'single' })} />
-            Space page as tabs (alternative view)
-          </label>
+        </section>
+        <section className="stack-sm" aria-labelledby="demo-pages-h">
+          <div className="row between">
+            <h3 id="demo-pages-h" className="demo-h">Pages to review</h3>
+            <span className="xs muted">{totalNotes} notes</span>
+          </div>
+          <p className="xs muted">Opening a page switches to a role that can see it. Numbers are your notes on that page.</p>
+          <PageList close={() => setOpen(false)} />
+        </section>
+        <section className="stack-sm" aria-labelledby="demo-ctl-h">
+          <h3 id="demo-ctl-h" className="demo-h">Controls</h3>
           <label className="row small">
             <input type="checkbox" checked={state.failNextPayment} onChange={(e) => dispatch({ type: 'SET_FAIL', on: e.target.checked })} />
             Make the next payment fail
@@ -152,16 +261,10 @@ function DemoPanel() {
           <Button onClick={() => dispatch({ type: 'SKIP_WEEK' })}>Skip ahead one week</Button>
           <NotesButton />
           <a className="btn" href={`${import.meta.env.BASE_URL}sandbox.html`}>Open component sandbox</a>
-          <Button
-            onClick={() => {
-              dispatch({ type: 'RESET' });
-              nav('/');
-            }}
-          >
-            Reset demo data
-          </Button>
-        </div>
-      )}
+          <Button onClick={() => { dispatch({ type: 'RESET' }); nav('/'); }}>Reset demo data</Button>
+          <p className="xs muted">All spaces, people, prices and organisations are placeholders.</p>
+        </section>
+      </div>
     </aside>
   );
 }
@@ -205,10 +308,17 @@ function SignupPrompt() {
 }
 
 // Keeps the Notes tool on the current page's list of notes.
-export function NotesBridge() {
+// The key adds the view when it isn't the default, e.g. "/space/s2~tabs".
+export function NotesBridge({ page }) {
   const loc = useLocation();
+  const { layout } = useDemo();
+  const { landingLayout } = useChoices();
+  const path = page || loc.pathname;
+  const pageDef = page ? null : pageFor(path);
+  const view = pageDef?.id === 'space' && layout === 'tabs' ? 'tabs' : pageDef?.id === 'landing' && landingLayout === 'map' ? 'map' : '';
+  const key = view ? `${path}~${view}` : path;
   useEffect(() => { startNotesTool(); }, []);
-  useEffect(() => { setNotesPage(loc.pathname); }, [loc.pathname]);
+  useEffect(() => { setNotesPage(key); }, [key]);
   return null;
 }
 
@@ -231,6 +341,7 @@ export default function Shell() {
   useEffect(() => { window.scrollTo(0, 0); }, [loc.pathname]);
   return (
     <>
+      <a className="skip" href="#main" onClick={(e) => { e.preventDefault(); document.getElementById('main')?.focus(); }}>Skip to content</a>
       <Header />
       <Outlet />
       <SignupPrompt />
