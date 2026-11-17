@@ -30,7 +30,7 @@ function download(name) {
 export function Item() {
   const { id } = useParams();
   const found = useItem(id);
-  const { state, dispatch, user, isMember, cfg } = useDemo();
+  const { state, dispatch, user, isMember, cfg, here } = useDemo();
   const [rights, setRights] = useState('licence');
   const [report, setReport] = useState(false);
   const [reason, setReason] = useState('');
@@ -52,7 +52,7 @@ export function Item() {
           <div className="teaser-cta"><div>
             <h3>Members only</h3>
             <p className="small">Sign up to see and buy redesigns and measured models.</p>
-            <Button variant="primary" onClick={() => dispatch({ type: 'OPEN_SIGNUP', reason: 'buy', returnTo: window.location.pathname })}>Sign up</Button>
+            <Button variant="primary" onClick={() => dispatch({ type: 'OPEN_SIGNUP', reason: 'buy', returnTo: here })}>Sign up</Button>
           </div></div>
         </div>
       </Page>

@@ -21,6 +21,17 @@ Open the address it prints (usually http://localhost:5173).
 - `npm run build` then `npm run preview` serves the built version.
 - `npm run seed` regenerates `src/data/seed.json` from `scripts/make-seed.mjs`.
 
+## Share it online (GitHub Pages)
+
+Every push to `main` builds the site and publishes it with GitHub Actions
+(`.github/workflows/deploy.yml`). One-time setup in the GitHub repo:
+Settings > Pages > Build and deployment > Source: **GitHub Actions**.
+
+The link is https://samlee12345.github.io/InterstitialSpace/ . Pages use
+`#/` addresses (for example `…/InterstitialSpace/#/space/s1`) so any page can
+be shared directly. Each visitor gets their own copy of the demo data, which
+resets when they reload.
+
 ## How it is put together
 
 - `src/styles/tokens.css` holds every visual value (grays, type, spacing,

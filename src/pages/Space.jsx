@@ -115,7 +115,7 @@ function Diagram({ space }) {
 
 // ── Redesigns ───────────────────────────────────────────────
 function Redesigns({ space }) {
-  const { state, isMember, isArchitect, dispatch, rankOf, user, uploadLimit } = useDemo();
+  const { state, isMember, isArchitect, dispatch, rankOf, user, uploadLimit, here } = useDemo();
   const list = state.redesigns
     .filter((r) => r.spaceId === space.id && r.published && !r.takenDown)
     .sort((a, b) => rankOf(a.architectId) - rankOf(b.architectId));
@@ -139,7 +139,7 @@ function Redesigns({ space }) {
             <div>
               <h3>{list.length} redesign{list.length > 1 ? 's' : ''} for this space</h3>
               <p className="small">Redesigns are visible to members.</p>
-              <Button variant="primary" onClick={() => dispatch({ type: 'OPEN_SIGNUP', reason: 'redesigns', returnTo: window.location.pathname + window.location.search })}>See redesigns</Button>
+              <Button variant="primary" onClick={() => dispatch({ type: 'OPEN_SIGNUP', reason: 'redesigns', returnTo: here })}>See redesigns</Button>
             </div>
           </div>
         </div>

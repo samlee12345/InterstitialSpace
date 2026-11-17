@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-export default defineConfig({ plugins: [react()] });
+// base './' lets the built site run from any folder, e.g. /InterstitialSpace/ on GitHub Pages.
+export default defineConfig({ base: './', plugins: [react()] });

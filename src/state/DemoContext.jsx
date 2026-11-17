@@ -1,4 +1,5 @@
 import { createContext, useContext, useMemo, useReducer } from 'react';
+import { useLocation } from 'react-router-dom';
 import seed from '../data/seed.json';
 import { POINTS, interactPoints, uploadPoints, fmtPoints } from '../lib/points.js';
 
@@ -266,6 +267,8 @@ const Ctx = createContext(null);
 
 export function DemoProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, undefined, () => fresh());
+  const loc = useLocation();
+  const here = loc.pathname + loc.search;
   const value = useMemo(() => {
     const roleDef = ROLES.find((r) => r.id === state.role);
     const user = state.users.find((u) => u.id === roleDef.userId) || null;
@@ -281,6 +284,7 @@ export function DemoProvider({ children }) {
     return {
       state, dispatch, user, get, architects,
       role: state.role,
+      here, // current in-app address, for returning after sign-up
       layout: state.layout,
       // One redesign per architect per week.
       uploadLimit: (userId) => {
@@ -298,11 +302,11 @@ export function DemoProvider({ children }) {
       // Returns true if signed in; otherwise opens the sign-up prompt.
       need: (reason) => {
         if (user) return true;
-        dispatch({ type: 'OPEN_SIGNUP', reason, returnTo: window.location.pathname + window.location.search });
+        dispatch({ type: 'OPEN_SIGNUP', reason, returnTo: here });
         return false;
       },
     };
-  }, [state]);
+  }, [state, here]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
