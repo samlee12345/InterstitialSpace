@@ -130,22 +130,36 @@ function Header() {
 
 const DRAWER_KEY = 'isp-demo-drawer';
 
-// Notes and discussions for a page, summed across its views or for one view.
-function countFor(counts, page, viewId) {
+const ZERO = { note: 0, discussion: 0, discussed: 0 };
+const add = (a, c) => ({ note: a.note + c.note, discussion: a.discussion + c.discussion, discussed: a.discussed + (c.discussed || 0) });
+const splitKey = (key) => { const [path, suffix = ''] = key.split('~'); return [path, suffix]; };
+
+// Notes and discussions for a page: summed across its views, for one view
+// (`viewId`), or for one exact path such as a single space (`path`).
+// A page's total is always the sum of its views.
+function countFor(counts, page, viewId, path) {
   return Object.entries(counts).reduce((n, [key, c]) => {
-    const [path, suffix = ''] = key.split('~');
-    if (!page.match(path)) return n;
-    if (viewId === undefined || suffix === viewId) return { note: n.note + c.note, discussion: n.discussion + c.discussion };
-    return n;
-  }, { note: 0, discussion: 0 });
+    const [p, suffix] = splitKey(key);
+    if (pageFor(p) !== page) return n;
+    if (path !== undefined && p !== path) return n;
+    if (viewId !== undefined && suffix !== viewId) return n;
+    return add(n, c);
+  }, ZERO);
+}
+
+// Keys that belong to no page in the list (the sandbox, a mistyped address).
+function otherKeys(counts) {
+  return Object.entries(counts).filter(([key, c]) => !pageFor(splitKey(key)[0]) && c.note + c.discussion > 0);
 }
 
 // Purple = notes, teal = discussions (same colours as the Notes tool).
+// Discussions read "discussed/total", e.g. 1/5 when one has a response.
 function NoteCounts({ n }) {
+  const d = `${n.discussed} of ${n.discussion} discussions discussed`;
   return (
     <>
-      {n.note > 0 && <span className="demo-notes" title={`${n.note} notes`} aria-label={`${n.note} notes`}>{n.note}</span>}
-      {n.discussion > 0 && <span className="demo-notes demo-discuss" title={`${n.discussion} discussions`} aria-label={`${n.discussion} discussions`}>{n.discussion}</span>}
+      {n.note > 0 && <span className="demo-notes" title={`${n.note} ${n.note === 1 ? 'note' : 'notes'}`} aria-label={`${n.note} ${n.note === 1 ? 'note' : 'notes'}`}>{n.note}</span>}
+      {n.discussion > 0 && <span className={`demo-notes demo-discuss ${n.discussed === n.discussion ? 'demo-discuss-done' : ''}`} title={d} aria-label={d}>{n.discussed}/{n.discussion}</span>}
     </>
   );
 }
@@ -212,7 +226,7 @@ function PageList({ close }) {
                       <span className="xs muted">Open a space that is:</span>
                       <ul className="demo-chips">
                         {p.variants.map(([label, to]) => (
-                          <li key={label}><button type="button" className="demo-chip" aria-current={loc.pathname === to ? 'true' : undefined} onClick={() => go({ ...p, to })}>{label}</button></li>
+                          <li key={label}><button type="button" className="demo-chip" aria-current={loc.pathname === to ? 'true' : undefined} onClick={() => go({ ...p, to })}>{label}<NoteCounts n={countFor(counts, p, undefined, to)} /></button></li>
                         ))}
                       </ul>
                     </div>
@@ -249,6 +263,24 @@ function PageList({ close }) {
           </ul>
         </section>
       ))}
+      {otherKeys(counts).length > 0 && (
+        <section className="stack-sm" aria-label="Other pages">
+          <h3 className="demo-h">Other pages</h3>
+          <ul className="demo-pages">
+            {otherKeys(counts).map(([key, c]) => {
+              const [path, suffix] = splitKey(key);
+              const label = path === 'sandbox' ? 'Component sandbox' : `${path}${suffix ? ` (${suffix})` : ''}`;
+              return (
+                <li key={key}>
+                  {path === 'sandbox'
+                    ? <a className="demo-page" href="sandbox.html"><span className="grow">{label}</span><NoteCounts n={add(ZERO, c)} /></a>
+                    : <button type="button" className="demo-page" onClick={() => nav(path)}><span className="grow">{label}</span><NoteCounts n={add(ZERO, c)} /></button>}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }
@@ -259,7 +291,7 @@ function DemoPanel() {
   const setOpen = (v) => { setOpenRaw(v); try { localStorage.setItem(DRAWER_KEY, v ? '1' : '0'); } catch { /* ignore */ } };
   const nav = useNavigate();
   const counts = useNotesCounts();
-  const totals = Object.values(counts).reduce((a, c) => ({ note: a.note + c.note, discussion: a.discussion + c.discussion }), { note: 0, discussion: 0 });
+  const totals = Object.values(counts).reduce(add, ZERO);
   // While the drawer is open, the page makes room for it instead of being covered.
   useEffect(() => {
     document.body.classList.toggle('demo-open', open);
@@ -295,9 +327,9 @@ function DemoPanel() {
         <section className="stack-sm" aria-labelledby="demo-pages-h">
           <div className="row between">
             <h3 id="demo-pages-h" className="demo-h">Pages to review</h3>
-            <span className="xs muted">{totals.note} notes, {totals.discussion} discussions</span>
+            <span className="xs muted">{totals.note} {totals.note === 1 ? 'note' : 'notes'}, {totals.discussed} of {totals.discussion} {totals.discussion === 1 ? 'discussion' : 'discussions'} discussed</span>
           </div>
-          <p className="xs muted">Opening a page switches to a role that can see it. Purple numbers are notes, teal are discussions.</p>
+          <p className="xs muted">Opening a page switches to a role that can see it. Purple numbers are notes. Teal shows discussions as discussed/total; a discussion counts as discussed once it has a response.</p>
           <PageList close={() => setOpen(false)} />
         </section>
         <section className="stack-sm" aria-labelledby="demo-ctl-h">

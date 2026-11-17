@@ -49,7 +49,12 @@ note, then ⌘↵. Press **D** instead for a **discussion**: a point to raise
 with the team. Notes are purple and round, discussions are teal and square,
 and each kind has its own numbering and its own Copy and Clear menus, each
 offering "This page" or "All pages" (so you can clear every note and keep
-the discussions). "Copy everything" and "Clear everything" cover both kinds
+the discussions). Each discussion card has "Respond": add the team's
+answer under it, and it counts as discussed (its number turns hollow).
+Tallies show discussions as discussed/total, e.g. 1/5, in the toolbar and in
+the Demo bar, where a page's count is the sum of its views and each space
+link shows that space's own count. Copies include the responses.
+"Copy everything" and "Clear everything" cover both kinds
 on every page; clearing asks for confirmation. Both are kept per page in
 your browser and survive reloads. Copies are labelled by page and section,
 so testers can paste them into a message. Notes never leave the

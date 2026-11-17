@@ -395,3 +395,6 @@ body.demo-open .nt-toolbar { left: calc(50% - var(--width-demo-drawer) / 2); max
 .demo-chip { min-height: var(--space-6); padding: 0 var(--space-2); font: inherit; font-size: var(--text-xs); color: var(--color-text); background: var(--color-surface); border: var(--border-thin) solid var(--color-border-strong); border-radius: var(--radius-pill); cursor: pointer; }
 .demo-chip:hover { background: var(--color-sunken); }
 .demo-chip[aria-current] { background: var(--color-action); color: var(--color-text-inverse); border-color: var(--color-action); }
+.demo-discuss-done { background: var(--color-surface); color: var(--review-discuss-strong); box-shadow: inset 0 0 0 var(--border-thick) var(--review-discuss); }
+.demo-chip { display: inline-flex; align-items: center; gap: var(--space-1); }
+.demo-chip .demo-notes { min-width: 0; height: auto; padding: 0 var(--space-1); }

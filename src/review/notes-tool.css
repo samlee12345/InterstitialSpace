@@ -75,3 +75,13 @@ body[data-nt-kind="discussion"] .nt-hovered { outline-color: var(--review-discus
 .nt-menu-item { font: inherit; font-size: var(--text-xs); text-align: left; white-space: nowrap; padding: var(--space-2) var(--space-3); color: var(--gray-900); background: transparent; border: 0; border-radius: var(--radius-sm); cursor: pointer; }
 .nt-menu-item:hover:not(:disabled), .nt-menu-item:focus-visible { background: var(--gray-100); }
 .nt-menu-item:disabled { color: var(--gray-400); cursor: not-allowed; }
+
+/* Discussion responses. A discussed item's number turns hollow, so open ones stand out. */
+.nt-card-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.nt-replies { display: flex; flex-direction: column; gap: var(--space-1); }
+.nt-reply-list { list-style: none; margin: 0; padding: 0 0 0 var(--space-2); border-left: var(--border-thick) solid var(--review-discuss-soft); display: flex; flex-direction: column; gap: var(--space-1); }
+.nt-reply { display: flex; align-items: flex-start; gap: var(--space-1); color: var(--gray-700); }
+.nt-reply-btn { align-self: flex-start; font: inherit; font-weight: var(--weight-bold); color: var(--review-discuss-strong); background: transparent; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.nt-reply-btn:hover { color: var(--gray-900); }
+.nt-reply-btn:focus-visible { outline: var(--border-thick) solid var(--review-discuss-soft); outline-offset: var(--border-thick); }
+.nt-kind-discussion.nt-discussed .nt-badge, .nt-kind-discussion.nt-marker.nt-discussed { background: var(--review-surface); color: var(--review-discuss-strong); box-shadow: inset 0 0 0 var(--border-thick) var(--review-discuss); }

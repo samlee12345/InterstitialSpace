@@ -43,15 +43,18 @@ const loadNotes = () => { notes = store.get(pageKey(), []); };
 const announce = () => window.dispatchEvent(new CustomEvent('isp-notes-change'));
 const saveNotes = () => { store.set(pageKey(), notes); announce(); };
 
-// Counts for every page key by kind, e.g. { '/browse': { note: 2, discussion: 1 } }.
+// A discussion counts as discussed once it has at least one response.
+export const isDiscussed = (n) => kindOf(n) === 'discussion' && (n.replies || []).length > 0;
+
+// Counts for every page key by kind, e.g. { '/browse': { note: 2, discussion: 3, discussed: 1 } }.
 export function notesCounts() {
   const out = {};
   try {
     for (let i = 0; i < localStorage.length; i += 1) {
       const k = localStorage.key(i);
       if (!k.startsWith(PREFIX)) continue;
-      const c = { note: 0, discussion: 0 };
-      (store.get(k, []) || []).forEach((n) => { c[kindOf(n)] += 1; });
+      const c = { note: 0, discussion: 0, discussed: 0 };
+      (store.get(k, []) || []).forEach((n) => { c[kindOf(n)] += 1; if (isDiscussed(n)) c.discussed += 1; });
       out[k.slice(PREFIX.length)] = c;
     }
   } catch { /* ignore */ }
@@ -165,24 +168,26 @@ function refreshToolbar() {
   const tb = document.getElementById('nt-toolbar');
   if (!tb) return;
   tb.innerHTML = '';
-  const counts = { note: 0, discussion: 0 };
-  notes.forEach((n) => { counts[kindOf(n)] += 1; });
+  const counts = { note: 0, discussion: 0, discussed: 0 };
+  notes.forEach((n) => { counts[kindOf(n)] += 1; if (isDiscussed(n)) counts.discussed += 1; });
   if (isHidden) {
     tb.appendChild(button(`Show notes (${counts.note}) and discussions (${counts.discussion})`, 'nt-btn nt-secondary', toggleHide));
     return;
   }
   // One group per kind: count, add, and Copy / Clear menus (this page or all pages).
-  const all = { note: 0, discussion: 0 };
-  Object.values(notesCounts()).forEach((c) => { all.note += c.note; all.discussion += c.discussion; });
+  const all = { note: 0, discussion: 0, discussed: 0 };
+  Object.values(notesCounts()).forEach((c) => { all.note += c.note; all.discussion += c.discussion; all.discussed += c.discussed; });
   Object.entries(KINDS).forEach(([kind, k]) => {
     const g = el('div', `nt-group nt-kind-${kind}`);
     g.setAttribute('role', 'group');
     g.setAttribute('aria-label', k.plural);
     const count = el('span', 'nt-count');
-    count.textContent = counts[kind];
-    count.setAttribute('aria-label', `${counts[kind]} ${k.plural.toLowerCase()} on this page`);
+    const isD = kind === 'discussion';
+    count.textContent = isD ? `${counts.discussed}/${counts.discussion}` : counts[kind];
+    count.setAttribute('aria-label', isD ? `${counts.discussed} of ${counts.discussion} discussions on this page have a response` : `${counts[kind]} notes on this page`);
     const label = el('span', 'nt-label');
-    label.textContent = all[kind] > counts[kind] ? `${k.plural} (${all[kind]} on all pages)` : k.plural;
+    const allText = isD ? `${all.discussed}/${all.discussion} discussed on all pages` : `${all[kind]} on all pages`;
+    label.textContent = all[kind] > counts[kind] || (isD && all.discussed !== counts.discussed) ? `${k.plural} (${allText})` : k.plural;
     const adding = isSelectMode && addKind === kind;
     g.append(count, label, button(adding ? 'Cancel' : `Add ${k.label.toLowerCase()}`, `nt-btn${adding ? ' nt-active' : ''}`, () => toggleSelectMode(kind), k.key.toUpperCase()));
     const plural = k.plural.toLowerCase();
@@ -399,7 +404,11 @@ function renderRail() {
     del.textContent = '×';
     del.setAttribute('aria-label', `Delete ${KINDS[kind].label.toLowerCase()} ${i + 1}`);
     body.append(text, del);
-    card.append(badge, body);
+    const col = el('div', 'nt-card-col');
+    col.appendChild(body);
+    if (kind === 'discussion') col.appendChild(renderReplies(note, i + 1));
+    card.classList.toggle('nt-discussed', isDiscussed(note));
+    card.append(badge, col);
     rail.appendChild(card);
     del.addEventListener('click', (e) => { e.stopPropagation(); deleteNote(note.id); });
     text.addEventListener('dblclick', (e) => { e.stopPropagation(); startEdit(note, text); });
@@ -408,6 +417,55 @@ function renderRail() {
       findByFingerprint(note.fp)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
   });
+}
+
+// Responses under a discussion. Any response marks it as discussed.
+function renderReplies(note, number) {
+  const wrap = el('div', 'nt-replies');
+  const list = note.replies || [];
+  if (list.length) {
+    const ul = el('ul', 'nt-reply-list');
+    ul.setAttribute('aria-label', `Responses to discussion ${number}`);
+    list.forEach((r, j) => {
+      const li = el('li', 'nt-reply');
+      const t = el('span', 'nt-card-text');
+      t.textContent = r.text;
+      const del = el('button', 'nt-delete');
+      del.type = 'button';
+      del.textContent = '×';
+      del.setAttribute('aria-label', `Delete response ${j + 1} to discussion ${number}`);
+      del.addEventListener('click', (e) => { e.stopPropagation(); note.replies = list.filter((x) => x.id !== r.id); saveNotes(); rerenderAll(); });
+      li.append(t, del);
+      ul.appendChild(li);
+    });
+    wrap.appendChild(ul);
+  }
+  const add = el('button', 'nt-reply-btn');
+  add.type = 'button';
+  add.textContent = list.length ? 'Add a response' : 'Respond';
+  add.setAttribute('aria-label', `${add.textContent} to discussion ${number}`);
+  add.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const ta = el('textarea', 'nt-edit-input');
+    ta.rows = 2;
+    ta.placeholder = 'What did you decide? ⌘↵ to save';
+    ta.setAttribute('aria-label', `Response to discussion ${number}`);
+    add.replaceWith(ta);
+    ta.focus();
+    const save = () => {
+      const v = ta.value.trim();
+      if (v) { note.replies = [...list, { id: uid(), text: v, at: new Date().toISOString() }]; saveNotes(); }
+      rerenderAll();
+    };
+    ta.addEventListener('blur', save);
+    ta.addEventListener('keydown', (ev) => {
+      ev.stopPropagation();
+      if (ev.key === 'Enter' && (ev.metaKey || ev.ctrlKey)) ta.blur();
+      if (ev.key === 'Escape') { ta.removeEventListener('blur', save); rerenderAll(); }
+    });
+  });
+  wrap.appendChild(add);
+  return wrap;
 }
 
 function startEdit(note, textEl) {
@@ -433,7 +491,7 @@ function renderBadges() {
   const numbers = numberByKind();
   notes.forEach((note) => {
     if (!findByFingerprint(note.fp)) return;
-    const marker = el('span', `nt-marker nt-kind-${kindOf(note)}`);
+    const marker = el('span', `nt-marker nt-kind-${kindOf(note)}${isDiscussed(note) ? ' nt-discussed' : ''}`);
     marker.setAttribute('data-note-tool', '');
     marker.setAttribute('aria-hidden', 'true');
     marker.dataset.noteId = note.id;
@@ -468,6 +526,15 @@ function updatePositions() {
       card.classList.toggle('nt-card-off', !inView);
     }
   });
+  // Cards grow with responses: push later cards down so none overlap.
+  const cards = [...(rail?.querySelectorAll('.nt-card:not(.nt-card-missing):not(.nt-card-off)') || [])]
+    .sort((a, b) => parseFloat(a.style.top) - parseFloat(b.style.top));
+  let floor = 0;
+  cards.forEach((c) => {
+    const top = Math.max(parseFloat(c.style.top), floor);
+    c.style.top = `${top}px`;
+    floor = top + c.offsetHeight + 6;
+  });
 }
 
 // ── Hide, copy, clear, delete ────────────────────────────────────────────────
@@ -489,13 +556,15 @@ function numberByKind(list = notes) {
 function describe(list, path, kind) {
   const items = list.filter((n) => kindOf(n) === kind);
   if (!items.length) return '';
-  const lines = [`${KINDS[kind].plural}: ${path}`];
+  const done = items.filter(isDiscussed).length;
+  const lines = [`${KINDS[kind].plural}: ${path}${kind === 'discussion' ? ` (${done}/${items.length} discussed)` : ''}`];
   items.forEach((note, i) => {
     const where = [];
     if (note.fp.screenId) where.push(note.fp.screenId);
     const snippet = (note.fp.text || '').slice(0, 50);
     where.push(`${note.fp.tag}${snippet ? ` "${snippet}${note.fp.text.length > 50 ? '…' : ''}"` : ''}`);
     lines.push(`${i + 1}. [${where.join(' › ')}] ${note.text}`);
+    (note.replies || []).forEach((r) => lines.push(`   ↳ ${r.text}`));
   });
   return lines.join('\n');
 }
