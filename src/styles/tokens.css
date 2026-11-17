@@ -1,0 +1,90 @@
+/*
+  tokens.css — EVERY visual value lives here.
+  Components and app.css read these variables only. To restyle the prototype,
+  swap this file; nothing else should need to change.
+*/
+:root {
+  /* Grays (no brand colour yet) */
+  --gray-0: #ffffff;
+  --gray-50: #f7f7f7;
+  --gray-100: #efefef;
+  --gray-200: #e0e0e0;
+  --gray-300: #c8c8c8;
+  --gray-400: #a3a3a3;
+  --gray-500: #7a7a7a;
+  --gray-600: #5c5c5c;
+  --gray-700: #444444;
+  --gray-800: #2b2b2b;
+  --gray-900: #151515;
+
+  /* Roles (point at grays; later, point at brand colours) */
+  --color-bg: var(--gray-50);
+  --color-surface: var(--gray-0);
+  --color-sunken: var(--gray-100);
+  --color-border: var(--gray-300);
+  --color-border-strong: var(--gray-700);
+  --color-text: var(--gray-900);
+  --color-text-muted: var(--gray-600);
+  --color-text-inverse: var(--gray-0);
+  --color-action: var(--gray-900);
+  --color-action-hover: var(--gray-700);
+  --color-placeholder: var(--gray-200);
+  --color-placeholder-line: var(--gray-400);
+  --color-overlay: rgb(21 21 21 / 0.45);
+
+  /* Type */
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+  --text-3xl: 2.75rem;
+  --leading-tight: 1.2;
+  --leading-body: 1.5;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-bold: 700;
+  --measure: 68ch;
+
+  /* Spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  /* Shape */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-pill: 999px;
+  --border-thin: 1px;
+  --border-thick: 2px;
+  --shadow-1: 0 1px 2px rgb(21 21 21 / 0.12);
+  --shadow-2: 0 6px 24px rgb(21 21 21 / 0.18);
+  --blur-teaser: 6px;
+  --opacity-faded: 0.45;
+
+  /* Layout */
+  --width-page: 72rem;
+  --width-narrow: 40rem;
+  --width-card-min: 15rem;
+  --width-thumb: 5.5rem;
+  --width-card-tight: 12rem;
+  --height-header: 4.5rem;
+  --width-panel: 19rem;
+  --width-menu: 20rem;
+  --width-modal: 32rem;
+  --height-map: 26rem;
+  --height-control: 2.75rem;
+  --size-pin: 1.75rem;
+  --size-tally: 0.75rem;
+  --z-header: 10;
+  --z-float: 20;
+  --z-modal: 30;
+  --z-toast: 40;
+}

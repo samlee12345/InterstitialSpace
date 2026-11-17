@@ -1,0 +1,190 @@
+// Regenerates src/data/seed.json. Run with: npm run seed
+// Everything here is PLACEHOLDER content for the class demo.
+import { writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+
+const out = fileURLToPath(new URL('../src/data/seed.json', import.meta.url));
+
+const users = [
+  { id: 'u-a1', name: 'Architect A (you)', role: 'architect', points: 38, verified: false, licence: 'Licensed architect (placeholder no.)', reviewsThisYear: 0, paidOut: 64 },
+  { id: 'u-a2', name: 'Architect B', role: 'architect', points: 62, verified: true, licence: 'Licensed architect (placeholder no.)', reviewsThisYear: 6, paidOut: 0 },
+  { id: 'u-a3', name: 'Architect C', role: 'architect', points: 51, verified: true, licence: 'Licensed architect (placeholder no.)', reviewsThisYear: 11, paidOut: 0 },
+  { id: 'u-a4', name: 'Architect D (student)', role: 'architect', points: 12, verified: false, licence: 'Accredited student (placeholder)', reviewsThisYear: 0, paidOut: 0 },
+  { id: 'u-c1', name: 'Community member 1 (you)', role: 'community', points: 6.5 },
+  { id: 'u-c2', name: 'Community member 2', role: 'community', points: 14.25 },
+  { id: 'u-c3', name: 'Community member 3', role: 'community', points: 3.125 },
+  { id: 'u-p1', name: 'Heritage Trust (placeholder org)', role: 'paid', points: 120, paid: true, freeModelsLeft: 10 },
+].map((u) => ({ lifetime: u.points, ...u }));
+
+const photographers = ['u-c1', 'u-c2', 'u-c3', 'u-a2', 'u-a4'];
+const photos = (spaceId, n) =>
+  Array.from({ length: n }, (_, i) => ({
+    id: `${spaceId}-ph${i + 1}`,
+    credit: photographers[(i + spaceId.length + Number(spaceId.slice(1))) % photographers.length],
+    onSite: i % 4 !== 3,
+  }));
+
+const q = (feelings, transition, materiality, sensory) => ({ feelings, transition, materiality, sensory });
+const props = (activity, materials, climate, authorship) => ({ activity, materials, climate, authorship });
+
+// [id, name, type, lat, lng, status, photoCount, diagram, uploadedBy, votes, extra]
+const spaceRows = [
+  ['s1', 'Stepwell landing, Amer Road side', 'stepwell', 26.9512, 75.8478, 'approved', 12, { source: 'ai' }, 'u-c2', 41],
+  ['s2', 'Haveli courtyard, Chandpole lane', 'courtyard', 26.9268, 75.8094, 'approved', 9, { source: 'architect', by: 'u-a2' }, 'u-c1', 33],
+  ['s3', 'Chowk steps, Badi Chaupar corner', 'chowk steps', 26.9239, 75.8267, 'approved', 11, { source: 'ai' }, 'u-c3', 57],
+  ['s4', 'Gateway threshold, Jaipur Darwaza (east side)', 'gateway threshold', 26.9196, 75.8312, 'approved', 8, { source: 'architect', by: 'u-a3' }, 'u-c2', 28],
+  ['s5', 'Stepwell terrace, Nahargarh foothill', 'stepwell', 26.9361, 75.8153, 'approved', 10, { source: 'ai' }, 'u-c1', 22],
+  ['s6', 'Temple plinth steps, Johari Bazaar lane', 'chowk steps', 26.9214, 75.8243, 'approved', 7, { source: 'architect', by: 'u-a2' }, 'u-c3', 19],
+  ['s7', 'Courtyard passage, Kishanpole lane', 'courtyard', 26.9207, 75.8139, 'pending', 6, { source: 'architect', by: 'u-a3' }, 'u-c2', 9],
+  ['s8', 'Gateway niche, Jaipur Darwaza (west side)', 'gateway threshold', 26.9194, 75.8301, 'pending', 6, null, 'u-c1', 12],
+  ['s9', 'Shopfront otla, Tripolia Bazaar', 'threshold', 26.9247, 75.8221, 'pending', 3, null, 'u-c3', 4],
+  ['s10', 'Chowk well platform, Chhoti Chaupar', 'chowk steps', 26.9243, 75.8176, 'pending', 11, null, 'u-c2', 15],
+  ['s11', 'Haveli entrance steps, Gangori Bazaar', 'gateway threshold', 26.9291, 75.8201, 'pending', 4, null, 'u-a2', 2, { private: true }],
+  ['s12', 'Stepwell side steps, Nahargarh foothill', 'stepwell', 26.9363, 75.8155, 'pending', 10, { source: 'ai' }, 'u-c3', 6],
+];
+
+const qa = [
+  q('Calm, a place to pause out of the traffic', 'A sudden drop from the street into shade', 'Worn sandstone, lime plaster', 'Cool air, echo, pigeons'),
+  q('Protected, slightly hidden', 'Narrow lane opens into light', 'Painted plaster, stone paving', 'Cooking smells, quiet at noon'),
+  q('Busy and social', 'Steps lift you above the bazaar', 'Pink-washed masonry, stone treads', 'Horns, vendors, warm stone'),
+  q('In between — neither inside nor outside the walled city', 'Compression under the arch', 'Sandstone, iron studs on the door', 'Draft through the gate, dust'),
+];
+
+const spaces = spaceRows.map(([id, name, type, lat, lng, status, n, diagram, uploadedBy, votes, extra], i) => {
+  const ph = photos(id, n);
+  return {
+    id, name, type, lat, lng, status,
+    readyForApproval: status === 'pending' && !!diagram,
+    uploadedBy, votes,
+    photos: ph,
+    questionnaire: qa[i % qa.length],
+    properties: props(
+      ['Waiting and resting', 'Children playing', 'Selling and sitting', 'Passing through'][i % 4],
+      ['Sandstone', 'Lime plaster', 'Stone paving', 'Brick and plaster'][i % 4],
+      ['Shaded most of the day', 'Hot at midday', 'Breezy in the evening', 'Floods in monsoon'][i % 4],
+      'Unknown / vernacular',
+    ),
+    diagram: diagram
+      ? { ...diagram, credits: diagram.source === 'ai' ? [...new Set(ph.map((p) => p.credit))] : [] }
+      : null,
+    removed: false,
+    removal: null,
+    private: false,
+    ...(extra || {}),
+  };
+});
+
+const seed = {
+  _note: 'PLACEHOLDER DATA — invented for a class demo. Not real documentation, people, prices or organisations.',
+  config: {
+    priceLabel: '$XX', priceValue: 40, fullRightsMultiplier: 10,
+    modelPointsCost: 100, architectShare: 0.8, hostingShare: 0.15,
+    paidFreeModels: 10, paidTierPointsCost: 50,
+    duplicateRadiusM: 50, aiDiagramMinPhotos: 10, manualDiagramMinPhotos: 5,
+    moderatorPoints: 50, reviewsRequired: 10, surplusPoolPlaceholder: 10000,
+  },
+  users,
+  spaces,
+  redesigns: [
+    { id: 'r1', spaceId: 's1', architectId: 'u-a1', title: 'Shaded rest ledges for the stepwell landing', description: 'Stone ledges and a light canopy so people can sit out of the sun without blocking the steps.', files: ['plans.pdf', 'sections.pdf', 'model.3dm'], version: 1, published: true, takenDown: false, sales: 3 },
+    { id: 'r2', spaceId: 's3', architectId: 'u-a1', title: 'Chowk steps as evening seating', description: 'Widened treads, a handrail and low lighting for the hours when the chowk is busiest.', files: ['drawings.pdf', 'model.skp'], version: 1, published: true, takenDown: false, sales: 1 },
+    { id: 'r3', spaceId: 's2', architectId: 'u-a2', title: 'Courtyard water channel and jaali screen', description: 'Brings back a shallow water channel and adds a screen for shade and privacy.', files: ['set-v2.pdf', 'model.3dm'], version: 2, published: true, takenDown: false, sales: 5 },
+    { id: 'r4', spaceId: 's4', architectId: 'u-a3', title: 'Threshold benches and drinking water point', description: 'Two benches inside the gate and a public water point for people waiting.', files: ['drawings.pdf'], version: 1, published: true, takenDown: false, sales: 2 },
+    { id: 'r5', spaceId: 's1', architectId: 'u-a4', title: 'Stepwell handrail and night lighting', description: 'A continuous handrail and shielded lights along the main descent.', files: ['student-set.pdf'], version: 1, published: true, takenDown: false, sales: 0 },
+  ],
+  models: [
+    { id: 'm1', spaceId: 's1', title: 'Measured model — Stepwell landing, Amer Road side', files: ['plan.dwg', 'section.dwg', 'model.obj'], takenDown: false },
+    { id: 'm2', spaceId: 's2', title: 'Measured model — Haveli courtyard, Chandpole lane', files: ['plan.dwg', 'section.dwg', 'model.obj'], takenDown: false },
+    { id: 'm3', spaceId: 's4', title: 'Measured model — Gateway threshold, Jaipur Darwaza (east side)', files: ['plan.dwg', 'section.dwg'], takenDown: false },
+  ],
+  contests: [
+    {
+      id: 'c1', spaceId: 's2', status: 'live', title: 'A shared courtyard for Chandpole lane',
+      brief: 'Residents voted this courtyard their top priority. Propose a low-cost redesign that keeps it open to the lane, adds shade and seating, and can be built in phases.',
+      prize: '$2,500', deadline: '2026-12-20', coHost: 'Heritage Trust (placeholder org)', coHostId: 'u-p1',
+      eligibility: 'Licensed architects and accredited architecture students',
+      criteria: ['Responds to what residents asked for', 'Buildable within the stated budget', 'Respects the existing structure'],
+      entries: [
+        { id: 'e1', architectId: 'u-a3', title: 'Courtyard of four thresholds' },
+        { id: 'e2', architectId: 'u-a4', title: 'Shade first' },
+      ],
+    },
+    {
+      id: 'c2', spaceId: 's5', status: 'judging', title: 'Stepwell terrace, Nahargarh foothill',
+      brief: 'Make the terrace safe and usable after dark without changing the stepwell itself.',
+      prize: '$1,800', deadline: '2026-11-01', coHost: "Ward residents' association (placeholder)", coHostId: null,
+      eligibility: 'Licensed architects and accredited architecture students',
+      criteria: ['Safety after dark', 'Low maintenance', 'Leaves the stepwell untouched'],
+      entries: [
+        { id: 'e3', architectId: 'u-a2', title: 'Lantern terrace' },
+        { id: 'e4', architectId: 'u-a3', title: 'Edge and rail' },
+        { id: 'e5', architectId: 'u-a4', title: 'Night steps' },
+      ],
+    },
+  ],
+  comments: [
+    { id: 'cm1', spaceId: 's1', userId: 'u-c2', text: 'We sit here every evening. It needs shade in May and June.', onSite: true },
+    { id: 'cm2', spaceId: 's1', userId: 'u-c3', text: 'The lower steps are slippery after rain.', onSite: false },
+    { id: 'cm3', spaceId: 's1', userId: 'u-a2', text: 'The landing proportions are worth keeping exactly as they are.', onSite: true },
+    { id: 'cm4', spaceId: 's2', userId: 'u-c1', text: 'Children play here after school. Please keep it open to the lane.', onSite: true },
+    { id: 'cm5', spaceId: 's2', userId: 'u-c2', text: 'A water tap would change everything.', onSite: true },
+    { id: 'cm6', spaceId: 's3', userId: 'u-c3', text: 'Best place to watch the bazaar. Nowhere to sit that is not a step.', onSite: true },
+    { id: 'cm7', spaceId: 's3', userId: 'u-c1', text: 'Too dark at night.', onSite: false },
+    { id: 'cm8', spaceId: 's4', userId: 'u-c2', text: 'People wait here for buses with no bench.', onSite: true },
+    { id: 'cm9', spaceId: 's8', userId: 'u-c1', text: 'This niche is used by a tea seller every morning.', onSite: true },
+    { id: 'cm10', spaceId: 's10', userId: 'u-c2', text: 'The well platform is where the lane meets. It deserves attention.', onSite: true },
+  ],
+  coopDecisions: [
+    { id: 'd1', title: 'Should next year’s paid-tier price stay the same?', status: 'open', closes: '2026-12-15', result: null, votes: {} },
+    { id: 'd2', title: 'Use part of the 2026 surplus to lend out scanning equipment', status: 'closed', closes: '2026-10-01', result: 'Passed — 64% yes', votes: { 'u-a1': 'Yes', 'u-c1': 'Yes', 'u-a2': 'No', 'u-p1': 'Yes' } },
+    { id: 'd3', title: 'Let off-site comments and votes earn half points', status: 'closed', closes: '2026-08-12', result: 'Passed — 71% yes', votes: { 'u-a1': 'No', 'u-c1': 'Yes', 'u-a2': 'Yes', 'u-p1': 'Yes' } },
+  ],
+  notifications: [
+    { id: 'n1', to: 'u-a1', type: 'sale', text: 'Your redesign “Shaded rest ledges for the stepwell landing” was bought. You earn 80% of $XX.', read: false },
+    { id: 'n2', to: 'u-a1', type: 'contest', text: 'Results are in for “Stepwell terrace, Nahargarh foothill”: judging has started.', read: false },
+    { id: 'n3', to: 'u-a1', type: 'points', text: '+5 points for publishing “Chowk steps as evening seating”.', read: true },
+    { id: 'n4', to: 'u-a1', type: 'ranking', text: 'You moved up to rank 3 of 4 architects.', read: true },
+    { id: 'n5', to: 'u-a1', type: 'coop', text: 'New co-op decision open for voting: paid-tier price.', read: false },
+    { id: 'n6', to: 'u-a1', type: 'removal', text: 'Removal request for a space you contributed to is under team review.', read: true },
+    { id: 'n7', to: 'u-a1', type: 'sale', text: '“Courtyard water channel and jaali screen” has an edited version. Update it from My purchases.', read: false },
+    { id: 'n8', to: 'u-c1', type: 'points', text: 'Your photos of “Haveli courtyard, Chandpole lane” qualified. +4.5 points.', read: false },
+    { id: 'n9', to: 'u-c1', type: 'coop', text: 'New co-op decision open for voting: paid-tier price.', read: false },
+    { id: 'n10', to: 'u-a2', type: 'points', text: '+2 points for a moderator review.', read: false },
+    { id: 'n11', to: 'u-a2', type: 'sale', text: 'Your redesign “Courtyard water channel and jaali screen” was bought.', read: true },
+    { id: 'n12', to: 'u-p1', type: 'contest', text: 'Your contest “A shared courtyard for Chandpole lane” has 2 entries.', read: false },
+    { id: 'n13', to: 'u-p1', type: 'coop', text: 'New co-op decision open for voting: paid-tier price.', read: true },
+  ],
+  moderation: [
+    { spaceId: 's7', yes: 2, no: 1, voted: [], duplicates: [], mergeVotes: 0 },
+    { spaceId: 's12', yes: 1, no: 0, voted: [], duplicates: ['s5'], mergeVotes: 2 },
+    { spaceId: 's8', yes: 0, no: 0, voted: [], duplicates: ['s4'], mergeVotes: 0 },
+    { spaceId: 's9', yes: 0, no: 0, voted: [], duplicates: [], mergeVotes: 0 },
+    { spaceId: 's10', yes: 0, no: 0, voted: [], duplicates: [], mergeVotes: 0 },
+    { spaceId: 's11', yes: 0, no: 0, voted: [], duplicates: [], mergeVotes: 0 },
+  ],
+  flags: [
+    { id: 'f1', itemId: 'r5', reason: 'Handrail dimensions do not match the measured diagram.', status: 'open' },
+    { id: 'f2', itemId: 'm3', reason: 'Section appears to be drawn at the wrong scale.', status: 'open' },
+  ],
+  purchases: [
+    { id: 'p-seed1', userId: 'u-a1', itemId: 'r3', kind: 'redesign', title: 'Courtyard water channel and jaali screen', rights: 'licence', method: 'card', amount: '$XX', version: 1, date: '2026-10-28', receipt: 'ISP-000117' },
+  ],
+  ledger: [
+    { id: 'l1', userId: 'u-a1', text: 'Published a redesign', pts: 5 },
+    { id: 'l2', userId: 'u-a1', text: 'Published a redesign', pts: 5 },
+    { id: 'l3', userId: 'u-a1', text: 'Comment (on site)', pts: 0.25 },
+    { id: 'l4', userId: 'u-c1', text: 'Photos qualified (9 × 0.5)', pts: 4.5 },
+    { id: 'l5', userId: 'u-p1', text: 'Paid tier, one month', pts: -50 },
+  ],
+  payouts: [{ id: 'po1', userId: 'u-a1', amount: 64, date: '2026-10-31' }],
+  diagramUploads: [],
+};
+
+// When each seeded redesign was published (drives the one-a-week limit).
+['2026-08-02', '2026-10-05', '2026-09-14', '2026-07-21', '2026-10-30'].forEach((d, i) => { seed.redesigns[i].createdAt = Date.parse(d); });
+// Where each seeded notification leads.
+const links = { n1: '/earnings', n2: '/contest/c2', n3: '/points', n4: '/ranking', n5: '/co-op', n6: '/profile', n7: '/purchases', n8: '/space/s2', n9: '/co-op', n10: '/moderation', n11: '/earnings', n12: '/contest/c1', n13: '/co-op' };
+seed.notifications.forEach((n) => { n.link = links[n.id]; });
+
+writeFileSync(out, JSON.stringify(seed, null, 2));
+console.log(`Wrote ${out}: ${spaces.length} spaces, ${seed.redesigns.length} redesigns, ${seed.models.length} models`);
