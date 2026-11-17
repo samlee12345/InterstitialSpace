@@ -105,8 +105,8 @@ const seed = {
       eligibility: 'Licensed architects and accredited architecture students',
       criteria: ['Responds to what residents asked for', 'Buildable within the stated budget', 'Respects the existing structure'],
       entries: [
-        { id: 'e1', architectId: 'u-a3', title: 'Courtyard of four thresholds' },
-        { id: 'e2', architectId: 'u-a4', title: 'Shade first' },
+        { id: 'e1', architectId: 'u-a3', title: 'Courtyard of four thresholds', submittedAt: '2026-11-09' },
+        { id: 'e2', architectId: 'u-a4', title: 'Shade first', submittedAt: '2026-11-14' },
       ],
     },
     {
@@ -116,9 +116,9 @@ const seed = {
       eligibility: 'Licensed architects and accredited architecture students',
       criteria: ['Safety after dark', 'Low maintenance', 'Leaves the stepwell untouched'],
       entries: [
-        { id: 'e3', architectId: 'u-a2', title: 'Lantern terrace' },
-        { id: 'e4', architectId: 'u-a3', title: 'Edge and rail' },
-        { id: 'e5', architectId: 'u-a4', title: 'Night steps' },
+        { id: 'e3', architectId: 'u-a2', title: 'Lantern terrace', submittedAt: '2026-10-18' },
+        { id: 'e4', architectId: 'u-a3', title: 'Edge and rail', submittedAt: '2026-10-25' },
+        { id: 'e5', architectId: 'u-a4', title: 'Night steps', submittedAt: '2026-10-30' },
       ],
     },
   ],

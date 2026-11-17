@@ -132,8 +132,12 @@ Navigate with clicks, not the address bar: a page reload resets the data.
      page it is about.
 3. **Community member** (1 min). Name menu, "Create new space": photos, "no
    geotag" (half-points warning), "Is this the same place?", questionnaire,
-   submit: Pending. "Add your experience" with a photo, choose "Don't allow"
-   on the location prompt (+0.125), then vote on site (+0.25).
+   submit: Pending. "Add your experience" opens a three-step overlay: share
+   location (on site earns full points), a comment with optional photos,
+   then five quick questions ending with "What needs fixing most?". The
+   post shows "Needs fixing: …" under the comment. Then vote on site (+0.25).
+   On Browse, search by an address or "lat, lon" (e.g. 26.9239, 75.8267)
+   to list spaces within 500 m, nearest first.
 4. **Moderator** (1 min). Moderation lists only spaces that are ready for
    approval. Review "Courtyard passage" and vote yes: third yes approves it.
    Review "Stepwell side steps": duplicate suggestion, then "No" needs a

@@ -167,6 +167,14 @@ export function MapBox({ spaces, area, hiddenIds = [], activeId, selectedId, onH
   );
 }
 
+// "26.9239, 75.8267" → { lat, lng }; anything else → null.
+export function parseLatLng(q) {
+  const m = q.trim().match(/^(-?\d{1,3}(?:\.\d+)?)\s*[, ]\s*(-?\d{1,3}(?:\.\d+)?)$/);
+  if (!m) return null;
+  const [lat, lng] = [Number(m[1]), Number(m[2])];
+  return Math.abs(lat) <= 90 && Math.abs(lng) <= 180 ? { lat, lng } : null;
+}
+
 // Text search across a space's name, type and what people said about it.
 export const matchesSearch = (space, q) => {
   const t = q.trim().toLowerCase();

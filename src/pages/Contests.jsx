@@ -4,6 +4,9 @@ import { useDemo } from '../state/DemoContext.jsx';
 import { Badge, Button, Choice, Empty, FileDrop, ImageBox, Input, Mine, Page, RoleGate, Select, Steps } from '../components/ui.jsx';
 import { ContestCard, Crumbs } from '../components/domain.jsx';
 
+// "2026-11-12" → "Nov 12, 2026"
+const fmtDate = (d) => (d ? new Date(`${d}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'date not recorded');
+
 export function Contests() {
   const { state, isPaid } = useDemo();
   return (
@@ -41,7 +44,7 @@ export function Contest() {
     if (!f.agree) e.agree = 'Accept the rule of entry to submit.';
     setErr(e);
     if (Object.keys(e).length) return;
-    const entry = { id: `e-${Date.now()}`, architectId: user.id, title: f.title.trim(), statement: f.statement.trim(), files: f.files };
+    const entry = { id: `e-${Date.now()}`, submittedAt: new Date().toISOString().slice(0, 10), architectId: user.id, title: f.title.trim(), statement: f.statement.trim(), files: f.files };
     dispatch({ type: 'SUBMIT_ENTRY', contestId: c.id, entry });
     // Back to the space page, where the contest banner lists the entries.
     nav(`/space/${space.id}`, {
@@ -74,13 +77,15 @@ export function Contest() {
           <section className="stack-sm">
             <h2>Entries ({c.entries.length})</h2>
             {isMember ? (
-              <ul className="list small">
+              <ul className="entries small">
                 {c.entries.map((e) => (
-                  <li key={e.id} className="row">
-                    <span className="bold">{e.title}</span>
-                    <span className="muted">by {get.user(e.architectId)?.name}</span>
-                    <Mine userId={e.architectId} />
-                    {c.winner === e.id && <Badge kind="solid">Winner</Badge>}
+                  <li key={e.id}>
+                    <span className="row">
+                      <span className="bold">{e.title}</span>
+                      <Mine userId={e.architectId} />
+                      {c.winner === e.id && <Badge kind="solid">Winner</Badge>}
+                    </span>
+                    <span className="muted">by {get.user(e.architectId)?.name}. Submitted {fmtDate(e.submittedAt)}</span>
                   </li>
                 ))}
                 {c.entries.length === 0 && <li className="muted">No entries yet.</li>}
@@ -94,7 +99,7 @@ export function Contest() {
               <Input label="Statement" textarea value={f.statement} onChange={(e) => setF({ ...f, statement: e.target.value })} error={err.statement} hint="How does your design meet the co-host’s criteria?" />
               <FileDrop label="Entry files" files={f.files} onChange={(files) => setF({ ...f, files })} error={err.files} />
               <Choice type="checkbox" checked={f.agree} onChange={(e) => setF({ ...f, agree: e.target.checked })} title="Rule of entry: if I win, I sell this design to the co-host">
-                The co-host sets the sale price. Most of the prize goes to the winner; the platform takes a hosting share.
+                The co-host sets the sale price. The winner receives the full prize.
               </Choice>
               {err.agree && <span className="error" role="alert">{err.agree}</span>}
               <div className="row">
@@ -107,7 +112,7 @@ export function Contest() {
         <aside className="card">
           <span className="small muted">Prize money</span>
           <span className="display">{c.prize}</span>
-          <span className="xs muted">Placeholder amount. Funded by the co-host and held in escrow until a winner is picked. The winner receives {Math.round((1 - cfg.hostingShare) * 100)}%; the platform keeps a {Math.round(cfg.hostingShare * 100)}% hosting share.</span>
+          <span className="small">The winner receives the full prize.</span>
           <hr className="rule" />
           <dl className="dl">
             <dt>Deadline</dt><dd>{c.deadline}</dd>
@@ -233,8 +238,7 @@ export function ContestRequest() {
             <dl className="dl">
               <dt>Winner</dt><dd>{judging.entries.find((e) => e.id === winner)?.title} by {get.user(judging.entries.find((e) => e.id === winner)?.architectId)?.name}</dd>
               <dt>Prize in escrow</dt><dd>{judging.prize}</dd>
-              <dt>Winner’s share</dt><dd>{Math.round((1 - cfg.hostingShare) * 100)}% of the prize</dd>
-              <dt>Platform hosting share</dt><dd>{Math.round(cfg.hostingShare * 100)}% (placeholder rate)</dd>
+              <dt>Winner receives</dt><dd>The full prize</dd>
               <dt>Design</dt><dd>Sold to you as co-host, at the price you set</dd>
             </dl>
           </div>

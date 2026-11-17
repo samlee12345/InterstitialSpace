@@ -88,6 +88,7 @@
   --width-panel: 19rem;
   --width-menu: 20rem;
   --width-modal: 32rem;
+  --width-modal-wide: 40rem;
   --height-map: 26rem;
   --height-control: 2.75rem;
   --size-pin: 1.75rem;
@@ -95,7 +96,7 @@
   --size-tally: 0.75rem;
   --z-header: 10;
   --z-float: 20;
-  --z-modal: 30;
+  --z-modal: 50;
   --z-toast: 40;
   --z-review: 1000;
 

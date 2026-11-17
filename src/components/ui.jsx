@@ -226,7 +226,7 @@ export function Steps({ steps, current }) {
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 // Dialog: moves focus in, keeps Tab inside, Escape closes, and focus returns to what opened it.
-export function Modal({ title, onClose, children }) {
+export function Modal({ title, onClose, wide, children }) {
   const ref = useRef(null);
   const titleId = useId();
   useEffect(() => {
@@ -251,7 +251,7 @@ export function Modal({ title, onClose, children }) {
   }, []);
   return (
     <div className="overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose?.()}>
-      <div ref={ref} className="modal" role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1}>
+      <div ref={ref} className={`modal ${wide ? 'modal-wide' : ''}`} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1}>
         <h2 id={titleId}>{title}</h2>
         {children}
       </div>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
-import { Badge, Banner, Button, Empty, ImageBox, Input, Mine, Modal, Page, PointsBadge, StatusBadges, TabPanel, Tabs } from '../components/ui.jsx';
+import { Badge, Banner, Button, Empty, Icon, ImageBox, Input, Mine, Modal, Page, PointsBadge, StatusBadges, Steps, TabPanel, Tabs } from '../components/ui.jsx';
 import { RedesignCard, contestStatus, typeLabel } from '../components/domain.jsx';
 import { POINTS } from '../lib/points.js';
 
@@ -145,35 +145,120 @@ function Redesigns({ space }) {
   );
 }
 
+// ── Add your experience: a three-step overlay ────────────────
+// 1. Location (confirms they're there; on site earns full points)
+// 2. Comment (required) and photos (optional)
+// 3. Five quick questions about what needs fixing
+export const EXPERIENCE_QUESTIONS = [
+  { id: 'feel', type: 'multi', legend: 'How does it feel to be here?', hint: 'Pick any that fit.', options: ['Calm', 'Welcoming', 'Busy', 'Cramped', 'Exposed', 'Unsafe'] },
+  { id: 'senses', type: 'multi', legend: 'Senses: what stands out?', hint: 'Pick any that fit.', options: ['Too hot', 'Good shade', 'Noisy', 'Quiet', 'Bad smell', 'Dark at night'] },
+  { id: 'access', type: 'single', legend: 'Arriving and leaving: how easy is it to get in and out?', options: ['Easy', 'Some difficulty', 'Hard'] },
+  { id: 'fix', type: 'single', legend: 'What needs fixing most?', required: true, options: ['Shade', 'Seating', 'Lighting', 'Water', 'Drainage', 'Steps and access', 'Cleanliness', 'Nothing needs fixing'] },
+  { id: 'keep', type: 'text', legend: 'What should stay as it is?', hint: 'Optional.' },
+];
+
+function ChipGroup({ q, value, onChange }) {
+  const multi = q.type === 'multi';
+  const selected = multi ? value || [] : value;
+  const toggle = (opt) => onChange(multi ? (selected.includes(opt) ? selected.filter((x) => x !== opt) : [...selected, opt]) : opt);
+  return (
+    <fieldset className="chips-field">
+      <legend>{q.legend}{q.required && <span className="muted"> (required)</span>}</legend>
+      {q.hint && <span className="xs muted">{q.hint}</span>}
+      <div className="chips">
+        {q.options.map((opt) => (
+          <label key={opt} className="chip">
+            <input type={multi ? 'checkbox' : 'radio'} name={q.id} checked={multi ? selected.includes(opt) : selected === opt} onChange={() => toggle(opt)} />
+            <span>{opt}</span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
+function ExperienceWizard({ space, onClose, onPosted }) {
+  const { dispatch, user } = useDemo();
+  const [step, setStep] = useState(0);
+  const [onSite, setOnSite] = useState(null);
+  const [text, setText] = useState('');
+  const [photos, setPhotos] = useState(0);
+  const [answers, setAnswers] = useState({});
+  const [err, setErr] = useState('');
+  const pickLocation = (v) => { setOnSite(v); setStep(1); };
+  const next = () => {
+    if (!text.trim()) return setErr('Say something about the space first.');
+    setErr('');
+    return setStep(2);
+  };
+  const post = () => {
+    if (!answers.fix) return setErr('Choose what needs fixing most, or “Nothing needs fixing”.');
+    dispatch({ type: 'ADD_EXPERIENCE', spaceId: space.id, userId: user.id, text: text.trim(), photos, onSite, answers });
+    onPosted(photos);
+    return onClose();
+  };
+  return (
+    <Modal title="Add your experience" onClose={onClose} wide>
+      <Steps steps={['Location', 'Your experience', 'What needs fixing']} current={step} />
+      {step === 0 && (
+        <div className="stack">
+          <p>Are you at {space.name} right now? Sharing your location confirms it. Experiences posted on site earn {POINTS.interactOnSite} points; off site, or without location, {POINTS.interactOffSite}.</p>
+          <div className="stack-sm">
+            <Button variant="primary" onClick={() => pickLocation(true)}><Icon name="locate" />Share location: I’m here</Button>
+            <Button onClick={() => pickLocation(false)}>Share location: I’m somewhere else</Button>
+            <Button variant="quiet" onClick={() => pickLocation(false)}>Continue without location</Button>
+          </div>
+          <p className="xs muted">Simulated. No real location is read.</p>
+        </div>
+      )}
+      {step === 1 && (
+        <div className="stack">
+          <p className="note small">{onSite ? 'Location confirmed: you’re at this space. Full points.' : 'Not confirmed on site. You’ll earn half points.'}</p>
+          <Input label="How do you use this space? What is it like?" textarea value={text} onChange={(e) => setText(e.target.value)} error={err} />
+          <div className="field">
+            <span className="label">Photos (optional)</span>
+            <div className="thumbs">{Array.from({ length: photos }, (_, i) => <ImageBox key={i} label={`${i + 1}`} shape="square" />)}</div>
+            <div className="row">
+              <Button onClick={() => setPhotos(photos + 1)}>Add a photo</Button>
+              {photos > 0 && <Button variant="quiet" onClick={() => setPhotos(photos - 1)}>Remove last</Button>}
+            </div>
+            <span className="xs muted">Tip: include a person in the frame. It helps the AI judge scale for the spatial diagram.</span>
+          </div>
+          <div className="row"><Button variant="primary" onClick={next}>Continue</Button><Button variant="quiet" onClick={() => setStep(0)}>Back</Button></div>
+        </div>
+      )}
+      {step === 2 && (
+        <div className="stack">
+          <p className="small muted">Five quick questions. Answers from everyone feed the summary at the top of this space and show architects what to fix.</p>
+          {EXPERIENCE_QUESTIONS.map((q) => (q.type === 'text' ? (
+            <Input key={q.id} label={q.legend} hint={q.hint} value={answers[q.id] || ''} onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })} />
+          ) : (
+            <ChipGroup key={q.id} q={q} value={answers[q.id]} onChange={(v) => { setAnswers({ ...answers, [q.id]: v }); setErr(''); }} />
+          )))}
+          {err && <span className="error" role="alert">{err}</span>}
+          <div className="row"><Button variant="primary" onClick={post}>Post experience</Button><Button variant="quiet" onClick={() => setStep(1)}>Back</Button></div>
+        </div>
+      )}
+    </Modal>
+  );
+}
+
 // ── Experiences: AI summary, then each member's comment with their photos ──
 function Experience({ space, setBanner }) {
   const { state, dispatch, user, get, need } = useDemo();
-  const [open, setOpen] = useState(false);
-  const [text, setText] = useState('');
-  const [photos, setPhotos] = useState(0);
-  const [err, setErr] = useState('');
-  const [ask, setAsk] = useState(null); // 'post' | 'vote'
+  const [adding, setAdding] = useState(false);
+  const [voting, setVoting] = useState(false);
   // Most relevant first: contributors with more points rank higher.
   const posts = state.comments
     .filter((c) => c.spaceId === space.id)
     .sort((a, b) => get.user(b.userId).points - get.user(a.userId).points);
   const q = space.questionnaire;
 
-  const pick = (onSite) => {
-    if (ask === 'vote') dispatch({ type: 'VOTE_SPACE', spaceId: space.id, userId: user.id, onSite });
-    else {
-      dispatch({ type: 'ADD_EXPERIENCE', spaceId: space.id, userId: user.id, text: text.trim(), photos, onSite });
-      setBanner({ title: 'Experience posted', text: `Your experience${photos ? ` and ${photos} photo${photos > 1 ? 's' : ''}` : ''} now show on this space, marked “Yours”.` });
-      setText(''); setPhotos(0); setOpen(false);
-    }
-    setAsk(null);
-  };
-
   return (
     <section className="stack" data-screen-label="Experiences" aria-labelledby="exp-heading">
       <SectionHead id="exp-heading" title={`Experiences (${posts.length})`} note="How people use and feel about this space, with their photos. Most relevant first.">
-        <Button onClick={() => need('vote') && setAsk('vote')}>Vote for this space ({space.votes})</Button>
-        {!open && <Button variant="primary" onClick={() => need('comment') && setOpen(true)}>Add your experience</Button>}
+        <Button onClick={() => need('vote') && setVoting(true)}>Vote for this space ({space.votes})</Button>
+        <Button variant="primary" onClick={() => need('comment') && setAdding(true)}>Add your experience</Button>
       </SectionHead>
 
       <div className="summary-box">
@@ -191,30 +276,6 @@ function Experience({ space, setBanner }) {
         </dl>
       </div>
 
-      {open && (
-        <form
-          className="card"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!text.trim()) return setErr('Say something about the space first.');
-            setErr('');
-            return setAsk('post');
-          }}
-        >
-          <h3>Your experience</h3>
-          <Input label="How do you use this space? What should improve?" textarea value={text} onChange={(e) => setText(e.target.value)} error={err} />
-          <div className="field">
-            <span className="label">Photos (optional)</span>
-            <div className="row">
-              <Button onClick={() => setPhotos(photos + 1)}>Add a photo</Button>
-              {photos > 0 && <Button variant="quiet" onClick={() => setPhotos(photos - 1)}>Remove last</Button>}
-              <span className="small muted">{photos} added. Tip: include a person in the frame for scale.</span>
-            </div>
-          </div>
-          <div className="row"><Button variant="primary" type="submit">Post experience</Button><Button onClick={() => setOpen(false)}>Cancel</Button></div>
-        </form>
-      )}
-
       <ul className="list">
         {posts.map((c) => (
           <li key={c.id} className="experience">
@@ -226,6 +287,14 @@ function Experience({ space, setBanner }) {
                 {!c.onSite && <span className="xs muted">off site</span>}
               </div>
               <p>{c.text}</p>
+              {c.answers && (
+                <div className="row small">
+                  {c.answers.fix && <Badge>{c.answers.fix === 'Nothing needs fixing' ? 'Nothing needs fixing' : `Needs fixing: ${c.answers.fix}`}</Badge>}
+                  {[...(c.answers.feel || []), ...(c.answers.senses || [])].length > 0 && (
+                    <span className="muted">{[...(c.answers.feel || []), ...(c.answers.senses || [])].join(', ')}</span>
+                  )}
+                </div>
+              )}
             </div>
             {c.photoIds?.length > 0 && (
               <div className="exp-photos" aria-label={`${c.photoIds.length} photos`}>
@@ -240,7 +309,20 @@ function Experience({ space, setBanner }) {
         ))}
         {posts.length === 0 && <li className="muted">No experiences yet. Be the first to add one.</li>}
       </ul>
-      {ask && <LocationPrompt action={ask === 'vote' ? 'vote' : 'post'} onPick={pick} onClose={() => setAsk(null)} />}
+      {adding && (
+        <ExperienceWizard
+          space={space}
+          onClose={() => setAdding(false)}
+          onPosted={(n) => setBanner({ title: 'Experience posted', text: `Your experience${n ? ` and ${n} photo${n > 1 ? 's' : ''}` : ''} now show on this space, marked “Yours”.` })}
+        />
+      )}
+      {voting && (
+        <LocationPrompt
+          action="vote"
+          onPick={(onSite) => { dispatch({ type: 'VOTE_SPACE', spaceId: space.id, userId: user.id, onSite }); setVoting(false); }}
+          onClose={() => setVoting(false)}
+        />
+      )}
     </section>
   );
 }

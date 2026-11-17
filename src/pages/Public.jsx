@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
 import { Button, Choice, Icon, ImageBox, Input, Page, Select } from '../components/ui.jsx';
-import { MapBox, SpaceCard, distanceM, matchesSearch } from '../components/domain.jsx';
+import { MapBox, SpaceCard, distanceM, matchesSearch, parseLatLng } from '../components/domain.jsx';
 import { useChoices } from '../design/choices.js';
 
 const VISITOR_LIMIT = 10;
@@ -303,6 +303,8 @@ const SORTS = {
   name: { label: 'Name (A to Z)', fn: (a, b) => a.name.localeCompare(b.name) },
 };
 
+const NEAR_POINT_M = 500; // radius for a "lat, lon" search on Browse
+
 const STATUSES = {
   all: { label: 'All', test: () => true },
   approved: { label: 'Approved', test: (s) => s.status === 'approved' },
@@ -317,9 +319,12 @@ export function Browse() {
   const [sort, setSort] = useState('votes');
   const [hover, setHover] = useState(null);
   const limited = !isMember && state.signupDismissed;
+  // A "lat, lon" search finds spaces near that point, nearest first; anything else matches text.
+  const point = parseLatLng(q);
+  const near = (s) => distanceM(point, s) <= NEAR_POINT_M;
   const list = visibleSpaces
-    .filter((s) => STATUSES[status].test(s) && (type === 'all' || s.type === type) && matchesSearch(s, q))
-    .sort(SORTS[sort].fn);
+    .filter((s) => STATUSES[status].test(s) && (type === 'all' || s.type === type) && (point ? near(s) : matchesSearch(s, q)))
+    .sort(point ? (a, b) => distanceM(point, a) - distanceM(point, b) : SORTS[sort].fn);
   const hidden = limited ? list.slice(VISITOR_LIMIT).map((s) => s.id) : [];
   const types = ['all', ...new Set(visibleSpaces.map((s) => s.type))];
   return (
@@ -332,7 +337,8 @@ export function Browse() {
           </div>
           <div className="field">
             <label htmlFor="browse-q">Search</label>
-            <input id="browse-q" className="input" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, area, or what people said: shade, steps, Johari Bazaar…" autoComplete="off" />
+            <input id="browse-q" className="input" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Enter address or lat, lon" autoComplete="off" aria-describedby="browse-q-hint" />
+            <span id="browse-q-hint" className="xs muted">For example Johari Bazaar, or 26.9239, 75.8267</span>
           </div>
           <div className="row row-end">
             <fieldset className="segmented">
@@ -352,7 +358,10 @@ export function Browse() {
           {limited && (
             <p className="note">You’re browsing without an account, so {VISITOR_LIMIT} spaces are shown and the rest are blurred. <Link to="/signup">Sign up to see all {visibleSpaces.length}</Link></p>
           )}
-          <p className="small muted" aria-live="polite">{list.length} {list.length === 1 ? 'space' : 'spaces'}</p>
+          <p className="small muted" aria-live="polite">
+            {list.length} {list.length === 1 ? 'space' : 'spaces'}
+            {point && ` within ${NEAR_POINT_M} m of ${point.lat}, ${point.lng}, nearest first`}
+          </p>
           {list.length === 0 ? (
             <div className="note stack-sm">
               <span>No spaces match{q.trim() ? ` “${q.trim()}”` : ''}.</span>
@@ -369,7 +378,7 @@ export function Browse() {
             </div>
           )}
         </div>
-        <MapBox spaces={list} area={visibleSpaces} hiddenIds={hidden} activeId={hover} onHover={setHover} sticky />
+        <MapBox spaces={list} area={visibleSpaces} hiddenIds={hidden} activeId={hover} onHover={setHover} me={point} sticky />
       </div>
     </Page>
   );
@@ -449,7 +458,7 @@ export function Terms() {
     ['Redesigns and measured models', 'Sold under the platform purchase licence. Buyers can use and adapt the files. They cannot redistribute them.'],
     ['Architects', 'Keep copyright in their redesigns and receive 80% of each sale; the platform keeps 20%. They can publish one redesign a week. An agency can buy full design rights: the price and terms are agreed between the agency and the architect, and the architect must be credited.'],
     ['Spatial diagrams', 'The platform keeps the download fee for Base Library diagrams and models. Community photographers are credited.'],
-    ['Contests', 'The co-host funds the prize, sets the criteria and judges. The winning architect sells the design to the co-host. Most of the prize goes to the winner; the platform takes a hosting share.'],
+    ['Contests', 'The co-host funds the prize, sets the criteria and judges. The winning architect receives the full prize and sells the design to the co-host.'],
     ['Private owners', 'Anyone can document a space visible from public ground. An owner can request removal with proof of ownership; the team reviews each request.'],
     ['The co-op', 'Every account holder is a member with one vote. Any year-end surplus is returned to members by points.'],
     ['If the platform shuts down', 'Contributors keep their work.'],
