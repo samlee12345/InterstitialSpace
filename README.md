@@ -47,8 +47,8 @@ Press **N** on any page (or "Turn on notes" in the Demo bar) to start the
 notes tool, ported from the portfolio. Press N again, click any text, type a
 note, then ⌘↵. Press **D** instead for a **discussion**: a point to raise
 with the team. Notes are purple and round, discussions are teal and square,
-and each kind has its own numbering, Copy and Clear buttons. "Clear all pages"
-deletes both kinds everywhere, after a confirmation. Both are kept per page in your browser and survive reloads.
+and each kind has its own numbering, Copy and Clear buttons. "Clear notes on
+all pages" deletes every note and keeps the discussions, after a confirmation. Both are kept per page in your browser and survive reloads.
 "Copy all pages" puts every note on the clipboard, labelled by page and
 section, so testers can paste them into a message. Notes never leave the
 tester's browser. Each view keeps its own notes (for example the Tabs view of
