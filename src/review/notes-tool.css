@@ -3,7 +3,7 @@
 .nt-toolbar {
   position: fixed; left: 50%; bottom: var(--space-3); transform: translateX(-50%);
   z-index: var(--z-review); display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2);
-  max-width: calc(100vw - 2 * var(--width-panel) - var(--space-6));
+  max-width: calc(100vw - 2 * var(--width-review-rail) - var(--space-6));
   background: var(--gray-900); color: var(--gray-0); border-radius: var(--radius-md);
   padding: var(--space-2) var(--space-3); box-shadow: var(--shadow-2);
   font-family: var(--font-body); font-size: var(--text-xs); user-select: none;
@@ -56,3 +56,17 @@ body.nt-select-mode #root, body.nt-select-mode #root * { cursor: crosshair !impo
 
 @media (max-width: 56rem) { .nt-rail { display: none; } }
 @media (prefers-reduced-motion: reduce) { .nt-card { transition: none; } }
+
+/* Kinds: notes use --review-accent (purple), discussions use --review-discuss (teal). */
+.nt-group { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding-right: var(--space-2); border-right: var(--border-thin) solid var(--gray-700); }
+.nt-group:last-of-type { border-right: 0; padding-right: 0; }
+.nt-kind-discussion .nt-count, .nt-kind-discussion .nt-btn:not(.nt-secondary):not(.nt-danger):not(.nt-active):not(.nt-ghost),
+.nt-kind-discussion.nt-marker, .nt-kind-discussion .nt-badge { background: var(--review-discuss); color: var(--review-on-accent); }
+.nt-kind-discussion .nt-btn:not(.nt-secondary):not(.nt-danger):not(.nt-active):not(.nt-ghost):hover { background: var(--review-discuss-strong); }
+.nt-kind-discussion.nt-card { background: var(--review-discuss-surface); border-color: var(--review-discuss-soft); }
+.nt-kind-discussion.nt-popover { border-color: var(--review-discuss-soft); }
+.nt-kind-discussion .nt-popover-input:focus, .nt-kind-discussion .nt-edit-input { outline-color: var(--review-discuss); border-color: var(--review-discuss); }
+.nt-kind-discussion.nt-marker { border-radius: var(--radius-sm); }
+.nt-kind-discussion .nt-badge { border-radius: var(--radius-sm); }
+body[data-nt-kind="discussion"] .nt-hovered { outline-color: var(--review-discuss) !important; }
+.nt-popover-title { margin: 0; font-size: var(--text-sm); font-weight: var(--weight-bold); color: var(--gray-900); }

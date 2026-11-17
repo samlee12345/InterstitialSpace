@@ -32,6 +32,7 @@
   --color-placeholder-line: var(--gray-400);
   --color-overlay: rgb(21 21 21 / 0.45);
   --scrim: rgb(21 21 21 / 0.78);
+  --color-locate-halo: rgb(21 21 21 / 0.12);
 
   /* Type */
   --font-body: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -90,6 +91,7 @@
   --height-map: 26rem;
   --height-control: 2.75rem;
   --size-pin: 1.75rem;
+  --size-pin-dot: 1rem;
   --size-tally: 0.75rem;
   --z-header: 10;
   --z-float: 20;
@@ -104,6 +106,10 @@
   --review-accent-soft: #c9c0f5;
   --review-on-accent: #ffffff;
   --review-surface: #fbfaff;
+  --review-discuss: #0f766e;
+  --review-discuss-strong: #115e59;
+  --review-discuss-soft: #99d5cf;
+  --review-discuss-surface: #f3fbfa;
   --width-review-rail: 14rem;
   --width-review-popover: 18rem;
   --size-review-marker: 1.125rem;

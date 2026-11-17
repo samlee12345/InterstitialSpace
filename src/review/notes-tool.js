@@ -1,5 +1,8 @@
-/* Notes: inline annotation tool, ported from the portfolio's components/notes-tool.js.
- * Press N (or "Notes" in the Demo bar) to start. Notes are saved in this browser,
+/* Notes and Discussions: inline annotation tool, ported from the portfolio's
+ * components/notes-tool.js, with a second kind of annotation.
+ * Note (N): your own review notes. Discussion (D): points to raise with the team.
+ * Each kind has its own colour, numbering, copy and clear.
+ * Press N or D (or "Notes" in the Demo bar) to start. Notes are saved in this browser,
  * one list per page, and shown as numbered markers plus cards in the right margin.
  * Changes from the original, for a React single-page app:
  *  - the page key follows the in-app route (setNotesPage), not the file name
@@ -18,7 +21,14 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* storage full or blocked: notes last this visit */ } },
 };
 
+export const KINDS = {
+  note: { label: 'Note', plural: 'Notes', key: 'n' },
+  discussion: { label: 'Discussion', plural: 'Discussions', key: 'd' },
+};
+const kindOf = (n) => (n.kind === 'discussion' ? 'discussion' : 'note');
+
 let page = '/';
+let addKind = 'note';
 let notes = [];
 let isActive = false;
 let isSelectMode = false;
@@ -33,13 +43,16 @@ const loadNotes = () => { notes = store.get(pageKey(), []); };
 const announce = () => window.dispatchEvent(new CustomEvent('isp-notes-change'));
 const saveNotes = () => { store.set(pageKey(), notes); announce(); };
 
-// Note counts for every page key, e.g. { '/browse': 2, '/space/s2~tabs': 1 }.
+// Counts for every page key by kind, e.g. { '/browse': { note: 2, discussion: 1 } }.
 export function notesCounts() {
   const out = {};
   try {
     for (let i = 0; i < localStorage.length; i += 1) {
       const k = localStorage.key(i);
-      if (k.startsWith(PREFIX)) out[k.slice(PREFIX.length)] = (store.get(k, []) || []).length;
+      if (!k.startsWith(PREFIX)) continue;
+      const c = { note: 0, discussion: 0 };
+      (store.get(k, []) || []).forEach((n) => { c[kindOf(n)] += 1; });
+      out[k.slice(PREFIX.length)] = c;
     }
   } catch { /* ignore */ }
   return out;
@@ -144,12 +157,7 @@ function renderToolbar() {
 
 function countOtherPages() {
   let n = 0;
-  try {
-    for (let i = 0; i < localStorage.length; i += 1) {
-      const k = localStorage.key(i);
-      if (k.startsWith(PREFIX) && k !== pageKey()) n += (store.get(k, []) || []).length;
-    }
-  } catch { /* ignore */ }
+  Object.entries(notesCounts()).forEach(([k, c]) => { if (PREFIX + k !== pageKey()) n += c.note + c.discussion; });
   return n;
 }
 
@@ -157,25 +165,39 @@ function refreshToolbar() {
   const tb = document.getElementById('nt-toolbar');
   if (!tb) return;
   tb.innerHTML = '';
+  const counts = { note: 0, discussion: 0 };
+  notes.forEach((n) => { counts[kindOf(n)] += 1; });
   if (isHidden) {
-    tb.appendChild(button(`Show notes (${notes.length})`, 'nt-btn nt-secondary', toggleHide));
+    tb.appendChild(button(`Show notes (${counts.note}) and discussions (${counts.discussion})`, 'nt-btn nt-secondary', toggleHide));
     return;
   }
-  const count = el('span', 'nt-count');
-  count.textContent = notes.length;
-  const label = el('span', 'nt-label');
+  // One group per kind: count, add, copy, clear.
+  Object.entries(KINDS).forEach(([kind, k]) => {
+    const g = el('div', `nt-group nt-kind-${kind}`);
+    g.setAttribute('role', 'group');
+    g.setAttribute('aria-label', k.plural);
+    const count = el('span', 'nt-count');
+    count.textContent = counts[kind];
+    count.setAttribute('aria-label', `${counts[kind]} ${k.plural.toLowerCase()} on this page`);
+    const label = el('span', 'nt-label');
+    label.textContent = k.plural;
+    const adding = isSelectMode && addKind === kind;
+    g.append(count, label, button(adding ? 'Cancel' : `Add ${k.label.toLowerCase()}`, `nt-btn${adding ? ' nt-active' : ''}`, () => toggleSelectMode(kind), k.key.toUpperCase()));
+    if (counts[kind]) {
+      g.appendChild(button(`Copy ${k.plural.toLowerCase()}`, 'nt-btn nt-secondary', (e) => copyKind(e.currentTarget, kind)));
+      g.appendChild(button(`Clear ${k.plural.toLowerCase()}`, 'nt-btn nt-danger', () => clearKind(kind)));
+    }
+    tb.appendChild(g);
+  });
+  const rest = el('div', 'nt-group');
   const others = countOtherPages();
-  label.textContent = others ? `Notes on this page (${others} on other pages)` : 'Notes on this page';
-  tb.append(count, label);
-  tb.appendChild(button(isSelectMode ? 'Cancel' : 'Add note', `nt-btn${isSelectMode ? ' nt-active' : ''}`, toggleSelectMode, 'N'));
-  if (notes.length) tb.appendChild(button('Copy', 'nt-btn nt-secondary', (e) => copyNotes(e.currentTarget, false)));
-  if (notes.length || others) tb.appendChild(button('Copy all pages', 'nt-btn nt-secondary', (e) => copyNotes(e.currentTarget, true)));
-  if (notes.length) tb.appendChild(button('Clear', 'nt-btn nt-danger', clearNotes));
-  tb.appendChild(button('Hide', 'nt-btn nt-secondary', toggleHide));
-  tb.appendChild(button('Turn off', 'nt-btn nt-secondary', deactivate));
+  if (notes.length || others) rest.appendChild(button(others ? `Copy all pages (${others + notes.length})` : 'Copy all pages', 'nt-btn nt-secondary', (e) => copyAll(e.currentTarget)));
+  rest.appendChild(button('Hide', 'nt-btn nt-secondary', toggleHide));
+  rest.appendChild(button('Turn off', 'nt-btn nt-secondary', deactivate));
+  tb.appendChild(rest);
   if (isSelectMode) {
     const hint = el('span', 'nt-hint');
-    hint.textContent = 'Click any text to attach a note. Esc to cancel.';
+    hint.textContent = `Click any text to attach a ${KINDS[addKind].label.toLowerCase()}. Esc to cancel.`;
     tb.appendChild(hint);
   }
 }
@@ -193,17 +215,22 @@ function button(text, cls, onClick, shortcut) {
 function onGlobalKey(e) {
   const tag = (e.target.tagName || '').toLowerCase();
   if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.target.isContentEditable) return;
-  if (e.metaKey || e.ctrlKey || e.altKey || e.key !== 'n') return;
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const kind = e.key === 'n' ? 'note' : e.key === 'd' ? 'discussion' : null;
+  if (!kind) return;
   e.preventDefault();
-  if (!isActive) { activate(); return; }
+  if (!isActive) { activate(); addKind = kind; refreshToolbar(); return; }
   if (isHidden) toggleHide();
-  toggleSelectMode();
+  toggleSelectMode(kind);
 }
 
 // ── Select mode ──────────────────────────────────────────────────────────────
-function toggleSelectMode() {
-  if (isSelectMode) { exitSelectMode(); refreshToolbar(); return; }
+function toggleSelectMode(kind = addKind) {
+  if (isSelectMode && kind === addKind) { exitSelectMode(); refreshToolbar(); return; }
+  if (isSelectMode) exitSelectMode();
+  addKind = kind;
   isSelectMode = true;
+  document.body.dataset.ntKind = kind;
   document.body.classList.add('nt-select-mode');
   document.addEventListener('mouseover', onHover);
   document.addEventListener('mouseout', onOut);
@@ -215,6 +242,7 @@ function toggleSelectMode() {
 function exitSelectMode() {
   isSelectMode = false;
   document.body.classList.remove('nt-select-mode');
+  delete document.body.dataset.ntKind;
   document.removeEventListener('mouseover', onHover);
   document.removeEventListener('mouseout', onOut);
   document.removeEventListener('click', onSelect, true);
@@ -257,28 +285,33 @@ function openAddPopover(targetEl, x, y) {
   const pop = el('div', 'nt-popover');
   pop.setAttribute('data-note-tool', '');
   pop.setAttribute('role', 'dialog');
-  pop.setAttribute('aria-label', 'Add a note');
+  const kind = addKind;
+  const k = KINDS[kind];
+  pop.classList.add(`nt-kind-${kind}`);
+  pop.setAttribute('aria-label', `Add a ${k.label.toLowerCase()}`);
   pop.style.left = `${Math.max(8, Math.min(x, window.innerWidth - 300))}px`;
   pop.style.top = `${Math.max(8, Math.min(y + 12, window.innerHeight - 150))}px`;
 
   const ta = el('textarea', 'nt-popover-input');
   ta.rows = 3;
-  ta.placeholder = 'Your note';
-  ta.setAttribute('aria-label', 'Note');
+  ta.placeholder = kind === 'discussion' ? 'What should the team discuss?' : 'Your note';
+  ta.setAttribute('aria-label', k.label);
+  const title = el('p', 'nt-popover-title');
+  title.textContent = `New ${k.label.toLowerCase()}`;
   const hint = el('p', 'nt-popover-hint');
   hint.textContent = '⌘↵ to save, Esc to cancel';
   const actions = el('div', 'nt-popover-actions');
   const doSave = () => {
     const text = ta.value.trim();
     if (text) {
-      notes.push({ id: uid(), fp: fingerprint(targetEl), text });
+      notes.push({ id: uid(), kind, fp: fingerprint(targetEl), text });
       saveNotes();
       rerenderAll();
     }
     closePopover();
   };
-  actions.append(button('Cancel', 'nt-btn nt-ghost', closePopover), button('Save note', 'nt-btn', doSave));
-  pop.append(ta, hint, actions);
+  actions.append(button('Cancel', 'nt-btn nt-ghost', closePopover), button(`Save ${k.label.toLowerCase()}`, 'nt-btn', doSave));
+  pop.append(title, ta, hint, actions);
   document.body.appendChild(pop);
   ta.focus();
   ta.addEventListener('keydown', (e) => {
@@ -303,11 +336,15 @@ function renderRail() {
   rail.setAttribute('data-note-tool', '');
   document.body.appendChild(rail);
 
-  notes.forEach((note, i) => {
-    const card = el('div', 'nt-card');
+  const numbers = numberByKind();
+  notes.forEach((note) => {
+    const i = numbers[note.id] - 1;
+    const kind = kindOf(note);
+    const card = el('div', `nt-card nt-kind-${kind}`);
     card.dataset.noteId = note.id;
     const badge = el('span', 'nt-badge');
     badge.textContent = i + 1;
+    badge.setAttribute('aria-label', `${KINDS[kind].label} ${i + 1}`);
     const body = el('div', 'nt-card-body');
     const text = el('span', 'nt-card-text');
     text.textContent = note.text;
@@ -315,7 +352,7 @@ function renderRail() {
     const del = el('button', 'nt-delete');
     del.type = 'button';
     del.textContent = '×';
-    del.setAttribute('aria-label', `Delete note ${i + 1}`);
+    del.setAttribute('aria-label', `Delete ${KINDS[kind].label.toLowerCase()} ${i + 1}`);
     body.append(text, del);
     card.append(badge, body);
     rail.appendChild(card);
@@ -348,13 +385,14 @@ function startEdit(note, textEl) {
 function renderBadges() {
   document.querySelectorAll('.nt-marker').forEach((m) => m.remove());
   if (!isActive || isHidden) return;
-  notes.forEach((note, i) => {
+  const numbers = numberByKind();
+  notes.forEach((note) => {
     if (!findByFingerprint(note.fp)) return;
-    const marker = el('span', 'nt-marker');
+    const marker = el('span', `nt-marker nt-kind-${kindOf(note)}`);
     marker.setAttribute('data-note-tool', '');
     marker.setAttribute('aria-hidden', 'true');
     marker.dataset.noteId = note.id;
-    marker.textContent = i + 1;
+    marker.textContent = numbers[note.id];
     document.body.appendChild(marker);
   });
 }
@@ -395,9 +433,19 @@ function toggleHide() {
   rerenderAll();
 }
 
-function describe(list, path) {
-  const lines = [`Notes: ${path}`];
-  list.forEach((note, i) => {
+// Numbers run separately for each kind: Note 1, 2… and Discussion 1, 2…
+function numberByKind(list = notes) {
+  const seen = { note: 0, discussion: 0 };
+  const out = {};
+  list.forEach((n) => { seen[kindOf(n)] += 1; out[n.id] = seen[kindOf(n)]; });
+  return out;
+}
+
+function describe(list, path, kind) {
+  const items = list.filter((n) => kindOf(n) === kind);
+  if (!items.length) return '';
+  const lines = [`${KINDS[kind].plural}: ${path}`];
+  items.forEach((note, i) => {
     const where = [];
     if (note.fp.screenId) where.push(note.fp.screenId);
     const snippet = (note.fp.text || '').slice(0, 50);
@@ -407,19 +455,7 @@ function describe(list, path) {
   return lines.join('\n');
 }
 
-function copyNotes(btn, all) {
-  let text = describe(notes, page);
-  if (all) {
-    const blocks = [];
-    try {
-      for (let i = 0; i < localStorage.length; i += 1) {
-        const k = localStorage.key(i);
-        const list = k.startsWith(PREFIX) ? store.get(k, []) : [];
-        if (list.length) blocks.push(describe(list, k.slice(PREFIX.length)));
-      }
-    } catch { /* ignore */ }
-    text = blocks.sort().join('\n\n');
-  }
+function writeClipboard(btn, text) {
   const done = () => { const old = btn.textContent; btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = old; }, 1800); };
   navigator.clipboard?.writeText(text).then(done).catch(() => {
     const ta = document.createElement('textarea');
@@ -434,9 +470,27 @@ function copyNotes(btn, all) {
   });
 }
 
-function clearNotes() {
-  if (!window.confirm(`Delete all ${notes.length} note${notes.length === 1 ? '' : 's'} on this page? This can’t be undone.`)) return;
-  notes = [];
+function copyKind(btn, kind) { writeClipboard(btn, describe(notes, page, kind)); }
+
+// Every page, notes first then discussions, each block labelled with its page.
+function copyAll(btn) {
+  const pages = [];
+  try {
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const k = localStorage.key(i);
+      if (k.startsWith(PREFIX)) pages.push([k.slice(PREFIX.length), store.get(k, []) || []]);
+    }
+  } catch { /* ignore */ }
+  pages.sort((a, b) => a[0].localeCompare(b[0]));
+  const blocks = Object.keys(KINDS).flatMap((kind) => pages.map(([path, list]) => describe(list, path, kind)).filter(Boolean));
+  writeClipboard(btn, blocks.join('\n\n'));
+}
+
+function clearKind(kind) {
+  const n = notes.filter((x) => kindOf(x) === kind).length;
+  const k = KINDS[kind];
+  if (!window.confirm(`Delete all ${n} ${n === 1 ? k.label.toLowerCase() : k.plural.toLowerCase()} on this page? This can’t be undone.`)) return;
+  notes = notes.filter((x) => kindOf(x) !== kind);
   saveNotes();
   rerenderAll();
 }

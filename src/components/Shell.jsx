@@ -129,14 +129,24 @@ function Header() {
 
 const DRAWER_KEY = 'isp-demo-drawer';
 
-// Notes for a page key, summed across its views or for one view.
+// Notes and discussions for a page, summed across its views or for one view.
 function countFor(counts, page, viewId) {
   return Object.entries(counts).reduce((n, [key, c]) => {
     const [path, suffix = ''] = key.split('~');
     if (!page.match(path)) return n;
-    if (viewId === undefined || suffix === viewId) return n + c;
+    if (viewId === undefined || suffix === viewId) return { note: n.note + c.note, discussion: n.discussion + c.discussion };
     return n;
-  }, 0);
+  }, { note: 0, discussion: 0 });
+}
+
+// Purple = notes, teal = discussions (same colours as the Notes tool).
+function NoteCounts({ n }) {
+  return (
+    <>
+      {n.note > 0 && <span className="demo-notes" title={`${n.note} notes`} aria-label={`${n.note} notes`}>{n.note}</span>}
+      {n.discussion > 0 && <span className="demo-notes demo-discuss" title={`${n.discussion} discussions`} aria-label={`${n.discussion} discussions`}>{n.discussion}</span>}
+    </>
+  );
 }
 
 function useNotesCounts() {
@@ -177,7 +187,7 @@ function PageList({ close }) {
                 <li key={p.id}>
                   <button type="button" className="demo-page" aria-current={here && !p.views ? 'page' : undefined} onClick={() => go(p, p.views?.[0])}>
                     <span className="grow">{p.label}</span>
-                    {total > 0 && <span className="demo-notes" title={`${total} notes`}>{total}</span>}
+                    <NoteCounts n={total} />
                     <span className={`demo-kind demo-kind-${p.kind}`}>{p.kind === 'clickable' ? 'Clickable' : 'Simulated'}</span>
                   </button>
                   {p.views && (
@@ -188,8 +198,19 @@ function PageList({ close }) {
                           <li key={v.id || 'default'}>
                             <button type="button" className="demo-page demo-view" aria-current={here && currentView(p) === v.id ? 'page' : undefined} onClick={() => go(p, v)}>
                               <span className="grow">{v.label}</span>
-                              {n > 0 && <span className="demo-notes" title={`${n} notes`}>{n}</span>}
+                              <NoteCounts n={n} />
                             </button>
+                            {v.control === 'locate' && (
+                              <fieldset className="demo-control">
+                                <legend>“Use my location” finds</legend>
+                                {[['new', 'A new place'], ['existing', 'An existing space']].map(([val, label]) => (
+                                  <label key={val} className="row xs">
+                                    <input type="radio" name="locate-finds" checked={state.locateFinds === val} onChange={() => dispatch({ type: 'SET_LOCATE', value: val })} />
+                                    {label}
+                                  </label>
+                                ))}
+                              </fieldset>
+                            )}
                           </li>
                         );
                       })}
@@ -211,7 +232,7 @@ function DemoPanel() {
   const setOpen = (v) => { setOpenRaw(v); try { localStorage.setItem(DRAWER_KEY, v ? '1' : '0'); } catch { /* ignore */ } };
   const nav = useNavigate();
   const counts = useNotesCounts();
-  const totalNotes = Object.values(counts).reduce((a, b) => a + b, 0);
+  const totals = Object.values(counts).reduce((a, c) => ({ note: a.note + c.note, discussion: a.discussion + c.discussion }), { note: 0, discussion: 0 });
   // While the drawer is open, the page makes room for it instead of being covered.
   useEffect(() => {
     document.body.classList.toggle('demo-open', open);
@@ -223,7 +244,7 @@ function DemoPanel() {
     return (
       <button type="button" className="demo-pill" onClick={() => setOpen(true)} aria-expanded="false" aria-controls="demo-drawer">
         <span>Demo: {roleLabel}</span>
-        {totalNotes > 0 && <span className="demo-notes">{totalNotes}</span>}
+        <NoteCounts n={totals} />
       </button>
     );
   }
@@ -247,9 +268,9 @@ function DemoPanel() {
         <section className="stack-sm" aria-labelledby="demo-pages-h">
           <div className="row between">
             <h3 id="demo-pages-h" className="demo-h">Pages to review</h3>
-            <span className="xs muted">{totalNotes} notes</span>
+            <span className="xs muted">{totals.note} notes, {totals.discussion} discussions</span>
           </div>
-          <p className="xs muted">Opening a page switches to a role that can see it. Numbers are your notes on that page.</p>
+          <p className="xs muted">Opening a page switches to a role that can see it. Purple numbers are notes, teal are discussions.</p>
           <PageList close={() => setOpen(false)} />
         </section>
         <section className="stack-sm" aria-labelledby="demo-ctl-h">
@@ -331,7 +352,7 @@ function NotesButton() {
   }, []);
   return (
     <Button onClick={activateNotes} aria-keyshortcuts="N">
-      {on ? 'Notes are on (press N to add)' : 'Turn on notes (or press N)'}
+      {on ? 'Notes are on (N: note, D: discussion)' : 'Turn on notes (or press N or D)'}
     </Button>
   );
 }

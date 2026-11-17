@@ -25,10 +25,13 @@ function Stat({ icon, n, label }) {
 // headingLevel keeps the page outline correct (h2 under an h1, h3 under an h2).
 export function SpaceCard({ space, faded, active, onHover, headingLevel = 3, variant }) {
   const { spaceCard } = useChoices();
+  const { state } = useDemo();
+  const nRedesigns = state.redesigns.filter((r) => r.spaceId === space.id && r.published && !r.takenDown).length;
   const v = SPACE_CARD_VARIANTS[variant] ? variant : spaceCard;
   const H = `h${headingLevel}`;
   const votes = <Stat icon="vote" n={space.votes} label={space.votes === 1 ? 'vote' : 'votes'} />;
   const photos = <Stat icon="photo" n={space.photos.length} label={space.photos.length === 1 ? 'photo' : 'photos'} />;
+  const redesigns = <Stat icon="redesign" n={nRedesigns} label={nRedesigns === 1 ? 'redesign' : 'redesigns'} />;
   const badges = <StatusBadges space={space} />;
   const hasBadges = space.status !== 'approved' || space.readyForApproval || space.removal === 'review';
 
@@ -44,6 +47,7 @@ export function SpaceCard({ space, faded, active, onHover, headingLevel = 3, var
         </div>
         <dl className="card-foot">
           <div><dt>Votes</dt><dd>{space.votes}</dd></div>
+          <div><dt>Redesigns</dt><dd>{nRedesigns}</dd></div>
           <div><dt>Photos</dt><dd>{space.photos.length}</dd></div>
         </dl>
       </>
@@ -59,7 +63,7 @@ export function SpaceCard({ space, faded, active, onHover, headingLevel = 3, var
           </span>
           <div className="stack-sm grow">
             <H className="card-title">{space.name}</H>
-            <span className="small muted">{typeLabel(space.type)}, {space.photos.length} photos</span>
+            <span className="small muted">{typeLabel(space.type)}, {nRedesigns} {nRedesigns === 1 ? 'redesign' : 'redesigns'}, {space.photos.length} photos</span>
             {hasBadges && <div className="row">{badges}</div>}
           </div>
         </div>
@@ -72,7 +76,7 @@ export function SpaceCard({ space, faded, active, onHover, headingLevel = 3, var
         <div className="stack-sm grow">
           <H className="card-title">{space.name}</H>
           <div className="row"><Badge>{typeLabel(space.type)}</Badge>{badges}</div>
-          <div className="row small">{votes}{photos}</div>
+          <div className="row small stats">{votes}{redesigns}{photos}</div>
         </div>
       </div>
     );
@@ -85,7 +89,7 @@ export function SpaceCard({ space, faded, active, onHover, headingLevel = 3, var
         </div>
         {hasBadges && <div className="row">{badges}</div>}
         <H className="card-title">{space.name}</H>
-        <div className="row small">{votes}{photos}</div>
+        <div className="row small stats">{votes}{redesigns}{photos}</div>
       </>
     );
   }
@@ -106,44 +110,58 @@ export function SpaceCard({ space, faded, active, onHover, headingLevel = 3, var
   );
 }
 
-// Map placeholder: pins are placed from each space's lat/lng and show the vote count.
-// `area` sets the map's extent (defaults to the pins), so an empty filter keeps the same map.
-// Pins closer than a pin's width are nudged apart so both stay clickable.
-export function MapBox({ spaces, area, hiddenIds = [], activeId, onHover, sticky, className = '', label = 'Map placeholder: Jaipur. Dashed pins are pending.', children }) {
+// Distance in metres between two lat/lng points (haversine).
+export function distanceM(a, b) {
+  const R = 6371000;
+  const rad = (d) => (d * Math.PI) / 180;
+  const dLat = rad(b.lat - a.lat);
+  const dLng = rad(b.lng - a.lng);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+const ZOOM_SPAN = 0.0016; // degrees shown either side of a focused point (about 170 m)
+
+// Map placeholder. Pins are plain markers: solid for approved, dashed and hollow for pending.
+// `area` sets the extent when nothing is focused, so an empty filter keeps the same map.
+// `focus` ({ lat, lng }) zooms in around a point. With `onPinClick`, pins are buttons
+// that select a space (map landing); without it they link to the space page (Browse).
+// `me` draws a "you are here" marker.
+export function MapBox({ spaces, area, hiddenIds = [], activeId, selectedId, onHover, onPinClick, focus, me, sticky, className = '', label = 'Map placeholder: Jaipur. Dashed pins are pending.', children }) {
   const extent = area?.length ? area : spaces;
-  const lats = extent.map((s) => s.lat);
-  const lngs = extent.map((s) => s.lng);
-  const [minLat, maxLat, minLng, maxLng] = [Math.min(...lats), Math.max(...lats), Math.min(...lngs), Math.max(...lngs)];
+  let [minLat, maxLat, minLng, maxLng] = [Math.min(...extent.map((s) => s.lat)), Math.max(...extent.map((s) => s.lat)), Math.min(...extent.map((s) => s.lng)), Math.max(...extent.map((s) => s.lng))];
+  if (focus) [minLat, maxLat, minLng, maxLng] = [focus.lat - ZOOM_SPAN, focus.lat + ZOOM_SPAN, focus.lng - ZOOM_SPAN * 1.6, focus.lng + ZOOM_SPAN * 1.6];
+  // Grid scale while zoomed: a hint of magnification, capped so cells stay readable.
+  const zoom = focus ? 2.5 : 1;
+  const xy = (p) => ({
+    x: 8 + ((p.lng - minLng) / (maxLng - minLng || 1)) * 84,
+    y: 90 - ((p.lat - minLat) / (maxLat - minLat || 1)) * 72,
+  });
   const placed = [];
   const pos = spaces.map((s) => {
-    let x = 8 + ((s.lng - minLng) / (maxLng - minLng || 1)) * 84;
-    let y = 90 - ((s.lat - minLat) / (maxLat - minLat || 1)) * 72;
-    // Nudge down-right until clear of earlier pins (in % of the map).
-    for (let i = 0; i < 6 && placed.some((p) => Math.abs(p.x - x) < 4.5 && Math.abs(p.y - y) < 5); i += 1) { x += 3.5; y += 4; }
+    let { x, y } = xy(s);
+    // Nudge apart pins that would overlap (in % of the map).
+    for (let i = 0; i < 6 && placed.some((p) => Math.abs(p.x - x) < 2.5 && Math.abs(p.y - y) < 3.5); i += 1) { x += 2; y += 2.5; }
     placed.push({ x, y });
     return { left: `${x}%`, top: `${y}%` };
   });
+  const status = (s) => (s.status === 'approved' ? 'approved' : 'pending');
+  const meXY = me && xy(me);
   return (
-    <div className={`map ${sticky ? 'map-sticky' : ''} ${className}`}>
+    <div className={`map ${sticky ? 'map-sticky' : ''} ${className}`} style={{ '--map-zoom': zoom }}>
       {label && <span className="map-label">{label}</span>}
-      {spaces.map((s, i) =>
-        hiddenIds.includes(s.id) ? (
-          <span key={s.id} className="pin faded" style={pos[i]} aria-hidden="true">?</span>
+      {spaces.map((s, i) => {
+        if (hiddenIds.includes(s.id)) return <span key={s.id} className="pin faded" style={pos[i]} aria-hidden="true" />;
+        const cls = `pin pin-${status(s)} ${activeId === s.id ? 'pin-active' : ''} ${selectedId === s.id ? 'pin-selected' : ''}`;
+        const name = `${s.name}, ${status(s)}, ${s.votes} votes`;
+        const hover = { onMouseEnter: () => onHover?.(s.id), onMouseLeave: () => onHover?.(null), onFocus: () => onHover?.(s.id), onBlur: () => onHover?.(null) };
+        return onPinClick ? (
+          <button key={s.id} type="button" className={cls} style={pos[i]} title={s.name} aria-label={name} aria-pressed={selectedId === s.id} onClick={() => onPinClick(s)} {...hover} />
         ) : (
-          <Link
-            key={s.id}
-            to={`/space/${s.id}`}
-            className={`pin ${s.status !== 'approved' ? 'pin-pending' : ''} ${activeId === s.id ? 'pin-active' : ''}`}
-            style={pos[i]}
-            title={s.name}
-            aria-label={`${s.name}, ${s.votes} votes`}
-            onMouseEnter={() => onHover?.(s.id)}
-            onMouseLeave={() => onHover?.(null)}
-          >
-            {s.votes}
-          </Link>
-        ),
-      )}
+          <Link key={s.id} to={`/space/${s.id}`} className={cls} style={pos[i]} title={s.name} aria-label={name} {...hover} />
+        );
+      })}
+      {meXY && <span className="pin-me" style={{ left: `${meXY.x}%`, top: `${meXY.y}%` }} role="img" aria-label="Your location" />}
       {children}
     </div>
   );

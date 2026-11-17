@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
-import { Button, Choice, ImageBox, Input, Page, Select } from '../components/ui.jsx';
-import { MapBox, SpaceCard, matchesSearch } from '../components/domain.jsx';
+import { Button, Choice, Icon, ImageBox, Input, Page, Select } from '../components/ui.jsx';
+import { MapBox, SpaceCard, distanceM, matchesSearch } from '../components/domain.jsx';
 import { useChoices } from '../design/choices.js';
 
 const VISITOR_LIMIT = 10;
@@ -123,66 +123,172 @@ function ClassicLanding() {
   );
 }
 
+// Simulated positions for "Use my location". The Demo bar chooses which one you get.
+export const LOCATE = {
+  new: { lat: 26.9301, lng: 75.8243, label: 'a place that isn’t documented yet' },
+  existing: { lat: 26.93615, lng: 75.81535, spaceId: 's5', label: 'a documented space' },
+};
+const NEARBY_M = 50;
+
+function redesignCount(state, id) {
+  return state.redesigns.filter((r) => r.spaceId === id && r.published && !r.takenDown).length;
+}
+
+// The selected space in the side panel, plus the other spaces within 50 m.
+function SelectedSpace({ space, onBack, onSelect }) {
+  const { visibleSpaces } = useDemo();
+  const nearby = visibleSpaces
+    .filter((s) => s.id !== space.id)
+    .map((s) => ({ s, d: distanceM(space, s) }))
+    .filter((x) => x.d <= NEARBY_M)
+    .sort((a, b) => a.d - b.d);
+  return (
+    <div className="stack">
+      <div><button type="button" className="link-btn small" onClick={onBack}>Back to search</button></div>
+      <SpaceCard space={space} variant="row" headingLevel={2} />
+      <section className="stack-sm" aria-labelledby="nearby-h">
+        <h3 id="nearby-h" className="demo-h">Other spaces within {NEARBY_M} m</h3>
+        {nearby.length === 0 ? (
+          <p className="small muted">No other documented spaces within {NEARBY_M} m.</p>
+        ) : (
+          <ul className="list small">
+            {nearby.map(({ s, d }) => (
+              <li key={s.id}>
+                <button type="button" className="result-btn" onClick={() => onSelect(s)}>
+                  <span className="bold">{s.name}</span>
+                  <span className="muted">{Math.round(d)} m away, {s.votes} votes</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </div>
+  );
+}
+
 // Map-first landing (like OpenCelliD): the map is the page, with search and a short
-// description on top. Searching for a place that isn't there offers to add it.
+// description on top. Clicking a pin zooms in and shows that space in the panel;
+// the card opens the space. Searching for a place that isn't there offers to add it.
 function MapLanding() {
-  const { visibleSpaces, isMember, dispatch } = useDemo();
+  const { state, visibleSpaces, isMember, dispatch, get } = useDemo();
   const { landing } = useChoices();
   const nav = useNavigate();
   const [q, setQ] = useState('');
   const [hover, setHover] = useState(null);
+  const [selectedId, setSelectedId] = useState(null);
+  const [locate, setLocate] = useState('idle'); // idle | locating | new
+  const [me, setMe] = useState(null);
+  const panel = useRef(null);
+  const selected = selectedId ? get.space(selectedId) : null;
   const results = q.trim() ? visibleSpaces.filter((s) => matchesSearch(s, q)) : [];
-  const pins = q.trim() ? results : visibleSpaces;
-  const add = () => {
-    const to = `/space/new?name=${encodeURIComponent(q.trim())}`;
+  const pins = q.trim() && !selected ? results : visibleSpaces;
+  const focus = selected ? { lat: selected.lat, lng: selected.lng } : locate === 'new' ? me : null;
+
+  const select = (s) => { setSelectedId(s.id); setLocate('idle'); setTimeout(() => panel.current?.querySelector('a, button')?.focus(), 0); };
+  const back = () => { setSelectedId(null); setLocate('idle'); setMe(null); };
+  const addPlace = (name) => {
+    const to = `/space/new${name ? `?name=${encodeURIComponent(name)}` : ''}`;
     if (isMember) nav(to);
     else dispatch({ type: 'OPEN_SIGNUP', reason: 'upload', returnTo: to });
   };
-  return (
-    <>
-      <main id="main" tabIndex={-1} data-screen-label="page" className="map-landing">
-        <MapBox spaces={pins} area={visibleSpaces} activeId={hover} onHover={setHover} className="map-hero" label={null}>
-          <div className="map-search" role="search">
-            <h1>The stoop, the stepwell, the courtyard in between.</h1>
-            <p className="small">A map of everyday in-between spaces in Jaipur, documented by the people who use them. Architects propose redesigns, and the platform is a co-op owned by its members.</p>
-            <form onSubmit={(e) => { e.preventDefault(); if (results.length === 1) nav(`/space/${results[0].id}`); }}>
-              <label htmlFor="map-q" className="small bold">Search for a space</label>
-              <div className="row">
-                <input id="map-q" className="input grow" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Stepwell, Johari Bazaar, shade…" autoComplete="off" />
-              </div>
-            </form>
-            {q.trim() && (
-              <div className="map-results" aria-live="polite">
-                {results.length > 0 ? (
-                  <>
-                    <p className="xs muted">{results.length} {results.length === 1 ? 'space' : 'spaces'} on the map</p>
-                    <ul className="list small">
-                      {results.slice(0, 5).map((s) => (
-                        <li key={s.id} onMouseEnter={() => setHover(s.id)} onMouseLeave={() => setHover(null)}>
-                          <Link to={`/space/${s.id}`} className="bold">{s.name}</Link>
-                          <span className="muted"> {s.votes} votes</span>
-                        </li>
-                      ))}
-                    </ul>
-                    {results.length > 5 && <Link className="small" to="/browse">See all {results.length} in Browse</Link>}
-                  </>
-                ) : (
-                  <div className="stack-sm">
-                    <p className="small">No space called “{q.trim()}” yet.</p>
-                    <div><Button variant="primary" onClick={add}>{isMember ? 'Add this place' : 'Sign up to add this place'}</Button></div>
-                  </div>
-                )}
+  const locateMe = () => {
+    setSelectedId(null);
+    setLocate('locating');
+    setTimeout(() => {
+      const found = LOCATE[state.locateFinds] || LOCATE.new;
+      setMe({ lat: found.lat, lng: found.lng });
+      if (found.spaceId) { setLocate('idle'); setSelectedId(found.spaceId); } else setLocate('new');
+    }, 900);
+  };
+
+  let content;
+  if (selected) {
+    content = (
+      <>
+        {me && <p className="note small">You’re here: this space is {Math.round(distanceM(me, selected))} m from your location.</p>}
+        <SelectedSpace space={selected} onBack={back} onSelect={select} />
+      </>
+    );
+  } else if (locate === 'locating') {
+    content = <div className="row" role="status"><div className="spinner" aria-hidden="true" /><span>Finding your location…</span></div>;
+  } else if (locate === 'new') {
+    content = (
+      <div className="stack">
+        <div><button type="button" className="link-btn small" onClick={back}>Back to search</button></div>
+        <h2 className="h-sm">Nothing documented here yet</h2>
+        <p className="small">You’re at {me.lat.toFixed(4)}, {me.lng.toFixed(4)}. No space on the platform is within {NEARBY_M} m. If you’re standing somewhere worth documenting, add it: photos taken here count in full.</p>
+        <div><Button variant="primary" onClick={() => addPlace('')}>{isMember ? 'Document this place' : 'Sign up to document this place'}</Button></div>
+      </div>
+    );
+  } else {
+    content = (
+      <>
+        <h1>The stoop, the stepwell, the courtyard in between.</h1>
+        <p className="small">A map of everyday in-between spaces in Jaipur, documented by the people who use them. Architects propose redesigns, and the platform is a co-op owned by its members.</p>
+        <form onSubmit={(e) => { e.preventDefault(); if (results.length === 1) select(results[0]); }}>
+          <label htmlFor="map-q" className="small bold">Search for a space</label>
+          <input id="map-q" className="input" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Stepwell, Johari Bazaar, shade…" autoComplete="off" />
+        </form>
+        <div><Button onClick={locateMe}><Icon name="locate" />Use my location</Button></div>
+        {q.trim() && (
+          <div className="map-results" aria-live="polite">
+            {results.length > 0 ? (
+              <>
+                <p className="xs muted">{results.length} {results.length === 1 ? 'space' : 'spaces'} on the map</p>
+                <ul className="list small">
+                  {results.slice(0, 5).map((s) => {
+                    const n = redesignCount(state, s.id);
+                    return (
+                      <li key={s.id} onMouseEnter={() => setHover(s.id)} onMouseLeave={() => setHover(null)}>
+                        <button type="button" className="result-btn" onClick={() => select(s)}>
+                          <span className="bold">{s.name}</span>
+                          <span className="row muted">
+                            <span className="stat"><Icon name="vote" />{s.votes} votes</span>
+                            <span className="stat"><Icon name="redesign" />{n} {n === 1 ? 'redesign' : 'redesigns'}</span>
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+                {results.length > 5 && <Link className="small" to="/browse">See all {results.length} in Browse</Link>}
+              </>
+            ) : (
+              <div className="stack-sm">
+                <p className="small">No space called “{q.trim()}” yet.</p>
+                <div><Button variant="primary" onClick={() => addPlace(q.trim())}>{isMember ? 'Add this place' : 'Sign up to add this place'}</Button></div>
               </div>
             )}
           </div>
-          <span className="map-label map-label-br">Map placeholder: Jaipur. Dashed pins are pending.</span>
-        </MapBox>
-        <div className="page stack-lg">
-          {(LANDING_VARIANTS[landing] || LANDING_VARIANTS.steps).render()}
-          <RecentlyDocumented />
-        </div>
-      </main>
-    </>
+        )}
+      </>
+    );
+  }
+
+  return (
+    <main id="main" tabIndex={-1} data-screen-label="page" className="map-landing">
+      <MapBox
+        spaces={pins}
+        area={visibleSpaces}
+        activeId={hover}
+        selectedId={selectedId}
+        onHover={setHover}
+        onPinClick={select}
+        focus={focus}
+        me={me}
+        className="map-hero"
+        label={null}
+      >
+        <div className="map-search" role="region" aria-label="Search and details" ref={panel}>{content}</div>
+        {focus && <button type="button" className="btn map-zoom-out" onClick={back}>Show all of Jaipur</button>}
+        <span className="map-label map-label-br">Map placeholder: Jaipur. Dashed pins are pending.</span>
+      </MapBox>
+      <div className="page stack-lg">
+        {(LANDING_VARIANTS[landing] || LANDING_VARIANTS.steps).render()}
+        <RecentlyDocumented />
+      </div>
+    </main>
   );
 }
 

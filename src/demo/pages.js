@@ -11,7 +11,7 @@ export const PAGE_GROUPS = [
   {
     group: 'Visitor and community',
     pages: [
-      { id: 'landing', label: 'Landing', to: '/', kind: 'simulated', match: exact('/'), views: [{ id: '', label: 'Classic', choice: ['landingLayout', 'classic'] }, { id: 'map', label: 'Map first', choice: ['landingLayout', 'map'] }] },
+      { id: 'landing', label: 'Landing', to: '/', kind: 'simulated', match: exact('/'), views: [{ id: '', label: 'Classic', choice: ['landingLayout', 'classic'] }, { id: 'map', label: 'Map first', choice: ['landingLayout', 'map'], control: 'locate' }] },
       { id: 'browse', label: 'Browse spaces', to: '/browse', kind: 'simulated', match: exact('/browse') },
       { id: 'space', label: 'Space page', to: '/space/s2', kind: 'clickable', match: re(/^\/space\/(?!new$)[^/]+$/), views: [{ id: '', label: 'One page', layout: 'single' }, { id: 'tabs', label: 'Tabs', layout: 'tabs' }] },
       { id: 'space-new', label: 'Create new space', to: '/space/new', kind: 'simulated', role: 'community', match: exact('/space/new') },

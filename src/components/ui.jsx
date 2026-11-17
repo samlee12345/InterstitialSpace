@@ -7,6 +7,8 @@ import { fmtPoints } from '../lib/points.js';
 const ICONS = {
   vote: 'M10 4 4.5 10.5h3.5V16h4v-5.5h3.5Z',
   photo: 'M3 7h3l1.5-2h5L14 7h3v9H3Z M10 14a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
+  redesign: 'M4 16l.9-3.6L13 4.3l2.7 2.7-8.1 8.1Z M11.4 5.9l2.7 2.7',
+  locate: 'M10 3v2.5 M10 14.5V17 M3 10h2.5 M14.5 10H17 M10 14.5a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Z M10 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z',
   pin: 'M10 17s5-4.6 5-8.5a5 5 0 0 0-10 0C5 12.4 10 17 10 17Z M10 10.2a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4Z',
 };
 export function Icon({ name, label }) {

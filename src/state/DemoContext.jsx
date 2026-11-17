@@ -20,6 +20,7 @@ const fresh = (role = 'architect') => ({
   failNextPayment: false,
   layout: 'single', // space page: 'single' (everything on one page) or 'tabs'
   weekSkip: 0, // demo control: pretend this many weeks have passed
+  locateFinds: 'new', // demo control: "Use my location" lands on a 'new' place or an 'existing' space
   returnTo: null,
   toasts: [],
   seq: 1,
@@ -60,6 +61,8 @@ function reducer(s, a) {
       return { ...s, failNextPayment: a.on };
     case 'SET_LAYOUT':
       return { ...s, layout: a.layout };
+    case 'SET_LOCATE':
+      return { ...s, locateFinds: a.value };
     case 'SKIP_WEEK':
       return toast({ ...s, weekSkip: s.weekSkip + 1 }, 'Skipped ahead one week');
     case 'CLEAR_RETURN':
