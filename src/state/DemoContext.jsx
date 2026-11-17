@@ -22,7 +22,7 @@ const fresh = (role = 'architect') => ({
   weekSkip: 0, // demo control: pretend this many weeks have passed
   locateFinds: 'new', // demo control: "Use my location" lands on a 'new' place or an 'existing' space
   createGeotag: true, // demo control: photos uploaded in Create new space carry location data
-  createNearby: true, // demo control: there are documented spaces within 50 m of those photos
+  createNearby: true, // demo control: the photos were taken next to documented spaces
   returnTo: null,
   toasts: [],
   seq: 1,
@@ -74,7 +74,7 @@ function reducer(s, a) {
 
     // ── Architect: redesigns ───────────────────────────────
     case 'PUBLISH_REDESIGN': {
-      const r = { id: a.id, spaceId: a.spaceId, architectId: a.userId, title: a.title, description: a.description, files: a.files, version: 1, published: true, takenDown: false, sales: 0, createdAt: Date.now() + s.weekSkip * WEEK };
+      const r = { id: a.id, spaceId: a.spaceId, architectId: a.userId, title: a.title, description: a.description, files: a.files, details: a.details || null, version: 1, published: true, takenDown: false, sales: 0, createdAt: Date.now() + s.weekSkip * WEEK };
       let n = { ...s, redesigns: [r, ...s.redesigns] };
       n = awardToast(n, a.userId, POINTS.redesign, 'redesign published');
       return notify(n, a.userId, 'points', `+5 points for publishing “${a.title}”.`, '/points');
@@ -193,7 +193,7 @@ function reducer(s, a) {
     case 'CREATE_SPACE': {
       const sp = {
         id: a.id, name: a.name, type: a.spaceType,
-        lat: a.lat ?? 26.9255 + (s.seq % 5) * 0.002, lng: a.lng ?? 75.8205 + (s.seq % 7) * 0.002, areaM: a.areaM || null,
+        lat: a.lat ?? 26.9255 + (s.seq % 5) * 0.002, lng: a.lng ?? 75.8205 + (s.seq % 7) * 0.002, areaM: a.areaM || null, area: a.area || null,
         // "The new space is inside this one" → parent. Only one parent.
         parentId: Object.entries(a.relations || {}).find(([, r]) => r === 'parent')?.[0] || null,
         status: 'pending', readyForApproval: false, uploadedBy: a.userId, votes: 0,

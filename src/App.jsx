@@ -9,7 +9,8 @@ import { Portfolio, ArchitectPage, Ranking, Earnings, Notifications } from './pa
 import { Contests, Contest, ContestRequest } from './pages/Contests.jsx';
 import SpaceNew from './pages/SpaceNew.jsx';
 import { Moderation, ModerationReview, Flags } from './pages/Moderation.jsx';
-import { Points, Coop, Profile, Removal } from './pages/Account.jsx';
+import { Points, Coop, Profile, Removal, Contributions } from './pages/Account.jsx';
+import { ForArchitects, Login } from './pages/Join.jsx';
 
 function NotFound() {
   return (
@@ -50,9 +51,12 @@ export default function App() {
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/earnings" element={<Earnings />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/contributions" element={<Contributions />} />
         <Route path="/removal/:spaceId" element={<Removal />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/architects" element={<ForArchitects />} />
+        <Route path="/login" element={<Login />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

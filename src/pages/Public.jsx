@@ -77,7 +77,7 @@ function CoopBand() {
     <section className="coop-band" aria-labelledby="coop-heading">
       <h2 id="coop-heading">Owned by the people who use it</h2>
       <p className="small">Every account is a member of the co-op with one vote on how it runs. Any surplus at the end of the year goes back to members by the points they earned. If the platform ever closes, contributors keep their work.</p>
-      <div className="row small"><Link to="/co-op">How the co-op decides</Link><Link to="/terms">Terms summary</Link></div>
+      <div className="row small"><Link to="/co-op">How the co-op decides</Link><Link to="/terms">Terms of Use</Link></div>
     </section>
   );
 }
@@ -384,70 +384,34 @@ export function Browse() {
   );
 }
 
+// Free community account. Architects go through verification at /architects.
 export function Signup() {
   const { dispatch, isMember, state } = useDemo();
   const nav = useNavigate();
-  // After sign-up, go back to whatever the visitor was trying to do.
   const back = state.returnTo || '/browse';
-  const [kind, setKind] = useState('community');
-  const [f, setF] = useState({ name: '', email: '', status: 'Licensed architect', licence: '' });
-  const [phase, setPhase] = useState('form'); // form | verifying
+  const [f, setF] = useState({ name: '', email: '' });
   const [err, setErr] = useState('');
-
-  useEffect(() => {
-    if (phase !== 'verifying') return undefined;
-    const t = setTimeout(() => {
-      dispatch({ type: 'SIGNUP', kind });
-      dispatch({ type: 'CLEAR_RETURN' });
-      nav(back);
-    }, 2600);
-    return () => clearTimeout(t);
-  }, [phase, kind, dispatch, nav, back]);
-
   const submit = (e) => {
     e.preventDefault();
     if (!f.name.trim() || !f.email.includes('@')) return setErr('Enter your name and an email address.');
-    if (kind === 'architect' && !f.licence.trim()) return setErr('Enter your licence number or school.');
     setErr('');
-    if (kind === 'architect') return setPhase('verifying');
-    dispatch({ type: 'SIGNUP', kind });
+    dispatch({ type: 'SIGNUP', kind: 'community' });
     dispatch({ type: 'CLEAR_RETURN' });
     return nav(back);
   };
-
-  if (phase === 'verifying') {
-    return (
-      <Page narrow tag="simulated">
-        <div className="alert">
-          <div className="row"><div className="spinner" aria-hidden="true" /><h1>Verifying…</h1></div>
-          <p>Verifying via state/national databases, NCARB, NAAB.</p>
-          <p className="small muted">Simulated. You’ll be signed in as an architect in a moment and taken back to where you were.</p>
-        </div>
-      </Page>
-    );
-  }
   return (
-    <Page narrow tag="simulated">
-      <h1>Sign up</h1>
-      {isMember && <p className="note">You’re already signed in for this demo role. Switch to Visitor in the Demo panel to try sign-up from scratch.</p>}
+    <Page narrow>
+      <h1>Create a free account</h1>
+      {isMember && <p className="note">You’re already signed in for this demo role. Switch to Visitor in the Demo bar to try sign-up from scratch.</p>}
+      <p>Document spaces, add your experience, vote, and buy redesigns and models. Every account is a member of the co-op with one vote.</p>
       <form className="stack" onSubmit={submit}>
-        <div className="field">
-          <span className="label">What kind of account?</span>
-          <Choice name="kind" checked={kind === 'community'} onChange={() => setKind('community')} title="Community member">Document spaces, comment, vote, and buy redesigns and models. Free.</Choice>
-          <Choice name="kind" checked={kind === 'architect'} onChange={() => setKind('architect')} title="Architect">Everything above, plus upload redesigns and diagrams, enter contests, and a public portfolio. Free.</Choice>
-        </div>
-        <Input label="Name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
-        <Input label="Email" type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
-        {kind === 'architect' && (
-          <>
-            <Select label="Your status" value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })} options={['Licensed architect', 'Accredited architecture student']} />
-            <Input label={f.status === 'Licensed architect' ? 'Licence number' : 'School and programme'} value={f.licence} onChange={(e) => setF({ ...f, licence: e.target.value })} hint="We check this against state/national databases, NCARB and NAAB." />
-          </>
-        )}
+        <Input label="Name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} autoComplete="name" />
+        <Input label="Email" type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} autoComplete="email" />
+        <Input label="Password" type="password" autoComplete="new-password" />
         {err && <span className="error" role="alert">{err}</span>}
-        <p className="small muted">Every account is a member of the co-op with one vote. <Link to="/terms">Terms summary</Link></p>
         <FormActions><Button variant="primary" type="submit">Create account</Button></FormActions>
       </form>
+      <p className="small muted">Are you an architect? <Link to="/architects">Get verified as an architect</Link> to sell redesigns. Already have an account? <Link to="/login">Log in</Link>. <Link to="/terms">Terms of Use</Link></p>
     </Page>
   );
 }
@@ -465,7 +429,7 @@ export function Terms() {
   ];
   return (
     <Page narrow tag="simulated">
-      <h1>Terms, on one page</h1>
+      <h1>Terms of Use</h1>
       <p className="muted">A plain summary for the class demo, not legal text.</p>
       <dl className="stack">
         {rows.map(([t, d]) => (

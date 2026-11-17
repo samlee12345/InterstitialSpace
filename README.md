@@ -47,10 +47,12 @@ Press **N** on any page (or "Turn on notes" in the Demo bar) to start the
 notes tool, ported from the portfolio. Press N again, click any text, type a
 note, then ⌘↵. Press **D** instead for a **discussion**: a point to raise
 with the team. Notes are purple and round, discussions are teal and square,
-and each kind has its own numbering, Copy and Clear buttons. "Clear notes on
-all pages" deletes every note and keeps the discussions, after a confirmation. Both are kept per page in your browser and survive reloads.
-"Copy all pages" puts every note on the clipboard, labelled by page and
-section, so testers can paste them into a message. Notes never leave the
+and each kind has its own numbering and its own Copy and Clear menus, each
+offering "This page" or "All pages" (so you can clear every note and keep
+the discussions). "Copy everything" and "Clear everything" cover both kinds
+on every page; clearing asks for confirmation. Both are kept per page in
+your browser and survive reloads. Copies are labelled by page and section,
+so testers can paste them into a message. Notes never leave the
 tester's browser. Each view keeps its own notes (for example the Tabs view of
 a space page), and the Demo bar shows the count per page and per view.
 
@@ -76,16 +78,21 @@ a space page), and the Demo bar shows the count per page and per view.
   Landing > Map first in the Demo bar, choose whether it finds a new place
   (offer to document it) or an existing space (Stepwell terrace). Searching
   for a name that isn't there offers "Add this place".
-- **Create new space, two versions** (Demo bar, under Create new space).
-  A: Photos, Location and area, Questionnaire (opens with "Is it one of
-  these nearby spaces?"), Review. B: an overlay asks for photos first, then
-  Location and area, Nearby spaces (only if any), Questionnaire, Review.
-  Photos must carry location data; the area is set on a map (click to move
-  the centre, slider for size). For each documented space within 50 m you
-  say: same space (adds your photos and a comment to it instead), it is
-  inside my new space, my new space is inside it, or not related. Demo bar
-  switches: whether the photos have location data, and whether there are
-  spaces within 50 m (three near the east Jaipur Darwaza gateway).
+- **Create new space, three versions** (Demo bar, under Create new space).
+  A: Photos, Area, Questionnaire (opens with "Is it one of these nearby
+  spaces?"), Review. B: an overlay asks for photos first, then Area, Nearby
+  spaces (only if any), Questionnaire, Review, with your photo thumbnails
+  (delete, add more) in a side panel. C: like A, but Continue on the Area
+  step opens an "Is it one of these nearby spaces?" confirmation overlay.
+  Photos must carry location data. On the Area step the photo point stays
+  fixed; zoom in and out, and draw the space with four draggable corners or
+  a circle (handles also move with the arrow keys, Shift for 5 m steps).
+  Nearby spaces are the documented spaces inside the drawn area or within
+  5 m of its edge, not a fixed radius around the photo. For each you say:
+  same space (adds your photos and a comment to it instead), it is inside my
+  new space, my new space is inside it, or not related. Demo bar switches:
+  whether the photos have location data, and whether they were taken next
+  to documented spaces (by the east Jaipur Darwaza gateway).
 - **Spaces within spaces.** A space can be part of another. Its header says
   "Part of …", and the space page lists related spaces (a section on the
   one-page view, a tab on the tabs view). Tabs show counts, e.g.
@@ -95,7 +102,25 @@ a space page), and the Demo bar shows the count per page and per view.
   timeline), on the contest page and on the space page.
 - **Map pins** are plain: solid for approved spaces, dashed and hollow for
   pending ones. Space cards show votes, redesigns and photos.
-- Account pages (Portfolio, Earnings, My purchases, Create new space, Points &
+- **Upload redesign / contest entry** is one three-step flow: files and
+  description; details and licence (units, scaled to the Base Library,
+  intervention scope, optional cost bracket and agency contact, one
+  combined attestation); then price and payout with the copyright and buyer
+  licence terms. From a live contest ("Submit an entry") the licence
+  statement becomes the contest rights transfer and the last step shows the
+  prize and rights instead of price.
+- **Sign-up.** The header for visitors shows "For architects" and "Log in".
+  For architects asks licensed architect or student. Licensed: country,
+  register number looked up in that country's register (India CoA, US
+  state boards via NCARB, UK ARB), then an ID whose name must match the
+  register. Student: school email code, programme checked against
+  accreditation lists, graduation year (sets re-verification), and proof of
+  enrolment this term. Community sign-up ("Create a free account") stays
+  for everyone else.
+- **Account.** Contributions lists every space you documented, commented on
+  or uploaded to (and removed spaces). Profile is account settings only:
+  photo, name and email, plan and verification, Delete account.
+- Account pages (Portfolio, Earnings, My purchases, Contributions, Points &
   membership, Profile, plus Moderation, Flag queue and Host a contest for those
   roles) are in the dropdown under your name, top right.
 - Demo-only information lives in the Demo bar, not on the pages: whether a
@@ -108,7 +133,9 @@ a space page), and the Demo bar shows the count per page and per view.
   review** (every page and view, marked Clickable or Simulated, with your
   note and discussion counts; opening one switches to a role that can see it; variations such
   as Landing: Classic / Map first and Space page: One page / Tabs are nested
-  under their page), and controls: "Make the next payment fail", "Skip ahead
+  under their page; Space page also links straight to a space that is
+  approved, pending, without a contest, with an ongoing, judging or closed
+  contest, and with or without related spaces), and controls: "Make the next payment fail", "Skip ahead
   one week", notes, the sandbox and "Reset demo data". The page list is in
   `src/demo/pages.js`.
 
@@ -128,7 +155,8 @@ Navigate with clicks, not the address bar: a page reload resets the data.
 2. **Architect** (4 min, the clickable core).
    - Browse, "Gateway niche, Jaipur Darwaza (west side)" (pending, 6 photos,
      no diagram). **Upload redesign**: title, description, "Use sample
-     files", price ($XX, set by the platform), terms, Publish. You land back
+     files", then details (units, scaled, scope, attestation), then price
+     and licence, Publish. You land back
      on the space with a "Redesign published" banner, the card marked
      "Yours", and +5 points. The upload button is replaced by the
      one-a-week notice ("Skip ahead one week" in the Demo bar lifts it).
@@ -144,13 +172,15 @@ Navigate with clicks, not the address bar: a page reload resets the data.
      checkout: 100 points is disabled (not enough points), pay by card.
    - Portfolio: Edit a redesign (new version), Unpublish another.
    - "Haveli courtyard, Chandpole lane" has a **contest banner**: prize,
-     entries, Contest details. "Submit an entry", then back on the space with
-     your entry listed and marked "Yours".
+     entries, Contest details. "Submit an entry" runs the same upload flow with
+     the contest rights transfer, then back on the space with your entry
+     marked "Yours".
    - Earnings (80% share, Request payout). Notifications: each one opens the
      page it is about.
-3. **Community member** (1 min). Name menu, "Create new space": photos, "no
-   geotag" (half-points warning), "Is this the same place?", questionnaire,
-   submit: Pending. "Add your experience" opens a three-step overlay: share
+3. **Community member** (1 min). Browse, "Create new interstitial space" (or the Demo
+   bar page list): photos, draw the area around the
+   photo point, "Is it one of these nearby spaces?", questionnaire, submit:
+   Pending. "Add your experience" opens a three-step overlay: share
    location (on site earns full points), a comment with optional photos,
    then five quick questions ending with "What needs fixing most?". The
    post shows "Needs fixing: …" under the comment. Then vote on site (+0.25).
@@ -165,7 +195,7 @@ Navigate with clicks, not the address bar: a page reload resets the data.
    skip ahead to judging, pick a winner, escrow and payment summary.
 6. **Private owner** (30 s). Any space, "Request removal" at the bottom, upload
    deed, Team review, "Team decides: remove". Switch to Community member,
-   Profile, Removed spaces.
+   Contributions, Removed spaces.
 7. Finish on Co-op and Terms. For the AI diagram: open "Chowk well platform,
    Chhoti Chaupar": "Processing…" then a diagram crediting photographers.
 

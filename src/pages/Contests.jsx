@@ -44,29 +44,9 @@ export function Contest() {
   const nav = useNavigate();
   const [params] = useSearchParams();
   const c = get.contest(id);
-  const [open, setOpen] = useState(params.get('enter') === '1');
-  const [f, setF] = useState({ title: '', statement: '', files: [], agree: false });
-  const [err, setErr] = useState({});
   if (!c) return <Page narrow><Empty title="Contest not found"><div><Button to="/contests">Browse contests</Button></div></Empty></Page>;
   const space = get.space(c.spaceId);
   const mine = user && c.entries.find((e) => e.architectId === user.id);
-
-  const submit = () => {
-    const e = {};
-    if (!f.title.trim()) e.title = 'Give your entry a title.';
-    if (f.statement.trim().length < 20) e.statement = 'Explain how the entry meets the criteria (20 characters or more).';
-    if (f.files.length === 0) e.files = 'Add at least one file.';
-    if (!f.agree) e.agree = 'Accept the rule of entry to submit.';
-    setErr(e);
-    if (Object.keys(e).length) return;
-    const entry = { id: `e-${Date.now()}`, submittedAt: new Date().toISOString().slice(0, 10), architectId: user.id, title: f.title.trim(), statement: f.statement.trim(), files: f.files };
-    dispatch({ type: 'SUBMIT_ENTRY', contestId: c.id, entry });
-    // Back to the space page, where the contest banner lists the entries.
-    nav(`/space/${space.id}`, {
-      replace: true,
-      state: { banner: { title: 'Contest entry submitted', text: `“${entry.title}” is entered in “${c.title}” and listed below, marked “Yours”. The co-host judges after ${c.deadline}; you’ll get a notification with the result.`, links: [[`/contest/${c.id}`, 'Contest details'], ['/portfolio', 'Open your portfolio']] } },
-    });
-  };
 
   return (
     <Page tag="clickable">
@@ -125,22 +105,7 @@ export function Contest() {
               </ul>
             ) : <p className="small muted">Sign up to see the entries.</p>}
           </section>
-          {open && c.status === 'live' && !mine && (
-            <section className="card">
-              <h2>Your entry</h2>
-              <Input label="Entry title" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} error={err.title} />
-              <Input label="Statement" textarea value={f.statement} onChange={(e) => setF({ ...f, statement: e.target.value })} error={err.statement} hint="How does your design meet the co-host’s criteria?" />
-              <FileDrop label="Entry files" files={f.files} onChange={(files) => setF({ ...f, files })} error={err.files} />
-              <Choice type="checkbox" checked={f.agree} onChange={(e) => setF({ ...f, agree: e.target.checked })} title="Rule of entry: if I win, I sell this design to the co-host">
-                The co-host sets the sale price. The winner receives the full prize.
-              </Choice>
-              {err.agree && <span className="error" role="alert">{err.agree}</span>}
-              <FormActions>
-                <Button onClick={() => setOpen(false)}>Cancel</Button>
-                <Button variant="primary" onClick={submit}>Submit entry</Button>
-              </FormActions>
-            </section>
-          )}
+
         </div>
         <aside className="card sticky-aside">
           <span className="small muted">Prize money</span>
@@ -158,7 +123,7 @@ export function Contest() {
           ) : mine ? (
             <p className="small bold">You entered “{mine.title}”.</p>
           ) : isArchitect ? (
-            !open && <Button variant="primary" onClick={() => setOpen(true)}>Submit an entry</Button>
+            <Button variant="primary" to={`/space/${c.spaceId}/upload-redesign?contest=${c.id}`}>Submit an entry</Button>
           ) : (
             <p className="small muted">{isMember ? 'Only architects can enter contests.' : 'Sign up as an architect to enter.'}</p>
           )}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
-import { Badge, Button, Choice, Empty, FileDrop, FormActions, Input, Modal, Page, RoleGate, StatusBadges } from '../components/ui.jsx';
+import { Badge, Button, Choice, Empty, FileDrop, FormActions, ImageBox, Input, Modal, Page, RoleGate, StatusBadges } from '../components/ui.jsx';
 import { Crumbs } from '../components/domain.jsx';
 import { fmtPoints } from '../lib/points.js';
 
@@ -37,9 +37,9 @@ export function Points() {
       </div>
 
       <section className="card">
-        <div className="row between">
+        <div className="row">
           <h2>Paid tier</h2>
-          {user.paid ? <Badge kind="solid">On this month</Badge> : <Badge kind="dashed">Free account</Badge>}
+          {user.paid && <Badge kind="solid">Active this month</Badge>}
         </div>
         {user.paid ? (
           <>
@@ -49,7 +49,7 @@ export function Points() {
           </>
         ) : (
           <>
-            <p className="prose">Billed monthly. {cfg.paidFreeModels} free measured-model downloads a month (no rollover) and the ability to request to host contests. Pay with money or points.</p>
+            <p className="prose">Billed monthly, cancel anytime. {cfg.paidFreeModels} free measured-model downloads a month (no rollover) and the ability to request to host contests. Pay with money or points.</p>
             <div><Button variant="primary" onClick={() => setUp(true)}>Upgrade</Button></div>
           </>
         )}
@@ -151,44 +151,117 @@ export function Coop() {
   );
 }
 
-export function Profile() {
-  const { state, user, isArchitect, rankOf } = useDemo();
-  if (!user) return <Page narrow tag="simulated"><RoleGate title="Sign in to see your profile">Visitors have no profile.</RoleGate></Page>;
-  const touched = (s) => s.uploadedBy === user.id || s.photos.some((p) => p.credit === user.id);
-  const mine = state.spaces.filter((s) => touched(s) && !s.removed);
-  const removed = state.spaces.filter((s) => touched(s) && s.removed);
+// Everything the user has done on each space: documented it, posted experiences,
+// added photos, drew its diagram, published redesigns, entered its contests.
+export function Contributions() {
+  const { state, user } = useDemo();
+  if (!user) return <Page tag="simulated"><RoleGate title="Sign in to see your contributions">Visitors have no contributions.</RoleGate></Page>;
+  const rows = state.spaces.map((s) => {
+    const did = [];
+    if (s.uploadedBy === user.id) did.push('Documented it');
+    const exp = state.comments.filter((c) => c.spaceId === s.id && c.userId === user.id);
+    if (exp.length) did.push(`${exp.length} ${exp.length === 1 ? 'experience' : 'experiences'}`);
+    const ph = s.photos.filter((p) => p.credit === user.id).length;
+    if (ph) did.push(`${ph} ${ph === 1 ? 'photo' : 'photos'}`);
+    if (s.diagram?.by === user.id) did.push('Spatial diagram');
+    const rd = state.redesigns.filter((r) => r.spaceId === s.id && r.architectId === user.id).length;
+    if (rd) did.push(`${rd} ${rd === 1 ? 'redesign' : 'redesigns'}`);
+    const en = state.contests.filter((c) => c.spaceId === s.id).flatMap((c) => c.entries).filter((e) => e.architectId === user.id).length;
+    if (en) did.push(`${en} contest ${en === 1 ? 'entry' : 'entries'}`);
+    return { s, did };
+  }).filter((r) => r.did.length);
+  const live = rows.filter((r) => !r.s.removed);
+  const removed = rows.filter((r) => r.s.removed);
   return (
-    <Page tag="simulated">
+    <Page>
       <header className="stack-sm">
-        <div className="row"><Badge>{isArchitect ? 'Architect' : user.paid ? 'Paid account' : 'Community member'}</Badge>{user.verified && <Badge kind="solid">Verified</Badge>}</div>
-        <h1>{user.name}</h1>
-        <p className="muted small">{fmtPoints(user.points)} points{isArchitect && `, rank ${rankOf(user.id)}`}. {user.licence || ''}</p>
-        <div className="row">
-          <Button to="/points">Points and membership</Button>
-          {isArchitect && <Button to="/portfolio">Portfolio</Button>}
-          <Button to="/purchases">My purchases</Button>
-        </div>
+        <h1>Contributions</h1>
+        <p className="muted">Every space you have documented, posted about, photographed, measured or redesigned.</p>
       </header>
-      <section className="stack">
-        <h2>Spaces you contributed to ({mine.length})</h2>
-        <ul className="list">
-          {mine.map((s) => (
-            <li key={s.id} className="row between">
-              <Link to={`/space/${s.id}`}>{s.name}</Link>
-              <span className="row"><StatusBadges space={s} />{s.status === 'pending' && s.uploadedBy === user.id && <span className="small muted">Pending qualification</span>}</span>
-            </li>
-          ))}
-          {mine.length === 0 && <li className="muted">None yet. <Link to="/space/new">Create a space</Link></li>}
-        </ul>
+      <section className="stack" aria-labelledby="contrib-h">
+        <h2 id="contrib-h">Spaces ({live.length})</h2>
+        {live.length === 0 ? (
+          <Empty title="Nothing yet"><p>Document a space, or add your experience to one you use.</p><div><Button to="/browse">Browse spaces</Button></div></Empty>
+        ) : (
+          <div className="table-wrap">
+            <table>
+              <thead><tr><th>Space</th><th>Status</th><th>What you contributed</th></tr></thead>
+              <tbody>
+                {live.map(({ s, did }) => (
+                  <tr key={s.id}>
+                    <td><Link to={`/space/${s.id}`}>{s.name}</Link></td>
+                    <td><span className="row"><StatusBadges space={s} />{s.status === 'approved' && <Badge>Approved</Badge>}</span></td>
+                    <td>{did.join(', ')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
-      <section className="stack">
-        <h2>Removed spaces ({removed.length})</h2>
+      <section className="stack" aria-labelledby="removed-h">
+        <h2 id="removed-h">Removed spaces ({removed.length})</h2>
         <p className="small muted">Spaces taken off the platform at an owner’s request. Only contributors see them here, and you keep your photos.</p>
         <ul className="list">
-          {removed.map((s) => <li key={s.id}>{s.name} <span className="small muted">({s.photos.filter((p) => p.credit === user.id).length} of your photos kept)</span></li>)}
+          {removed.map(({ s, did }) => <li key={s.id}>{s.name} <span className="small muted">({did.join(', ')})</span></li>)}
           {removed.length === 0 && <li className="muted">None.</li>}
         </ul>
       </section>
+    </Page>
+  );
+}
+
+// Account settings only: photo, details, account type, delete account.
+export function Profile() {
+  const { user, isArchitect, rankOf, dispatch } = useDemo();
+  const [f, setF] = useState({ name: user?.name.replace(' (you)', '') || '', email: user ? `${user.id}@example.com` : '' });
+  const [hasPhoto, setHasPhoto] = useState(false);
+  const [del, setDel] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
+  if (!user) return <Page tag="simulated"><RoleGate title="Sign in to see your profile">Visitors have no profile.</RoleGate></Page>;
+  const tier = isArchitect ? `Architect${user.verified ? ', verified' : ''}` : user.paid ? 'Paid account' : 'Community member';
+  return (
+    <Page narrow>
+      <h1>Profile</h1>
+      <section className="stack" aria-labelledby="photo-h">
+        <h2 id="photo-h" className="h-sm">Profile photo</h2>
+        <div className="row">
+          <div className="avatar">{hasPhoto ? <ImageBox label="Photo" shape="square" /> : <span aria-hidden="true">{f.name.charAt(0)}</span>}</div>
+          <Button onClick={() => setHasPhoto(true)}>{hasPhoto ? 'Change photo' : 'Upload photo'}</Button>
+          {hasPhoto && <Button variant="quiet" onClick={() => setHasPhoto(false)}>Remove</Button>}
+        </div>
+      </section>
+      <form className="stack" onSubmit={(e) => { e.preventDefault(); dispatch({ type: 'TOAST', text: 'Profile saved' }); }}>
+        <h2 className="h-sm">Your details</h2>
+        <Input label="Name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
+        <Input label="Email" type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
+        <FormActions><Button variant="primary" type="submit">Save changes</Button></FormActions>
+      </form>
+      <section className="stack" aria-labelledby="tier-h">
+        <h2 id="tier-h" className="h-sm">Account</h2>
+        <dl className="dl">
+          <dt>Account type</dt><dd>{tier}</dd>
+          <dt>Plan</dt><dd>{user.paid ? 'Paid tier, billed monthly' : 'Free'} <Link to="/points">{user.paid ? 'Manage' : 'See the paid tier'}</Link></dd>
+          {isArchitect && <><dt>Verification</dt><dd>{user.licence}</dd><dt>Ranking</dt><dd>No. {rankOf(user.id)}</dd></>}
+          <dt>Co-op</dt><dd>Member, one vote</dd>
+        </dl>
+      </section>
+      <section className="danger-zone" aria-labelledby="del-h">
+        <h2 id="del-h" className="h-sm">Delete account</h2>
+        <p className="small">Your account, points and co-op vote are removed. Purchases can’t be downloaded again afterwards.</p>
+        <div><Button onClick={() => setDel(true)}>Delete account</Button></div>
+      </section>
+      {del && (
+        <Modal title="Delete your account?" onClose={() => setDel(false)}>
+          <p>This can’t be undone. Type DELETE to confirm.</p>
+          <Input label="Confirm" value={confirmText} onChange={(e) => setConfirmText(e.target.value)} />
+          <p className="xs muted">Simulated: in the prototype nothing is deleted.</p>
+          <FormActions>
+            <Button onClick={() => setDel(false)}>Cancel</Button>
+            <Button variant="primary" disabled={confirmText !== 'DELETE'} onClick={() => { setDel(false); dispatch({ type: 'TOAST', text: 'Account deletion requested (simulated)' }); }}>Delete account</Button>
+          </FormActions>
+        </Modal>
+      )}
     </Page>
   );
 }
@@ -242,7 +315,7 @@ export function Removal() {
       {space.removal === 'removed' && (
         <div className="alert">
           <h2>Removed</h2>
-          <p>The space is hidden from the platform. People who contributed to it can still find their own work under Profile, Removed spaces.</p>
+          <p>The space is hidden from the platform. People who contributed to it can still find their own work under Contributions, Removed spaces.</p>
           <div><Button to="/browse">Browse spaces</Button></div>
         </div>
       )}

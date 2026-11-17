@@ -171,7 +171,9 @@ function refreshToolbar() {
     tb.appendChild(button(`Show notes (${counts.note}) and discussions (${counts.discussion})`, 'nt-btn nt-secondary', toggleHide));
     return;
   }
-  // One group per kind: count, add, copy, clear.
+  // One group per kind: count, add, and Copy / Clear menus (this page or all pages).
+  const all = { note: 0, discussion: 0 };
+  Object.values(notesCounts()).forEach((c) => { all.note += c.note; all.discussion += c.discussion; });
   Object.entries(KINDS).forEach(([kind, k]) => {
     const g = el('div', `nt-group nt-kind-${kind}`);
     g.setAttribute('role', 'group');
@@ -180,20 +182,27 @@ function refreshToolbar() {
     count.textContent = counts[kind];
     count.setAttribute('aria-label', `${counts[kind]} ${k.plural.toLowerCase()} on this page`);
     const label = el('span', 'nt-label');
-    label.textContent = k.plural;
+    label.textContent = all[kind] > counts[kind] ? `${k.plural} (${all[kind]} on all pages)` : k.plural;
     const adding = isSelectMode && addKind === kind;
     g.append(count, label, button(adding ? 'Cancel' : `Add ${k.label.toLowerCase()}`, `nt-btn${adding ? ' nt-active' : ''}`, () => toggleSelectMode(kind), k.key.toUpperCase()));
-    if (counts[kind]) {
-      g.appendChild(button(`Copy ${k.plural.toLowerCase()}`, 'nt-btn nt-secondary', (e) => copyKind(e.currentTarget, kind)));
-      g.appendChild(button(`Clear ${k.plural.toLowerCase()}`, 'nt-btn nt-danger', () => clearKind(kind)));
+    const plural = k.plural.toLowerCase();
+    if (all[kind]) {
+      g.appendChild(menu(`Copy ${plural}`, 'nt-btn nt-secondary', [
+        [`This page (${counts[kind]})`, counts[kind] > 0, (btn) => copyKind(btn, kind)],
+        [`All pages (${all[kind]})`, true, (btn) => copyKindAll(btn, kind)],
+      ]));
+      g.appendChild(menu(`Clear ${plural}`, 'nt-btn nt-danger', [
+        [`This page (${counts[kind]})`, counts[kind] > 0, () => clearKind(kind)],
+        [`All pages (${all[kind]})`, true, () => clearKindAll(kind)],
+      ]));
     }
     tb.appendChild(g);
   });
   const rest = el('div', 'nt-group');
-  const others = countOtherPages();
-  if (notes.length || others) rest.appendChild(button(others ? `Copy all pages (${others + notes.length})` : 'Copy all pages', 'nt-btn nt-secondary', (e) => copyAll(e.currentTarget)));
-  const allNotes = Object.values(notesCounts()).reduce((n, c) => n + c.note, 0);
-  if (allNotes > counts.note) rest.appendChild(button('Clear notes on all pages', 'nt-btn nt-danger', clearAllNotes));
+  if (all.note + all.discussion) {
+    rest.appendChild(button('Copy everything', 'nt-btn nt-secondary', (e) => copyAll(e.currentTarget)));
+    rest.appendChild(button('Clear everything', 'nt-btn nt-danger', clearEverything));
+  }
   rest.appendChild(button('Hide', 'nt-btn nt-secondary', toggleHide));
   rest.appendChild(button('Turn off', 'nt-btn nt-secondary', deactivate));
   tb.appendChild(rest);
@@ -202,6 +211,40 @@ function refreshToolbar() {
     hint.textContent = `Click any text to attach a ${KINDS[addKind].label.toLowerCase()}. Esc to cancel.`;
     tb.appendChild(hint);
   }
+}
+
+// A button that opens a short list of choices above it. items: [label, enabled, onPick(button)].
+function menu(text, cls, items) {
+  const wrap = el('div', 'nt-menu-wrap');
+  const trigger = button(`${text} ▾`, cls, () => {
+    const open = wrap.querySelector('.nt-menu');
+    document.querySelectorAll('.nt-menu').forEach((m) => m.remove());
+    document.querySelectorAll('.nt-menu-wrap > button[aria-expanded="true"]').forEach((b) => b.setAttribute('aria-expanded', 'false'));
+    if (open) return;
+    const list = el('div', 'nt-menu');
+    items.forEach(([label, enabled, onPick]) => {
+      const item = button(label, 'nt-menu-item', () => { onPick(trigger); list.remove(); trigger.setAttribute('aria-expanded', 'false'); });
+      item.disabled = !enabled;
+      list.appendChild(item);
+    });
+    wrap.appendChild(list);
+    trigger.setAttribute('aria-expanded', 'true');
+    list.querySelector('button:not(:disabled)')?.focus();
+    const close = (e) => {
+      if (e.type === 'keydown' && e.key !== 'Escape') return;
+      if (e.type === 'mousedown' && wrap.contains(e.target)) return;
+      list.remove();
+      trigger.setAttribute('aria-expanded', 'false');
+      if (e.type === 'keydown') trigger.focus();
+      document.removeEventListener('mousedown', close);
+      document.removeEventListener('keydown', close);
+    };
+    setTimeout(() => { document.addEventListener('mousedown', close); document.addEventListener('keydown', close); }, 0);
+  });
+  trigger.setAttribute('aria-haspopup', 'true');
+  trigger.setAttribute('aria-expanded', 'false');
+  wrap.appendChild(trigger);
+  return wrap;
 }
 
 function button(text, cls, onClick, shortcut) {
@@ -488,23 +531,44 @@ function copyAll(btn) {
   writeClipboard(btn, blocks.join('\n\n'));
 }
 
-// Deletes notes on every page, after one confirmation. Discussions stay.
-function clearAllNotes() {
-  const counts = Object.values(notesCounts());
-  const total = counts.reduce((n, c) => n + c.note, 0);
-  const pages = counts.filter((c) => c.note > 0).length;
-  if (!window.confirm(`Delete ${total} ${total === 1 ? 'note' : 'notes'} on ${pages} ${pages === 1 ? 'page' : 'pages'}? Discussions are kept. Copy the notes first if you need them. This can’t be undone.`)) return;
+// Every page's list, sorted by page.
+function allPages() {
+  const pages = [];
   try {
-    const keys = [];
-    for (let i = 0; i < localStorage.length; i += 1) { const k = localStorage.key(i); if (k.startsWith(PREFIX)) keys.push(k); }
-    keys.forEach((k) => {
-      const kept = (store.get(k, []) || []).filter((n) => kindOf(n) === 'discussion');
-      if (kept.length) store.set(k, kept); else localStorage.removeItem(k);
-    });
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const k = localStorage.key(i);
+      if (k.startsWith(PREFIX)) pages.push([k, k.slice(PREFIX.length), store.get(k, []) || []]);
+    }
   } catch { /* ignore */ }
-  notes = notes.filter((n) => kindOf(n) === 'discussion');
+  return pages.sort((a, b) => a[1].localeCompare(b[1]));
+}
+
+// Remove items matching `drop` on every page, after one confirmation.
+function clearEverywhere(drop, what) {
+  const pages = allPages().filter(([, , list]) => list.some(drop));
+  const total = pages.reduce((n, [, , list]) => n + list.filter(drop).length, 0);
+  if (!total) return;
+  if (!window.confirm(`Delete ${total} ${what(total)} on ${pages.length} ${pages.length === 1 ? 'page' : 'pages'}? Copy them first if you need them. This can’t be undone.`)) return;
+  pages.forEach(([key, , list]) => {
+    const kept = list.filter((n) => !drop(n));
+    try { if (kept.length) store.set(key, kept); else localStorage.removeItem(key); } catch { /* ignore */ }
+  });
+  notes = notes.filter((n) => !drop(n));
   announce();
   rerenderAll();
+}
+
+function clearKindAll(kind) {
+  const k = KINDS[kind];
+  clearEverywhere((n) => kindOf(n) === kind, (t) => `${t === 1 ? k.label.toLowerCase() : k.plural.toLowerCase()} (${kind === 'note' ? 'discussions' : 'notes'} are kept)`);
+}
+
+function clearEverything() {
+  clearEverywhere(() => true, (t) => `${t === 1 ? 'note or discussion' : 'notes and discussions'}`);
+}
+
+function copyKindAll(btn, kind) {
+  writeClipboard(btn, allPages().map(([, path, list]) => describe(list, path, kind)).filter(Boolean).join('\n\n'));
 }
 
 function clearKind(kind) {

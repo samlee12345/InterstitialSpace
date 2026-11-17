@@ -6,7 +6,7 @@ import { useSyncExternalStore } from 'react';
 export const DEFAULTS = {
   spaceCard: 'label', // see SPACE_CARD_VARIANTS in components/domain.jsx
   landing: 'steps', // see LANDING_VARIANTS in pages/Public.jsx
-  createFlow: 'inline', // Create new space: 'inline' (version A) or 'overlay' (version B: photos first in an overlay)
+  createFlow: 'inline', // Create new space: 'inline' (A), 'overlay' (B: photos first in an overlay), 'confirm' (C: nearby-space confirmation overlay after the area)
   landingLayout: 'classic', // 'classic' (hero then sections) or 'map' (the map is the landing page)
 };
 

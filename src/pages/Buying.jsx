@@ -83,7 +83,7 @@ export function Item() {
               <li>You cannot redistribute them.</li>
               <li>{kind === 'redesign' ? 'The architect keeps copyright.' : 'The platform keeps the fee for Base Library models; community photographers stay credited.'}</li>
             </ul>
-            <Link className="small" to="/terms">Terms summary</Link>
+            <Link className="small" to="/terms">Terms of Use</Link>
           </div>
           {!mine && !hidden && <div><Button variant="quiet" onClick={() => setReport(!report)}>Report a problem with this listing</Button></div>}
           {report && (
@@ -299,7 +299,7 @@ export function Checkout() {
             <Button variant="primary" onClick={pay} disabled={phase === 'paying'}>
               {phase === 'paying' ? 'Processing…' : method === 'card' ? `Pay ${cfg.priceLabel}` : method === 'points' ? `Pay ${cfg.modelPointsCost} points` : 'Download for free'}
             </Button>
-            <p className="xs muted">By paying you accept the purchase licence: use and adapt, no redistribution. <Link to="/terms">Terms summary</Link></p>
+            <p className="xs muted">By paying you accept the purchase licence: use and adapt, no redistribution. <Link to="/terms">Terms of Use</Link></p>
             <div><Button variant="quiet" to={`/item/${item.id}`}>Back to listing</Button></div>
           </div>
         </div>

@@ -13,13 +13,19 @@ export const PAGE_GROUPS = [
     pages: [
       { id: 'landing', label: 'Landing', to: '/', kind: 'simulated', match: exact('/'), views: [{ id: '', label: 'Classic', choice: ['landingLayout', 'classic'] }, { id: 'map', label: 'Map first', choice: ['landingLayout', 'map'], control: 'locate' }] },
       { id: 'browse', label: 'Browse spaces', to: '/browse', kind: 'simulated', match: exact('/browse') },
-      { id: 'space', label: 'Space page', to: '/space/s2', kind: 'clickable', match: re(/^\/space\/(?!new$)[^/]+$/), views: [{ id: '', label: 'One page', layout: 'single' }, { id: 'tabs', label: 'Tabs', layout: 'tabs' }] },
-      { id: 'space-new', label: 'Create new space', to: '/space/new', kind: 'simulated', role: 'community', match: exact('/space/new'), controls: 'create', views: [{ id: '', label: 'A: Same place in the questionnaire', choice: ['createFlow', 'inline'] }, { id: 'overlay', label: 'B: Upload photos first', choice: ['createFlow', 'overlay'] }] },
+      { id: 'space', label: 'Space page', to: '/space/s2', kind: 'clickable', match: re(/^\/space\/(?!new$)[^/]+$/), views: [{ id: '', label: 'One page', layout: 'single' }, { id: 'tabs', label: 'Tabs', layout: 'tabs' }], variants: [
+        ['Approved', '/space/s2'], ['Pending', '/space/s7'], ['No contest', '/space/s7'], ['Ongoing contest', '/space/s2'],
+        ['Judging contest', '/space/s5'], ['Closed contest', '/space/s4'], ['Has related spaces', '/space/s4'], ['No related spaces', '/space/s2'],
+      ] },
+      { id: 'space-new', label: 'Create new space', to: '/space/new', kind: 'simulated', role: 'community', match: exact('/space/new'), controls: 'create', views: [{ id: '', label: 'A: Nearby spaces in the questionnaire', choice: ['createFlow', 'inline'] }, { id: 'overlay', label: 'B: Upload photos first', choice: ['createFlow', 'overlay'] }, { id: 'confirm', label: 'C: Confirm nearby spaces after the map', choice: ['createFlow', 'confirm'] }] },
       { id: 'signup', label: 'Sign up', to: '/signup', kind: 'simulated', role: 'visitor', match: exact('/signup') },
+      { id: 'login', label: 'Log in', to: '/login', kind: 'simulated', role: 'visitor', match: exact('/login') },
+      { id: 'architects', label: 'For architects (verification)', to: '/architects', kind: 'simulated', role: 'visitor', match: exact('/architects') },
       { id: 'co-op', label: 'Co-op', to: '/co-op', kind: 'simulated', role: 'community', match: exact('/co-op') },
       { id: 'points', label: 'Points and membership', to: '/points', kind: 'simulated', match: exact('/points') },
-      { id: 'profile', label: 'Profile', to: '/profile', kind: 'simulated', match: exact('/profile') },
-      { id: 'terms', label: 'Terms summary', to: '/terms', kind: 'simulated', match: exact('/terms') },
+      { id: 'contributions', label: 'Contributions', to: '/contributions', kind: 'simulated', match: exact('/contributions') },
+      { id: 'profile', label: 'Profile (account settings)', to: '/profile', kind: 'simulated', match: exact('/profile') },
+      { id: 'terms', label: 'Terms of Use', to: '/terms', kind: 'simulated', match: exact('/terms') },
     ],
   },
   {

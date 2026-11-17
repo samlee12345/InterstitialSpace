@@ -70,3 +70,8 @@ body.nt-select-mode #root, body.nt-select-mode #root * { cursor: crosshair !impo
 .nt-kind-discussion .nt-badge { border-radius: var(--radius-sm); }
 body[data-nt-kind="discussion"] .nt-hovered { outline-color: var(--review-discuss) !important; }
 .nt-popover-title { margin: 0; font-size: var(--text-sm); font-weight: var(--weight-bold); color: var(--gray-900); }
+.nt-menu-wrap { position: relative; display: inline-flex; }
+.nt-menu { position: absolute; bottom: calc(100% + var(--space-1)); left: 0; z-index: 1; display: flex; flex-direction: column; min-width: 100%; padding: var(--space-1); background: var(--gray-0); border-radius: var(--radius-md); box-shadow: var(--shadow-2); }
+.nt-menu-item { font: inherit; font-size: var(--text-xs); text-align: left; white-space: nowrap; padding: var(--space-2) var(--space-3); color: var(--gray-900); background: transparent; border: 0; border-radius: var(--radius-sm); cursor: pointer; }
+.nt-menu-item:hover:not(:disabled), .nt-menu-item:focus-visible { background: var(--gray-100); }
+.nt-menu-item:disabled { color: var(--gray-400); cursor: not-allowed; }

@@ -13,7 +13,7 @@ function roleLinks({ isMember, isArchitect, isModerator, isPaid }) {
   if (!isMember) return [];
   const l = [];
   if (isArchitect) l.push(['/portfolio', 'Portfolio'], ['/earnings', 'Earnings']);
-  l.push(['/purchases', 'My purchases'], ['/space/new', 'Create new space'], ['/points', 'Points & membership']);
+  l.push(['/contributions', 'Contributions'], ['/purchases', 'My purchases'], ['/points', 'Points & membership']);
   if (isModerator) l.push(['/moderation', 'Moderation'], ['/flags', 'Flag queue']);
   if (isPaid) l.push(['/contest/request', 'Host a contest']);
   l.push(['/profile', 'Profile']);
@@ -118,8 +118,9 @@ function Header() {
           </div>
         ) : (
           <div className="row">
-            <span className="small muted">{role === 'owner' ? 'Private owner (no account)' : 'Not signed in'}</span>
-            <Button variant="primary" to="/signup">Sign up</Button>
+            {role === 'owner' && <span className="small muted">Private owner (no account)</span>}
+            <NavLink to="/architects" className={({ isActive }) => `small ${isActive ? 'bold' : ''}`}>For architects</NavLink>
+            <Button variant="primary" to="/login">Log in</Button>
           </div>
         )}
       </div>
@@ -167,7 +168,7 @@ function PageList({ close }) {
   const nav = useNavigate();
   const counts = useNotesCounts();
   const { createFlow } = useChoices();
-  const currentView = (page) => (page.id === 'space' ? (state.layout === 'tabs' ? 'tabs' : '') : page.id === 'landing' ? (landingLayout === 'map' ? 'map' : '') : page.id === 'space-new' ? (createFlow === 'overlay' ? 'overlay' : '') : '');
+  const currentView = (page) => (page.id === 'space' ? (state.layout === 'tabs' ? 'tabs' : '') : page.id === 'landing' ? (landingLayout === 'map' ? 'map' : '') : page.id === 'space-new' ? (['overlay', 'confirm'].includes(createFlow) ? createFlow : '') : '');
   const go = (page, view) => {
     if (page.role && page.role !== role) dispatch({ type: 'SET_ROLE', role: page.role });
     if (view?.layout) dispatch({ type: 'SET_LAYOUT', layout: view.layout });
@@ -193,7 +194,7 @@ function PageList({ close }) {
                   </button>
                   {p.controls === 'create' && (
                     <div className="demo-control-row">
-                      {[['createGeotag', 'Photos have location data'], ['createNearby', 'Documented spaces within 50 m']].map(([key, label]) => (
+                      {[['createGeotag', 'Photos have location data'], ['createNearby', 'Photos taken next to documented spaces']].map(([key, label]) => (
                         <fieldset key={key} className="demo-control">
                           <legend>{label}</legend>
                           {[[true, 'Yes'], [false, 'No']].map(([val, l]) => (
@@ -204,6 +205,16 @@ function PageList({ close }) {
                           ))}
                         </fieldset>
                       ))}
+                    </div>
+                  )}
+                  {p.variants && (
+                    <div className="stack-sm demo-variants">
+                      <span className="xs muted">Open a space that is:</span>
+                      <ul className="demo-chips">
+                        {p.variants.map(([label, to]) => (
+                          <li key={label}><button type="button" className="demo-chip" aria-current={loc.pathname === to ? 'true' : undefined} onClick={() => go({ ...p, to })}>{label}</button></li>
+                        ))}
+                      </ul>
                     </div>
                   )}
                   {p.views && (
@@ -354,7 +365,7 @@ export function NotesBridge({ page }) {
   const pageDef = page ? null : pageFor(path);
   const view = pageDef?.id === 'space' && layout === 'tabs' ? 'tabs'
     : pageDef?.id === 'landing' && landingLayout === 'map' ? 'map'
-      : pageDef?.id === 'space-new' && createFlow === 'overlay' ? 'overlay' : '';
+      : pageDef?.id === 'space-new' && ['overlay', 'confirm'].includes(createFlow) ? createFlow : '';
   const key = view ? `${path}~${view}` : path;
   useEffect(() => { startNotesTool(); }, []);
   useEffect(() => { setNotesPage(key); }, [key]);

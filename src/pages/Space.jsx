@@ -358,7 +358,7 @@ function ContestCard({ contest }) {
         </p>
       </div>
       {isArchitect && contest.status === 'live' && !entered && (
-        <Button variant="primary" className="above-stretch" to={`/contest/${contest.id}?enter=1`}>Submit an entry</Button>
+        <Button variant="primary" className="above-stretch" to={`/space/${contest.spaceId}/upload-redesign?contest=${contest.id}`}>Submit an entry</Button>
       )}
     </section>
   );
@@ -432,8 +432,8 @@ export default function Space() {
       <Page narrow>
         <Empty title="This space was removed">
           <p>The owner asked for it to be removed and the team agreed after reviewing proof of ownership.</p>
-          {contributed && <p>You contributed to it. Your work is kept under Profile, Removed spaces.</p>}
-          <div className="row"><Button to="/browse">Browse spaces</Button>{contributed && <Button to="/profile">Open profile</Button>}</div>
+          {contributed && <p>You contributed to it. Your work is kept under Contributions, Removed spaces.</p>}
+          <div className="row"><Button to="/browse">Browse spaces</Button>{contributed && <Button to="/contributions">Open contributions</Button>}</div>
         </Empty>
       </Page>
     );

@@ -76,6 +76,7 @@
   --width-page: 72rem;
   --width-narrow: 40rem;
   --width-form: 40rem;
+  --size-avatar: 4.5rem;
   --width-card-min: 15rem;
   --width-thumb: 5.5rem;
   --width-thumb-lg: 7rem;
@@ -96,6 +97,7 @@
   --height-control: 2.75rem;
   --size-pin: 1.75rem;
   --size-pin-dot: 1rem;
+  --size-handle: 1.25rem;
   --size-tally: 0.75rem;
   --z-header: 10;
   --z-float: 20;

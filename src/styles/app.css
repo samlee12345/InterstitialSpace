@@ -372,3 +372,26 @@ body.demo-open .nt-toolbar { left: calc(50% - var(--width-demo-drawer) / 2); max
 .winner-box .row { flex-wrap: nowrap; }
 .sticky-aside { position: sticky; top: calc(var(--height-header) + var(--space-3)); }
 .page.narrow .card dd, .page.narrow .card p { max-width: var(--measure-small); }
+.avatar { width: var(--size-avatar); height: var(--size-avatar); border-radius: var(--radius-pill); overflow: hidden; display: flex; align-items: center; justify-content: center; background: var(--color-sunken); border: var(--border-thin) solid var(--color-border-strong); font-size: var(--text-xl); font-weight: var(--weight-bold); }
+.avatar .imgbox { aspect-ratio: 1; border: 0; }
+.avatar .imgbox span { display: none; }
+.danger-zone { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-4); border: var(--border-thick) solid var(--color-border-strong); border-radius: var(--radius-md); max-width: var(--width-form); }
+.attest { display: flex; flex-direction: column; gap: var(--space-2); }
+.attest-error .choice { border-color: var(--color-border-strong); border-width: var(--border-thick); }
+.attest-list { display: flex; flex-direction: column; gap: var(--space-2); color: var(--color-text); }
+.dl-wide { grid-template-columns: var(--width-plan-when) 1fr; }
+
+/* Round 8: area editor on Create new space */
+.area-map { height: auto; aspect-ratio: 16 / 9; touch-action: none; }
+.area-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.area-svg polygon, .area-svg ellipse { fill: var(--color-locate-halo); stroke: var(--color-border-strong); stroke-width: var(--border-thick); stroke-dasharray: 6 4; }
+.pin-static { cursor: default; pointer-events: none; }
+.area-handle { position: absolute; width: var(--size-handle); height: var(--size-handle); padding: 0; transform: translate(-50%, -50%); background: var(--color-surface); border: var(--border-thick) solid var(--color-action); border-radius: var(--radius-sm); cursor: grab; z-index: 3; touch-action: none; }
+.area-handle:active { cursor: grabbing; }
+.photo-grid-compact { grid-template-columns: repeat(auto-fill, minmax(var(--width-thumb), 1fr)); }
+.photo-grid-compact .photo-add { min-height: 0; }
+.demo-variants { margin: var(--space-1) 0 var(--space-2) var(--space-3); padding-left: var(--space-4); border-left: var(--border-thin) solid var(--color-border); }
+.demo-chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.demo-chip { min-height: var(--space-6); padding: 0 var(--space-2); font: inherit; font-size: var(--text-xs); color: var(--color-text); background: var(--color-surface); border: var(--border-thin) solid var(--color-border-strong); border-radius: var(--radius-pill); cursor: pointer; }
+.demo-chip:hover { background: var(--color-sunken); }
+.demo-chip[aria-current] { background: var(--color-action); color: var(--color-text-inverse); border-color: var(--color-action); }
