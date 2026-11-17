@@ -3,11 +3,95 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
 import { Button, Choice, ImageBox, Input, Page, Select } from '../components/ui.jsx';
 import { MapBox, SpaceCard } from '../components/domain.jsx';
+import { useChoices } from '../design/choices.js';
 
 const VISITOR_LIMIT = 10;
 
+// What the section under the hero says. Compare in the sandbox; the chosen one is in design/choices.js.
+// Every claim here comes from the dev spec; nothing new is promised.
+function HowItWorks() {
+  const steps = [
+    ['Document a space', 'Anyone with an account photographs a stoop, step or courtyard and says how it feels and what should change. Documentation is free and open.'],
+    ['Vote for what needs fixing', 'Votes, worth more when cast on site, show architects, local authorities and contest co-hosts which spaces people care about most.'],
+    ['Architects redesign it', 'Architects propose redesigns for documented spaces and sell them. They keep 80% of each sale and their copyright.'],
+    ['Co-hosts fund the change', 'A local authority, NGO, owner or residents’ group funds a contest prize, judges the entries and buys the winning design.'],
+  ];
+  return (
+    <section className="stack" aria-labelledby="how-heading">
+      <h2 id="how-heading">How a space gets better</h2>
+      <ol className="steps-row">
+        {steps.map(([title, text]) => (
+          <li key={title}>
+            <h3>{title}</h3>
+            <p className="small">{text}</p>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
+function ForWhom() {
+  const groups = [
+    ['If you live or work near a space', 'Document the places you use every day, say what should change and vote. Your votes point architects and local authorities at what needs fixing.', ['/space/new', 'Document a space']],
+    ['If you are an architect', 'Sell redesigns of real, documented spaces at a set price, keep 80% and your copyright, build a public portfolio and enter funded contests.', ['/contests', 'See open contests']],
+    ['If you fund or run public space', 'See which spaces residents care about most, buy measured models, and co-host a contest to get a design for a specific site.', ['/browse', 'Browse by votes']],
+  ];
+  return (
+    <section className="stack" aria-labelledby="who-heading">
+      <h2 id="who-heading">Who it’s for</h2>
+      <div className="audiences">
+        {groups.map(([title, text, [to, label]]) => (
+          <div key={title} className="stack-sm">
+            <h3>{title}</h3>
+            <p className="small">{text}</p>
+            <Link to={to} className="small">{label}</Link>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function SpotlightFirst() {
+  return (
+    <section className="spotlight" aria-labelledby="spot-heading">
+      <div className="stack">
+        <h2 id="spot-heading">Show the city what needs fixing</h2>
+        <p className="prose">
+          A step that floods every monsoon, a courtyard with no shade, a gate where people wait with nowhere to sit. Document it, and ask your neighbours to vote. The spaces with the most votes are the ones architects redesign and co-hosts fund.
+        </p>
+        <div><Button to="/browse">See the most-voted spaces</Button></div>
+      </div>
+      <ul className="spot-list small">
+        <li><span className="bold">Residents</span> document and vote, for free.</li>
+        <li><span className="bold">Architects</span> sell redesigns and keep 80%.</li>
+        <li><span className="bold">Local authorities and NGOs</span> fund contests for the spaces that matter.</li>
+      </ul>
+    </section>
+  );
+}
+
+function CoopBand() {
+  return (
+    <section className="coop-band" aria-labelledby="coop-heading">
+      <h2 id="coop-heading">Owned by the people who use it</h2>
+      <p className="small">Every account is a member of the co-op with one vote on how it runs. Any surplus at the end of the year goes back to members by the points they earned. If the platform ever closes, contributors keep their work.</p>
+      <div className="row small"><Link to="/co-op">How the co-op decides</Link><Link to="/terms">Terms summary</Link></div>
+    </section>
+  );
+}
+
+export const LANDING_VARIANTS = {
+  steps: { name: 'How it works', note: 'Four steps in order, from documenting to funding. Explains the whole model to every visitor at once.', render: () => <><HowItWorks /><CoopBand /></> },
+  audiences: { name: 'Who it’s for', note: 'One block per audience with its own next step. Best if visitors arrive already knowing which group they are in.', render: () => <><ForWhom /><CoopBand /></> },
+  spotlight: { name: 'Call out what needs fixing', note: 'Leads with the civic case: residents pointing at spaces that need work. Strongest story for community members.', render: () => <><SpotlightFirst /><CoopBand /></> },
+};
+
 export function Landing() {
   const { visibleSpaces, isMember } = useDemo();
+  const { landing } = useChoices();
+  const recent = visibleSpaces.slice(0, 4);
   return (
     <Page tag="simulated">
       <section className="split">
@@ -21,17 +105,15 @@ export function Landing() {
         </div>
         <ImageBox label="Photo: steps at Jaipur Darwaza (placeholder)" />
       </section>
-      <section className="grid">
-        <div className="card"><h3>Document</h3><p className="small">Photograph a space, say how it feels and what should change. Free and open under Creative Commons.</p></div>
-        <div className="card"><h3>Measure</h3><p className="small">Photos become a measured spatial diagram, drawn by AI or uploaded by an architect.</p></div>
-        <div className="card"><h3>Redesign</h3><p className="small">Architects sell redesigns and keep 80% and their copyright. Co-hosts fund contests for specific spaces.</p></div>
-        <div className="card"><h3>Own it together</h3><p className="small">Every account is one co-op vote. Any year-end surplus goes back to members by points.</p></div>
+      {(LANDING_VARIANTS[landing] || LANDING_VARIANTS.steps).render()}
+      <section className="stack" aria-labelledby="recent-heading">
+        <div className="row between">
+          <h2 id="recent-heading">Recently documented</h2>
+          <Link to="/browse">See all spaces</Link>
+        </div>
+        <div className="grid">{recent.map((s) => <SpaceCard key={s.id} space={s} />)}</div>
       </section>
-      <section className="stack">
-        <div className="row between"><h2>Recently documented</h2><Link to="/browse">See all {visibleSpaces.length} spaces</Link></div>
-        <div className="grid">{visibleSpaces.slice(0, 4).map((s) => <SpaceCard key={s.id} space={s} />)}</div>
-      </section>
-      <p className="small muted">All spaces, people, prices and organisations in this prototype are placeholders. <Link to="/terms">Terms summary</Link></p>
+      <p className="small muted">All spaces, people, prices and organisations in this prototype are placeholders.</p>
     </Page>
   );
 }
@@ -42,15 +124,22 @@ const SORTS = {
   name: { label: 'Name (A to Z)', fn: (a, b) => a.name.localeCompare(b.name) },
 };
 
+const STATUSES = {
+  all: { label: 'All', test: () => true },
+  approved: { label: 'Approved', test: (s) => s.status === 'approved' },
+  pending: { label: 'Pending', test: (s) => s.status === 'pending' },
+};
+
 export function Browse() {
   const { visibleSpaces, isMember, state, need } = useDemo();
+  const [status, setStatus] = useState('all');
   const [type, setType] = useState('all');
   const [sort, setSort] = useState('votes');
   const [hover, setHover] = useState(null);
   const limited = !isMember && state.signupDismissed;
-  // Rank by community votes across every space, whatever the current sort or filter.
-  const byVotes = [...visibleSpaces].sort(SORTS.votes.fn).map((s) => s.id);
-  const list = visibleSpaces.filter((s) => type === 'all' || s.type === type).sort(SORTS[sort].fn);
+  const list = visibleSpaces
+    .filter((s) => STATUSES[status].test(s) && (type === 'all' || s.type === type))
+    .sort(SORTS[sort].fn);
   const hidden = limited ? list.slice(VISITOR_LIMIT).map((s) => s.id) : [];
   const types = ['all', ...new Set(visibleSpaces.map((s) => s.type))];
   return (
@@ -61,21 +150,36 @@ export function Browse() {
             <h1>Browse spaces</h1>
             <Button variant="primary" to="/space/new" onClick={(e) => !need('upload') && e.preventDefault()}>Create new interstitial space</Button>
           </div>
-          <div className="row">
-            <Select label="Sort by" value={sort} onChange={(e) => setSort(e.target.value)} options={Object.entries(SORTS).map(([value, o]) => ({ value, label: o.label }))} />
+          <div className="row row-end">
+            <fieldset className="segmented">
+              <legend>Status</legend>
+              <div className="segmented-track">
+                {Object.entries(STATUSES).map(([id, o]) => (
+                  <label key={id} className="segment">
+                    <input type="radio" name="status" value={id} checked={status === id} onChange={() => setStatus(id)} />
+                    <span>{o.label} <span className="muted">{visibleSpaces.filter(o.test).length}</span></span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
             <Select label="Type" value={type} onChange={(e) => setType(e.target.value)} options={types.map((t) => ({ value: t, label: t === 'all' ? 'All types' : t }))} />
-            <span className="small muted">{list.length} spaces. Votes decide which spaces get attention.</span>
+            <Select label="Sort by" value={sort} onChange={(e) => setSort(e.target.value)} options={Object.entries(SORTS).map(([value, o]) => ({ value, label: o.label }))} />
           </div>
           {limited && (
             <p className="note">You’re browsing without an account, so {VISITOR_LIMIT} spaces are shown and the rest are blurred. <Link to="/signup">Sign up to see all {visibleSpaces.length}</Link></p>
           )}
-          <div className="grid grid-tight">
-            {list.map((s, i) => (
-              <SpaceCard key={s.id} space={s} number={i + 1} voteRank={byVotes.indexOf(s.id) + 1} faded={hidden.includes(s.id)} active={hover === s.id} onHover={setHover} />
-            ))}
-          </div>
+          <p className="small muted" aria-live="polite">{list.length} {list.length === 1 ? 'space' : 'spaces'}</p>
+          {list.length === 0 ? (
+            <p className="note">No spaces match. <button type="button" className="link-btn" onClick={() => { setStatus('all'); setType('all'); }}>Show all spaces</button></p>
+          ) : (
+            <div className="grid grid-tight">
+              {list.map((s) => (
+                <SpaceCard key={s.id} space={s} headingLevel={2} faded={hidden.includes(s.id)} active={hover === s.id} onHover={setHover} />
+              ))}
+            </div>
+          )}
         </div>
-        <MapBox spaces={list} hiddenIds={hidden} activeId={hover} onHover={setHover} sticky />
+        {list.length > 0 && <MapBox spaces={list} hiddenIds={hidden} activeId={hover} onHover={setHover} sticky />}
       </div>
     </Page>
   );

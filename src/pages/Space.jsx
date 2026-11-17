@@ -54,7 +54,7 @@ function Diagram({ space }) {
 
   if (aiPending) {
     return (
-      <section className="stack">
+      <section className="stack" data-screen-label="Spatial diagram">
         <SectionHead title="Spatial diagram" />
         <div className="card">
           <div className="row"><div className="spinner" aria-hidden="true" /><h3>Processing…</h3></div>
@@ -65,7 +65,7 @@ function Diagram({ space }) {
   }
   if (!space.diagram) {
     return (
-      <section className="stack">
+      <section className="stack" data-screen-label="Spatial diagram">
         <SectionHead title="Spatial diagram">
           {isArchitect && <Button variant="primary" to={`/space/${space.id}/upload-diagram`}>Upload spatial diagram</Button>}
         </SectionHead>
@@ -79,7 +79,7 @@ function Diagram({ space }) {
   }
   const d = space.diagram;
   return (
-    <section className="stack">
+    <section className="stack" data-screen-label="Spatial diagram">
       <SectionHead title="Spatial diagram" note="A measured plan and section of the space as it is today." />
       <div className="split">
         <div className="stack">
@@ -121,7 +121,7 @@ function Redesigns({ space }) {
     .sort((a, b) => rankOf(a.architectId) - rankOf(b.architectId));
   const limit = isArchitect ? uploadLimit(user.id) : null;
   return (
-    <section className="stack">
+    <section className="stack" data-screen-label="Redesigns">
       <SectionHead title={`Redesigns (${list.length})`} note="Proposals by architects, paid per download. Architects ranked higher appear first.">
         {isArchitect && limit.allowed && <Button variant="primary" to={`/space/${space.id}/upload-redesign`}>Upload redesign</Button>}
         {isArchitect && !limit.allowed && <span className="small muted">You can publish one redesign a week. Next: {limit.next.toLocaleDateString()}.</span>}
@@ -174,7 +174,7 @@ function Experience({ space, setBanner }) {
   };
 
   return (
-    <section className="stack">
+    <section className="stack" data-screen-label="Experiences">
       <SectionHead title={`Experiences (${posts.length})`} note="How people use and feel about this space. Most relevant first: contributors with more points rank higher.">
         <Button onClick={() => need('vote') && setAsk('vote')}>Vote for this space ({space.votes})</Button>
         {!open && <Button variant="primary" onClick={() => need('comment') && setOpen(true)}>Add your experience</Button>}
@@ -257,7 +257,7 @@ function ContestBanner({ contest }) {
   const { get, isArchitect, isMember, user } = useDemo();
   const mine = user && contest.entries.find((e) => e.architectId === user.id);
   return (
-    <section className="alert">
+    <section className="alert" data-screen-label="Contest">
       <div className="row between row-top">
         <div className="stack-sm">
           <div className="row"><Badge kind={contest.status === 'live' ? 'solid' : ''}>Contest: {contestStatus(contest).toLowerCase()}</Badge></div>

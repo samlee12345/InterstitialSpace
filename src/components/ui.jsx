@@ -3,6 +3,20 @@ import { Link } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
 import { fmtPoints } from '../lib/points.js';
 
+// Authored line icons: one stroke weight, drawn on a 20px grid.
+const ICONS = {
+  vote: 'M10 4 4.5 10.5h3.5V16h4v-5.5h3.5Z',
+  photo: 'M3 7h3l1.5-2h5L14 7h3v9H3Z M10 14a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
+  pin: 'M10 17s5-4.6 5-8.5a5 5 0 0 0-10 0C5 12.4 10 17 10 17Z M10 10.2a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4Z',
+};
+export function Icon({ name, label }) {
+  return (
+    <svg className="icon" viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" {...(label ? { role: 'img', 'aria-label': label } : { 'aria-hidden': true })}>
+      <path d={ICONS[name]} />
+    </svg>
+  );
+}
+
 export function Button({ variant = 'default', to, className = '', ...p }) {
   const cls = `btn btn-${variant} ${className}`;
   return to ? <Link className={cls} to={to} {...p} /> : <button type="button" className={cls} {...p} />;
@@ -15,7 +29,7 @@ export function ScreenTag({ kind }) {
 
 export function Page({ tag, narrow, wide, children }) {
   return (
-    <main className={`page stack-lg ${narrow ? 'narrow' : ''} ${wide ? 'page-wide' : ''}`}>
+    <main className={`page stack-lg ${narrow ? 'narrow' : ''} ${wide ? 'page-wide' : ''}`} data-screen-label="page">
       {tag && <ScreenTag kind={tag} />}
       {children}
     </main>

@@ -1,0 +1,7 @@
+/* Sandbox page only. Tokens only. */
+.sb-variant { display: flex; flex-direction: column; gap: var(--space-3); }
+.sb-variant-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: var(--space-3); }
+.sb-frame { padding: var(--space-5); background: var(--color-bg); border: var(--border-thin) dashed var(--color-border); border-radius: var(--radius-md); }
+.sb-frame .grid-tight { max-width: var(--width-browse-list); }
+.sb-frame-page { background: var(--color-surface); }
+code { font-size: var(--text-sm); background: var(--color-sunken); padding: 0 var(--space-1); border-radius: var(--radius-sm); }

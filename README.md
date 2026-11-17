@@ -32,6 +32,24 @@ The link is https://samlee12345.github.io/InterstitialSpace/ . Pages use
 be shared directly. Each visitor gets their own copy of the demo data, which
 resets when they reload.
 
+## Component sandbox
+
+`sandbox.html` (Demo bar, "Open component sandbox") shows versions of a
+component side by side, built from the real components, tokens and seed data:
+space card layouts and the landing section under the hero. "Preview in the
+app" switches the prototype to that version in your browser only. The
+defaults everyone sees are in `src/design/choices.js`. To add another
+component, follow the comment at the top of `src/sandbox.jsx`.
+
+## Notes
+
+Press **N** on any page (or "Turn on notes" in the Demo bar) to start the
+notes tool, ported from the portfolio. Press N again, click any text, type a
+note, then ⌘↵. Notes are kept per page in your browser and survive reloads.
+"Copy all pages" puts every note on the clipboard, labelled by page and
+section, so testers can paste them into a message. Notes never leave the
+tester's browser.
+
 ## How it is put together
 
 - `src/styles/tokens.css` holds every visual value (grays, type, spacing,

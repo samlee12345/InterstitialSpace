@@ -1,13 +1,99 @@
 import { Link } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
-import { Badge, ImageBox, Mine, PointsBadge, StatusBadges } from './ui.jsx';
+import { Badge, Icon, ImageBox, Mine, PointsBadge, StatusBadges } from './ui.jsx';
+import { useChoices } from '../design/choices.js';
 
-// number: position in the current list (matches the map pin). voteRank: rank by community votes.
-export function SpaceCard({ space, faded, number, voteRank, active, onHover }) {
+// Space card layouts to compare in the sandbox. The chosen one is in design/choices.js.
+export const SPACE_CARD_VARIANTS = {
+  label: { name: 'Type on the photo', note: 'Type sits on the photo as a label, so the text below is just the name and two counts. Scans fast in a grid.' },
+  footer: { name: 'Counts in a footer', note: 'Type is a plain line under the name; votes and photos get their own footer with larger numbers. Best when counts matter most.' },
+  votes: { name: 'Votes lead', note: 'Vote count sits beside the name as the card’s anchor, like a ranked list. Makes it obvious which spaces people care about.' },
+  row: { name: 'Compact row', note: 'Small photo on the left, text on the right. Fits twice as many spaces in the list beside the map.' },
+};
+
+const typeLabel = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+
+function Stat({ icon, n, label }) {
+  return (
+    <span className="stat">
+      <Icon name={icon} />
+      <span><span className="bold">{n}</span> {label}</span>
+    </span>
+  );
+}
+
+// headingLevel keeps the page outline correct (h2 under an h1, h3 under an h2).
+export function SpaceCard({ space, faded, active, onHover, headingLevel = 3, variant }) {
+  const { spaceCard } = useChoices();
+  const v = SPACE_CARD_VARIANTS[variant] ? variant : spaceCard;
+  const H = `h${headingLevel}`;
+  const votes = <Stat icon="vote" n={space.votes} label={space.votes === 1 ? 'vote' : 'votes'} />;
+  const photos = <Stat icon="photo" n={space.photos.length} label={space.photos.length === 1 ? 'photo' : 'photos'} />;
+  const badges = <StatusBadges space={space} />;
+  const hasBadges = space.status !== 'approved' || space.readyForApproval || space.removal === 'review';
+
+  let body;
+  if (v === 'footer') {
+    body = (
+      <>
+        <ImageBox label="Photo" />
+        {hasBadges && <div className="row">{badges}</div>}
+        <div className="stack-sm">
+          <H className="card-title">{space.name}</H>
+          <span className="small muted">{typeLabel(space.type)}</span>
+        </div>
+        <dl className="card-foot">
+          <div><dt>Votes</dt><dd>{space.votes}</dd></div>
+          <div><dt>Photos</dt><dd>{space.photos.length}</dd></div>
+        </dl>
+      </>
+    );
+  } else if (v === 'votes') {
+    body = (
+      <>
+        <ImageBox label="Photo" />
+        <div className="vote-lead">
+          <span className="vote-box" aria-label={`${space.votes} votes`}>
+            <Icon name="vote" />
+            <span className="bold">{space.votes}</span>
+          </span>
+          <div className="stack-sm grow">
+            <H className="card-title">{space.name}</H>
+            <span className="small muted">{typeLabel(space.type)}, {space.photos.length} photos</span>
+            {hasBadges && <div className="row">{badges}</div>}
+          </div>
+        </div>
+      </>
+    );
+  } else if (v === 'row') {
+    body = (
+      <div className="card-row">
+        <div className="card-row-img"><ImageBox label="Photo" shape="square" /></div>
+        <div className="stack-sm grow">
+          <H className="card-title">{space.name}</H>
+          <div className="row"><Badge>{typeLabel(space.type)}</Badge>{badges}</div>
+          <div className="row small">{votes}{photos}</div>
+        </div>
+      </div>
+    );
+  } else {
+    body = (
+      <>
+        <div className="img-labelled">
+          <ImageBox label="Photo" />
+          <span className="img-label">{typeLabel(space.type)}</span>
+        </div>
+        {hasBadges && <div className="row">{badges}</div>}
+        <H className="card-title">{space.name}</H>
+        <div className="row small">{votes}{photos}</div>
+      </>
+    );
+  }
+
   return (
     <Link
       to={`/space/${space.id}`}
-      className={`card card-link ${faded ? 'faded' : ''} ${active ? 'card-active' : ''}`}
+      className={`card card-link card-${v} ${faded ? 'faded' : ''} ${active ? 'card-active' : ''}`}
       tabIndex={faded ? -1 : undefined}
       aria-hidden={faded || undefined}
       onMouseEnter={() => onHover?.(space.id)}
@@ -15,21 +101,12 @@ export function SpaceCard({ space, faded, number, voteRank, active, onHover }) {
       onFocus={() => onHover?.(space.id)}
       onBlur={() => onHover?.(null)}
     >
-      <ImageBox label={`Photo: ${space.type}`} />
-      <div className="row">
-        {number && <span className="pin pin-inline" aria-hidden="true">{number}</span>}
-        {voteRank && <Badge>No. {voteRank} by votes</Badge>}
-        <StatusBadges space={space} />
-      </div>
-      <h3>{space.name}</h3>
-      <p className="small muted">
-        <span className="bold">{space.votes} votes</span>, {space.photos.length} photos, {space.type}
-      </p>
+      {body}
     </Link>
   );
 }
 
-// Map placeholder: pins are placed from each space's lat/lng and numbered like the list.
+// Map placeholder: pins are placed from each space's lat/lng and show the vote count.
 export function MapBox({ spaces, hiddenIds = [], activeId, onHover, sticky }) {
   const lats = spaces.map((s) => s.lat);
   const lngs = spaces.map((s) => s.lng);
@@ -41,7 +118,7 @@ export function MapBox({ spaces, hiddenIds = [], activeId, onHover, sticky }) {
   return (
     <div className={`map ${sticky ? 'map-sticky' : ''}`}>
       <span className="map-label">Map placeholder: Jaipur. Dashed pins are pending.</span>
-      {spaces.map((s, i) =>
+      {spaces.map((s) =>
         hiddenIds.includes(s.id) ? (
           <span key={s.id} className="pin faded" style={pos(s)} aria-hidden="true">?</span>
         ) : (
@@ -51,11 +128,11 @@ export function MapBox({ spaces, hiddenIds = [], activeId, onHover, sticky }) {
             className={`pin ${s.status !== 'approved' ? 'pin-pending' : ''} ${activeId === s.id ? 'pin-active' : ''}`}
             style={pos(s)}
             title={s.name}
-            aria-label={`${i + 1}: ${s.name}`}
+            aria-label={`${s.name}, ${s.votes} votes`}
             onMouseEnter={() => onHover?.(s.id)}
             onMouseLeave={() => onHover?.(null)}
           >
-            {i + 1}
+            {s.votes}
           </Link>
         ),
       )}

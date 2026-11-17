@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import { ROLES, useDemo } from '../state/DemoContext.jsx';
 import { Badge, Button, Modal, Toasts } from './ui.jsx';
 import { fmtPoints } from '../lib/points.js';
+import { activateNotes, notesActive, setNotesPage, startNotesTool } from '../review/notes-tool.js';
 
 const link = ({ isActive }) => (isActive ? 'active' : '');
 
@@ -149,6 +150,8 @@ function DemoPanel() {
             Make the next payment fail
           </label>
           <Button onClick={() => dispatch({ type: 'SKIP_WEEK' })}>Skip ahead one week</Button>
+          <NotesButton />
+          <a className="btn" href={`${import.meta.env.BASE_URL}sandbox.html`}>Open component sandbox</a>
           <Button
             onClick={() => {
               dispatch({ type: 'RESET' });
@@ -201,6 +204,28 @@ function SignupPrompt() {
   );
 }
 
+// Keeps the Notes tool on the current page's list of notes.
+export function NotesBridge() {
+  const loc = useLocation();
+  useEffect(() => { startNotesTool(); }, []);
+  useEffect(() => { setNotesPage(loc.pathname); }, [loc.pathname]);
+  return null;
+}
+
+function NotesButton() {
+  const [on, setOn] = useState(notesActive());
+  useEffect(() => {
+    const sync = () => setOn(notesActive());
+    window.addEventListener('isp-notes-change', sync);
+    return () => window.removeEventListener('isp-notes-change', sync);
+  }, []);
+  return (
+    <Button onClick={activateNotes} aria-keyshortcuts="N">
+      {on ? 'Notes are on (press N to add)' : 'Turn on notes (or press N)'}
+    </Button>
+  );
+}
+
 export default function Shell() {
   const loc = useLocation();
   useEffect(() => { window.scrollTo(0, 0); }, [loc.pathname]);
@@ -211,6 +236,7 @@ export default function Shell() {
       <SignupPrompt />
       <Toasts />
       <DemoPanel />
+      <NotesBridge />
     </>
   );
 }

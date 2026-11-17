@@ -47,6 +47,7 @@
   --weight-medium: 500;
   --weight-bold: 700;
   --measure: 68ch;
+  --measure-small: 76ch;
 
   /* Spacing */
   --space-1: 0.25rem;
@@ -74,7 +75,10 @@
   --width-narrow: 40rem;
   --width-card-min: 15rem;
   --width-thumb: 5.5rem;
+  --width-thumb-lg: 7rem;
+  --size-icon: 1rem;
   --width-card-tight: 12rem;
+  --width-browse-list: 40rem;
   --height-header: 4.5rem;
   --width-panel: 19rem;
   --width-menu: 20rem;
@@ -87,4 +91,16 @@
   --z-float: 20;
   --z-modal: 30;
   --z-toast: 40;
+  --z-review: 1000;
+
+  /* Review overlay (Notes tool). Deliberately NOT gray, so reviewers can tell
+     their notes apart from the wireframe. Not part of the product's design. */
+  --review-accent: #5b45d6;
+  --review-accent-strong: #4532b3;
+  --review-accent-soft: #c9c0f5;
+  --review-on-accent: #ffffff;
+  --review-surface: #fbfaff;
+  --width-review-rail: 14rem;
+  --width-review-popover: 18rem;
+  --size-review-marker: 1.125rem;
 }
