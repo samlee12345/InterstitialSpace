@@ -189,7 +189,8 @@
       },
       "removed": false,
       "removal": null,
-      "private": false
+      "private": false,
+      "parentId": null
     },
     {
       "id": "s2",
@@ -267,7 +268,8 @@
       },
       "removed": false,
       "removal": null,
-      "private": false
+      "private": false,
+      "parentId": null
     },
     {
       "id": "s3",
@@ -360,7 +362,8 @@
       },
       "removed": false,
       "removal": null,
-      "private": false
+      "private": false,
+      "parentId": null
     },
     {
       "id": "s4",
@@ -433,7 +436,8 @@
       },
       "removed": false,
       "removal": null,
-      "private": false
+      "private": false,
+      "parentId": null
     },
     {
       "id": "s5",
@@ -521,7 +525,8 @@
       },
       "removed": false,
       "removal": null,
-      "private": false
+      "private": false,
+      "parentId": null
     },
     {
       "id": "s6",
@@ -589,7 +594,8 @@
       },
       "removed": false,
       "removal": null,
-      "private": false
+      "private": false,
+      "parentId": null
     },
     {
       "id": "s7",
@@ -652,7 +658,8 @@
       },
       "removed": false,
       "removal": null,
-      "private": false
+      "private": false,
+      "parentId": null
     },
     {
       "id": "s8",
@@ -711,7 +718,8 @@
       "diagram": null,
       "removed": false,
       "removal": null,
-      "private": false
+      "private": false,
+      "parentId": null
     },
     {
       "id": "s9",
@@ -755,7 +763,8 @@
       "diagram": null,
       "removed": false,
       "removal": null,
-      "private": false
+      "private": false,
+      "parentId": null
     },
     {
       "id": "s10",
@@ -839,7 +848,8 @@
       "diagram": null,
       "removed": false,
       "removal": null,
-      "private": false
+      "private": false,
+      "parentId": null
     },
     {
       "id": "s11",
@@ -888,7 +898,8 @@
       "diagram": null,
       "removed": false,
       "removal": null,
-      "private": true
+      "private": true,
+      "parentId": null
     },
     {
       "id": "s12",
@@ -976,7 +987,127 @@
       },
       "removed": false,
       "removal": null,
-      "private": false
+      "private": false,
+      "parentId": null
+    },
+    {
+      "id": "s13",
+      "name": "Bench ledge inside the Jaipur Darwaza arch",
+      "type": "threshold",
+      "lat": 26.91965,
+      "lng": 75.83105,
+      "status": "approved",
+      "readyForApproval": false,
+      "uploadedBy": "u-c2",
+      "votes": 14,
+      "photos": [
+        {
+          "id": "s13-ph1",
+          "credit": "u-c2",
+          "onSite": true
+        },
+        {
+          "id": "s13-ph2",
+          "credit": "u-c3",
+          "onSite": true
+        },
+        {
+          "id": "s13-ph3",
+          "credit": "u-a2",
+          "onSite": true
+        },
+        {
+          "id": "s13-ph4",
+          "credit": "u-a4",
+          "onSite": false
+        },
+        {
+          "id": "s13-ph5",
+          "credit": "u-c1",
+          "onSite": true
+        },
+        {
+          "id": "s13-ph6",
+          "credit": "u-c2",
+          "onSite": true
+        },
+        {
+          "id": "s13-ph7",
+          "credit": "u-c3",
+          "onSite": true
+        }
+      ],
+      "questionnaire": {
+        "feelings": "Calm, a place to pause out of the traffic",
+        "transition": "A sudden drop from the street into shade",
+        "materiality": "Worn sandstone, lime plaster",
+        "sensory": "Cool air, echo, pigeons"
+      },
+      "properties": {
+        "activity": "Waiting and resting",
+        "materials": "Sandstone",
+        "climate": "Shaded most of the day",
+        "authorship": "Unknown / vernacular"
+      },
+      "diagram": {
+        "source": "architect",
+        "by": "u-a3",
+        "credits": []
+      },
+      "removed": false,
+      "removal": null,
+      "private": false,
+      "parentId": "s4"
+    },
+    {
+      "id": "s14",
+      "name": "Chai stall steps outside Jaipur Darwaza",
+      "type": "chowk steps",
+      "lat": 26.91952,
+      "lng": 75.83085,
+      "status": "pending",
+      "readyForApproval": false,
+      "uploadedBy": "u-c1",
+      "votes": 5,
+      "photos": [
+        {
+          "id": "s14-ph1",
+          "credit": "u-c3",
+          "onSite": true
+        },
+        {
+          "id": "s14-ph2",
+          "credit": "u-a2",
+          "onSite": true
+        },
+        {
+          "id": "s14-ph3",
+          "credit": "u-a4",
+          "onSite": true
+        },
+        {
+          "id": "s14-ph4",
+          "credit": "u-c1",
+          "onSite": false
+        }
+      ],
+      "questionnaire": {
+        "feelings": "Protected, slightly hidden",
+        "transition": "Narrow lane opens into light",
+        "materiality": "Painted plaster, stone paving",
+        "sensory": "Cooking smells, quiet at noon"
+      },
+      "properties": {
+        "activity": "Children playing",
+        "materials": "Lime plaster",
+        "climate": "Hot at midday",
+        "authorship": "Unknown / vernacular"
+      },
+      "diagram": null,
+      "removed": false,
+      "removal": null,
+      "private": false,
+      "parentId": null
     }
   ],
   "redesigns": [
@@ -1127,6 +1258,31 @@
       ]
     },
     {
+      "id": "c3",
+      "spaceId": "s3",
+      "status": "live",
+      "title": "Evening seating for the Badi Chaupar steps",
+      "brief": "The chowk steps fill up every evening, but there is nowhere to sit that is not a step. Propose seating and lighting that work with the bazaar, not against it.",
+      "prize": "$3,000",
+      "deadline": "2027-01-15",
+      "coHost": "Walled City heritage cell (placeholder)",
+      "coHostId": null,
+      "eligibility": "Licensed architects and accredited architecture students",
+      "criteria": [
+        "Keeps the steps open for passing through",
+        "Lighting that is safe and not glaring",
+        "Survives heavy daily use"
+      ],
+      "entries": [
+        {
+          "id": "e6",
+          "architectId": "u-a2",
+          "title": "Steps that become seats",
+          "submittedAt": "2026-11-10"
+        }
+      ]
+    },
+    {
       "id": "c2",
       "spaceId": "s5",
       "status": "judging",
@@ -1160,6 +1316,146 @@
           "architectId": "u-a4",
           "title": "Night steps",
           "submittedAt": "2026-10-30"
+        }
+      ]
+    },
+    {
+      "id": "c4",
+      "spaceId": "s6",
+      "status": "judging",
+      "title": "Plinth steps that drain in the monsoon",
+      "brief": "Water pools on the temple plinth steps for weeks every monsoon. Propose a fix for drainage that keeps the steps usable for sitting and selling.",
+      "prize": "$1,500",
+      "deadline": "2026-11-10",
+      "coHost": "Johari Bazaar traders' association (placeholder)",
+      "coHostId": null,
+      "eligibility": "Licensed architects and accredited architecture students",
+      "criteria": [
+        "Drains within an hour of heavy rain",
+        "Keeps the steps usable",
+        "Can be built in the dry season"
+      ],
+      "entries": [
+        {
+          "id": "e7",
+          "architectId": "u-a3",
+          "title": "Channels under the treads",
+          "submittedAt": "2026-10-28"
+        },
+        {
+          "id": "e8",
+          "architectId": "u-a4",
+          "title": "Raised plinth edge",
+          "submittedAt": "2026-11-08"
+        }
+      ]
+    },
+    {
+      "id": "c5",
+      "spaceId": "s4",
+      "status": "closed",
+      "title": "A place to wait at Jaipur Darwaza",
+      "brief": "People wait inside the gateway for buses with nowhere to sit and no water. Design benches and a water point that leave the arch clear for traffic on foot.",
+      "prize": "$2,000",
+      "deadline": "2026-08-30",
+      "coHost": "Walled City NGO (placeholder)",
+      "coHostId": null,
+      "eligibility": "Licensed architects and accredited architecture students",
+      "criteria": [
+        "Seats at least 12 people",
+        "Keeps the arch clear",
+        "Drinking water that is easy to maintain"
+      ],
+      "winner": "e9",
+      "entries": [
+        {
+          "id": "e9",
+          "architectId": "u-a2",
+          "title": "Benches in the arch",
+          "submittedAt": "2026-08-12"
+        },
+        {
+          "id": "e10",
+          "architectId": "u-a3",
+          "title": "Waiting wall",
+          "submittedAt": "2026-08-20"
+        },
+        {
+          "id": "e11",
+          "architectId": "u-a1",
+          "title": "Threshold shade",
+          "submittedAt": "2026-08-28"
+        }
+      ],
+      "plans": [
+        {
+          "when": "Sep 2026",
+          "text": "Winner announced; the co-host bought the design.",
+          "done": true
+        },
+        {
+          "when": "Oct to Dec 2026",
+          "text": "Design development with the architect and people who wait here.",
+          "done": true
+        },
+        {
+          "when": "Feb 2027",
+          "text": "Construction of the benches and the water point.",
+          "done": false
+        },
+        {
+          "when": "Apr 2027",
+          "text": "Opening, then a follow-up survey on the platform.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "c6",
+      "spaceId": "s1",
+      "status": "closed",
+      "title": "Shade for the Amer Road stepwell landing",
+      "brief": "The landing is unusable in May and June. Propose shade that can go up in a season and does not hide the stepwell.",
+      "prize": "$2,200",
+      "deadline": "2026-06-30",
+      "coHost": "Amer Road residents' welfare association (placeholder)",
+      "coHostId": null,
+      "eligibility": "Licensed architects and accredited architecture students",
+      "criteria": [
+        "Shade for the hottest hours",
+        "Built within one season",
+        "Keeps views of the stepwell"
+      ],
+      "winner": "e12",
+      "entries": [
+        {
+          "id": "e12",
+          "architectId": "u-a4",
+          "title": "Canopy of stretched cotton",
+          "submittedAt": "2026-06-14"
+        },
+        {
+          "id": "e13",
+          "architectId": "u-a2",
+          "title": "Stone pergola",
+          "submittedAt": "2026-06-25"
+        }
+      ],
+      "plans": [
+        {
+          "when": "Jul 2026",
+          "text": "Winner announced; the co-host bought the design.",
+          "done": true
+        },
+        {
+          "when": "Sep 2026",
+          "text": "Canopy built by the residents’ association.",
+          "done": true
+        },
+        {
+          "when": "Dec 2026",
+          "text": "Check-in with residents on how the shade is working.",
+          "done": false
         }
       ]
     }
@@ -1773,6 +2069,98 @@
       "photoIds": [
         "s12-ph5",
         "s12-ph10"
+      ]
+    },
+    {
+      "id": "cm-s13-u-c2",
+      "spaceId": "s13",
+      "userId": "u-c2",
+      "text": "Shared these so the AI has enough to draw a diagram.",
+      "onSite": true,
+      "photoIds": [
+        "s13-ph1",
+        "s13-ph6"
+      ]
+    },
+    {
+      "id": "cm-s13-u-c3",
+      "spaceId": "s13",
+      "userId": "u-c3",
+      "text": "There is always someone sitting here. Photos from today.",
+      "onSite": true,
+      "photoIds": [
+        "s13-ph2",
+        "s13-ph7"
+      ]
+    },
+    {
+      "id": "cm-s13-u-a2",
+      "spaceId": "s13",
+      "userId": "u-a2",
+      "text": "The shade moves fast here. Photos from midday.",
+      "onSite": true,
+      "photoIds": [
+        "s13-ph3"
+      ]
+    },
+    {
+      "id": "cm-s13-u-a4",
+      "spaceId": "s13",
+      "userId": "u-a4",
+      "text": "Took these on my way through in the morning.",
+      "onSite": true,
+      "photoIds": [
+        "s13-ph4"
+      ]
+    },
+    {
+      "id": "cm-s13-u-c1",
+      "spaceId": "s13",
+      "userId": "u-c1",
+      "text": "Busiest in the late afternoon; these show it then.",
+      "onSite": true,
+      "photoIds": [
+        "s13-ph5"
+      ]
+    },
+    {
+      "id": "cm-s14-u-c3",
+      "spaceId": "s14",
+      "userId": "u-c3",
+      "text": "There is always someone sitting here. Photos from today.",
+      "onSite": true,
+      "photoIds": [
+        "s14-ph1"
+      ]
+    },
+    {
+      "id": "cm-s14-u-a2",
+      "spaceId": "s14",
+      "userId": "u-a2",
+      "text": "The shade moves fast here. Photos from midday.",
+      "onSite": true,
+      "photoIds": [
+        "s14-ph2"
+      ]
+    },
+    {
+      "id": "cm-s14-u-a4",
+      "spaceId": "s14",
+      "userId": "u-a4",
+      "text": "Took these on my way through in the morning.",
+      "onSite": true,
+      "photoIds": [
+        "s14-ph3"
+      ]
+    },
+    {
+      "id": "cm-s14-u-c1",
+      "spaceId": "s14",
+      "userId": "u-c1",
+      "text": "Busiest in the late afternoon; these show it then.",
+      "onSite": true,
+      "photoIds": [
+        "s14-ph4"
       ]
     }
   ],

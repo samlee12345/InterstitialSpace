@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
-import { Badge, Button, Choice, Empty, FileDrop, ImageBox, Input, Mine, Page, RoleGate, Select, Steps } from '../components/ui.jsx';
-import { ContestCard, Crumbs } from '../components/domain.jsx';
+import { Badge, Button, Choice, Empty, FileDrop, FormActions, ImageBox, Input, Mine, Page, RoleGate, Select, Steps } from '../components/ui.jsx';
+import { ContestCard, ContestPlans, Crumbs, contestWinner } from '../components/domain.jsx';
 
 // "2026-11-12" → "Nov 12, 2026"
 const fmtDate = (d) => (d ? new Date(`${d}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'date not recorded');
@@ -18,7 +18,22 @@ export function Contests() {
         </div>
         {isPaid && <Button to="/contest/request">Request to host a contest</Button>}
       </div>
-      <div className="grid">{state.contests.map((c) => <ContestCard key={c.id} contest={c} />)}</div>
+      {[
+        ['live', 'Open for entries', 'Architects can submit an entry until the deadline.'],
+        ['judging', 'Judging', 'Entries are closed. Each co-host is judging against the criteria it set.'],
+        ['closed', 'Closed', 'Winners, and what each co-host plans to do with the design.'],
+      ].map(([status, title, note]) => {
+        const list = state.contests.filter((c) => c.status === status);
+        return (
+          <section key={status} className="stack" aria-labelledby={`contests-${status}`}>
+            <div className="stack-sm">
+              <h2 id={`contests-${status}`}>{title} ({list.length})</h2>
+              <p className="small muted">{note}</p>
+            </div>
+            {list.length ? <div className="grid">{list.map((c) => <ContestCard key={c.id} contest={c} />)}</div> : <p className="small muted">None right now.</p>}
+          </section>
+        );
+      })}
     </Page>
   );
 }
@@ -60,6 +75,24 @@ export function Contest() {
         <div className="stack">
           <div className="row"><Badge kind={c.status === 'live' ? 'solid' : ''}>{c.status === 'live' ? 'Open for entries' : c.status === 'judging' ? 'Judging' : 'Closed'}</Badge></div>
           <h1>{c.title}</h1>
+          {contestWinner(c) && (
+            <section className="winner-box" aria-labelledby="winner-h">
+              <h2 id="winner-h" className="h-sm">Winner</h2>
+              <div className="row row-top">
+                <div className="winner-img"><ImageBox label="Winning design" /></div>
+                <div className="stack-sm grow">
+                  <span className="bold">{contestWinner(c).title}</span>
+                  <span className="small">by <Link to={`/architect/${contestWinner(c).architectId}`}>{get.user(contestWinner(c).architectId)?.name}</Link>. Received the {c.prize} prize; the design was sold to {c.coHost}.</span>
+                </div>
+              </div>
+              {c.plans?.length > 0 && (
+                <>
+                  <h3 className="h-xs">What happens next</h3>
+                  <ContestPlans contest={c} />
+                </>
+              )}
+            </section>
+          )}
           <section className="stack-sm"><h2>Brief</h2><p className="prose">{c.brief}</p></section>
           <section className="stack-sm">
             <h2>Site</h2>
@@ -102,14 +135,14 @@ export function Contest() {
                 The co-host sets the sale price. The winner receives the full prize.
               </Choice>
               {err.agree && <span className="error" role="alert">{err.agree}</span>}
-              <div className="row">
-                <Button variant="primary" onClick={submit}>Submit entry</Button>
+              <FormActions>
                 <Button onClick={() => setOpen(false)}>Cancel</Button>
-              </div>
+                <Button variant="primary" onClick={submit}>Submit entry</Button>
+              </FormActions>
             </section>
           )}
         </div>
-        <aside className="card">
+        <aside className="card sticky-aside">
           <span className="small muted">Prize money</span>
           <span className="display">{c.prize}</span>
           <span className="small">The winner receives the full prize.</span>
@@ -121,7 +154,7 @@ export function Contest() {
             <dt>Entries</dt><dd>{c.entries.length}</dd>
           </dl>
           {c.status !== 'live' ? (
-            <p className="small muted">{c.status === 'judging' ? 'Entries are closed. The co-host is judging.' : 'This contest has a winner.'}</p>
+            <p className="small muted">{c.status === 'judging' ? 'Entries are closed. The co-host is judging.' : 'This contest is closed.'}</p>
           ) : mine ? (
             <p className="small bold">You entered “{mine.title}”.</p>
           ) : isArchitect ? (
@@ -173,7 +206,7 @@ export function ContestRequest() {
           <Input label="Prize you will fund" value={f.prize} onChange={(e) => setF({ ...f, prize: e.target.value })} placeholder="$X,XXX" />
           <Input label="Judging criteria (you set these, and you judge)" textarea value={f.criteria} onChange={(e) => setF({ ...f, criteria: e.target.value })} />
           {err && <span className="error" role="alert">{err}</span>}
-          <div><Button variant="primary" onClick={send}>Send request</Button></div>
+          <FormActions><Button variant="primary" onClick={send}>Send request</Button></FormActions>
         </div>
       )}
 

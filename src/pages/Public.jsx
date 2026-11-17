@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
-import { Button, Choice, Icon, ImageBox, Input, Page, Select } from '../components/ui.jsx';
+import { Button, Choice, FormActions, Icon, ImageBox, Input, Page, Select } from '../components/ui.jsx';
 import { MapBox, SpaceCard, distanceM, matchesSearch, parseLatLng } from '../components/domain.jsx';
 import { useChoices } from '../design/choices.js';
 
@@ -446,7 +446,7 @@ export function Signup() {
         )}
         {err && <span className="error" role="alert">{err}</span>}
         <p className="small muted">Every account is a member of the co-op with one vote. <Link to="/terms">Terms summary</Link></p>
-        <div><Button variant="primary" type="submit">Create account</Button></div>
+        <FormActions><Button variant="primary" type="submit">Create account</Button></FormActions>
       </form>
     </Page>
   );

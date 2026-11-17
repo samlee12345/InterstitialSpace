@@ -166,7 +166,8 @@ function PageList({ close }) {
   const loc = useLocation();
   const nav = useNavigate();
   const counts = useNotesCounts();
-  const currentView = (page) => (page.id === 'space' ? (state.layout === 'tabs' ? 'tabs' : '') : page.id === 'landing' ? (landingLayout === 'map' ? 'map' : '') : '');
+  const { createFlow } = useChoices();
+  const currentView = (page) => (page.id === 'space' ? (state.layout === 'tabs' ? 'tabs' : '') : page.id === 'landing' ? (landingLayout === 'map' ? 'map' : '') : page.id === 'space-new' ? (createFlow === 'overlay' ? 'overlay' : '') : '');
   const go = (page, view) => {
     if (page.role && page.role !== role) dispatch({ type: 'SET_ROLE', role: page.role });
     if (view?.layout) dispatch({ type: 'SET_LAYOUT', layout: view.layout });
@@ -190,6 +191,21 @@ function PageList({ close }) {
                     <NoteCounts n={total} />
                     <span className={`demo-kind demo-kind-${p.kind}`}>{p.kind === 'clickable' ? 'Clickable' : 'Simulated'}</span>
                   </button>
+                  {p.controls === 'create' && (
+                    <div className="demo-control-row">
+                      {[['createGeotag', 'Photos have location data'], ['createNearby', 'Documented spaces within 50 m']].map(([key, label]) => (
+                        <fieldset key={key} className="demo-control">
+                          <legend>{label}</legend>
+                          {[[true, 'Yes'], [false, 'No']].map(([val, l]) => (
+                            <label key={l} className="row xs">
+                              <input type="radio" name={key} checked={state[key] === val} onChange={() => dispatch({ type: 'SET_CREATE', key, value: val })} />
+                              {l}
+                            </label>
+                          ))}
+                        </fieldset>
+                      ))}
+                    </div>
+                  )}
                   {p.views && (
                     <ul className="demo-views">
                       {p.views.map((v) => {
@@ -333,10 +349,12 @@ function SignupPrompt() {
 export function NotesBridge({ page }) {
   const loc = useLocation();
   const { layout } = useDemo();
-  const { landingLayout } = useChoices();
+  const { landingLayout, createFlow } = useChoices();
   const path = page || loc.pathname;
   const pageDef = page ? null : pageFor(path);
-  const view = pageDef?.id === 'space' && layout === 'tabs' ? 'tabs' : pageDef?.id === 'landing' && landingLayout === 'map' ? 'map' : '';
+  const view = pageDef?.id === 'space' && layout === 'tabs' ? 'tabs'
+    : pageDef?.id === 'landing' && landingLayout === 'map' ? 'map'
+      : pageDef?.id === 'space-new' && createFlow === 'overlay' ? 'overlay' : '';
   const key = view ? `${path}~${view}` : path;
   useEffect(() => { startNotesTool(); }, []);
   useEffect(() => { setNotesPage(key); }, [key]);

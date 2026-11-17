@@ -75,6 +75,23 @@ a space page), and the Demo bar shows the count per page and per view.
   Landing > Map first in the Demo bar, choose whether it finds a new place
   (offer to document it) or an existing space (Stepwell terrace). Searching
   for a name that isn't there offers "Add this place".
+- **Create new space, two versions** (Demo bar, under Create new space).
+  A: Photos, Location and area, Questionnaire (opens with "Is it one of
+  these nearby spaces?"), Review. B: an overlay asks for photos first, then
+  Location and area, Nearby spaces (only if any), Questionnaire, Review.
+  Photos must carry location data; the area is set on a map (click to move
+  the centre, slider for size). For each documented space within 50 m you
+  say: same space (adds your photos and a comment to it instead), it is
+  inside my new space, my new space is inside it, or not related. Demo bar
+  switches: whether the photos have location data, and whether there are
+  spaces within 50 m (three near the east Jaipur Darwaza gateway).
+- **Spaces within spaces.** A space can be part of another. Its header says
+  "Part of …", and the space page lists related spaces (a section on the
+  one-page view, a tab on the tabs view). Tabs show counts, e.g.
+  "Experiences (5)".
+- **Contests** are grouped into Open for entries, Judging and Closed.
+  Closed contests show the winner and the co-host's plans (a short
+  timeline), on the contest page and on the space page.
 - **Map pins** are plain: solid for approved spaces, dashed and hollow for
   pending ones. Space cards show votes, redesigns and photos.
 - Account pages (Portfolio, Earnings, My purchases, Create new space, Points &

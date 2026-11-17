@@ -14,7 +14,7 @@ export const PAGE_GROUPS = [
       { id: 'landing', label: 'Landing', to: '/', kind: 'simulated', match: exact('/'), views: [{ id: '', label: 'Classic', choice: ['landingLayout', 'classic'] }, { id: 'map', label: 'Map first', choice: ['landingLayout', 'map'], control: 'locate' }] },
       { id: 'browse', label: 'Browse spaces', to: '/browse', kind: 'simulated', match: exact('/browse') },
       { id: 'space', label: 'Space page', to: '/space/s2', kind: 'clickable', match: re(/^\/space\/(?!new$)[^/]+$/), views: [{ id: '', label: 'One page', layout: 'single' }, { id: 'tabs', label: 'Tabs', layout: 'tabs' }] },
-      { id: 'space-new', label: 'Create new space', to: '/space/new', kind: 'simulated', role: 'community', match: exact('/space/new') },
+      { id: 'space-new', label: 'Create new space', to: '/space/new', kind: 'simulated', role: 'community', match: exact('/space/new'), controls: 'create', views: [{ id: '', label: 'A: Same place in the questionnaire', choice: ['createFlow', 'inline'] }, { id: 'overlay', label: 'B: Upload photos first', choice: ['createFlow', 'overlay'] }] },
       { id: 'signup', label: 'Sign up', to: '/signup', kind: 'simulated', role: 'visitor', match: exact('/signup') },
       { id: 'co-op', label: 'Co-op', to: '/co-op', kind: 'simulated', role: 'community', match: exact('/co-op') },
       { id: 'points', label: 'Points and membership', to: '/points', kind: 'simulated', match: exact('/points') },

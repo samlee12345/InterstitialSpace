@@ -213,14 +213,27 @@ export function TabPanel({ idBase = 'tabs', id, children }) {
   );
 }
 
+// Progress through a multi-step flow: "Step 2 of 4: Location", with a segmented bar.
 export function Steps({ steps, current }) {
   return (
-    <ol className="steps">
-      {steps.map((s, i) => (
-        <li key={s} aria-current={i === current ? 'step' : undefined} className={i < current ? 'done' : ''}>{s}</li>
-      ))}
-    </ol>
+    <div className="progress">
+      <p className="small">
+        <span className="muted">Step {current + 1} of {steps.length}:</span> <span className="bold">{steps[current]}</span>
+      </p>
+      <ol className="progress-bar" aria-label="Steps">
+        {steps.map((s, i) => (
+          <li key={s} className={i < current ? 'done' : i === current ? 'now' : ''} aria-current={i === current ? 'step' : undefined}>
+            <span className="visually-hidden">{s}{i < current ? ' (done)' : ''}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
   );
+}
+
+// Form buttons: right-aligned, the secondary action (Back, Cancel) before the primary one.
+export function FormActions({ children }) {
+  return <div className="form-actions">{children}</div>;
 }
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';

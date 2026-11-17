@@ -127,7 +127,8 @@ const ZOOM_SPAN = 0.0016; // degrees shown either side of a focused point (about
 // `focus` ({ lat, lng }) zooms in around a point. With `onPinClick`, pins are buttons
 // that select a space (map landing); without it they link to the space page (Browse).
 // `me` draws a "you are here" marker.
-export function MapBox({ spaces, area, hiddenIds = [], activeId, selectedId, onHover, onPinClick, focus, me, sticky, className = '', label = 'Map placeholder: Jaipur. Dashed pins are pending.', children }) {
+// `areaM` draws the area being defined around `me` (metres from the centre); `onMapClick` gets { lat, lng }.
+export function MapBox({ spaces, area, hiddenIds = [], activeId, selectedId, onHover, onPinClick, focus, me, areaM, onMapClick, meLabel = 'Your location', sticky, className = '', label = 'Map placeholder: Jaipur. Dashed pins are pending.', children }) {
   const extent = area?.length ? area : spaces;
   let [minLat, maxLat, minLng, maxLng] = [Math.min(...extent.map((s) => s.lat)), Math.max(...extent.map((s) => s.lat)), Math.min(...extent.map((s) => s.lng)), Math.max(...extent.map((s) => s.lng))];
   if (focus) [minLat, maxLat, minLng, maxLng] = [focus.lat - ZOOM_SPAN, focus.lat + ZOOM_SPAN, focus.lng - ZOOM_SPAN * 1.6, focus.lng + ZOOM_SPAN * 1.6];
@@ -147,8 +148,19 @@ export function MapBox({ spaces, area, hiddenIds = [], activeId, selectedId, onH
   });
   const status = (s) => (s.status === 'approved' ? 'approved' : 'pending');
   const meXY = me && xy(me);
+  // Size of the area ellipse, as % of the map (approximate: a placeholder map).
+  const latSpanM = (maxLat - minLat) * 110540;
+  const lngSpanM = (maxLng - minLng) * 111320 * Math.cos((((minLat + maxLat) / 2) * Math.PI) / 180);
+  const click = (e) => {
+    if (!onMapClick || e.target.closest('.pin, button, a, .map-search, input, label')) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - r.left) / r.width) * 100;
+    const y = ((e.clientY - r.top) / r.height) * 100;
+    onMapClick({ lat: minLat + ((90 - y) / 72) * (maxLat - minLat), lng: minLng + ((x - 8) / 84) * (maxLng - minLng) });
+  };
   return (
-    <div className={`map ${sticky ? 'map-sticky' : ''} ${className}`} style={{ '--map-zoom': zoom }}>
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+    <div className={`map ${sticky ? 'map-sticky' : ''} ${onMapClick ? 'map-clickable' : ''} ${className}`} style={{ '--map-zoom': zoom }} onClick={click}>
       {label && <span className="map-label">{label}</span>}
       {spaces.map((s, i) => {
         if (hiddenIds.includes(s.id)) return <span key={s.id} className="pin faded" style={pos[i]} aria-hidden="true" />;
@@ -161,7 +173,10 @@ export function MapBox({ spaces, area, hiddenIds = [], activeId, selectedId, onH
           <Link key={s.id} to={`/space/${s.id}`} className={cls} style={pos[i]} title={s.name} aria-label={name} {...hover} />
         );
       })}
-      {meXY && <span className="pin-me" style={{ left: `${meXY.x}%`, top: `${meXY.y}%` }} role="img" aria-label="Your location" />}
+      {meXY && areaM && (
+        <span className="map-area" style={{ left: `${meXY.x}%`, top: `${meXY.y}%`, width: `${((2 * areaM) / lngSpanM) * 84}%`, height: `${((2 * areaM) / latSpanM) * 72}%` }} aria-hidden="true" />
+      )}
+      {meXY && <span className="pin-me" style={{ left: `${meXY.x}%`, top: `${meXY.y}%` }} role="img" aria-label={meLabel} />}
       {children}
     </div>
   );
@@ -204,20 +219,50 @@ export function RedesignCard({ redesign, blurred }) {
 
 export const contestStatus = (c) => (c.status === 'live' ? 'Open for entries' : c.status === 'judging' ? 'Judging' : 'Closed');
 
+// The winning entry of a closed contest, or null.
+export const contestWinner = (c) => (c.status === 'closed' ? c.entries.find((e) => e.id === c.winner) || null : null);
+
+// What happens after a contest: a short timeline from the co-host's plans.
+export function ContestPlans({ contest, compact }) {
+  const plans = contest.plans || [];
+  if (!plans.length) return null;
+  const shown = compact ? plans.filter((p) => !p.done).slice(0, 1) : plans;
+  if (!shown.length) return null;
+  return (
+    <ol className={`plans ${compact ? 'plans-compact' : ''}`}>
+      {shown.map((p) => (
+        <li key={p.when + p.text} className={p.done ? 'plan-done' : ''}>
+          <span className="plan-when">{p.when}</span>
+          <span>{p.text}{p.done ? '' : ''}</span>
+          <span className="visually-hidden">{p.done ? ' (done)' : ' (planned)'}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 export function ContestCard({ contest }) {
   const { get } = useDemo();
   const sp = get.space(contest.spaceId);
+  const won = contestWinner(contest);
   return (
     <Link to={`/contest/${contest.id}`} className="card card-link">
       <div className="row"><Badge kind={contest.status === 'live' ? 'solid' : ''}>{contestStatus(contest)}</Badge></div>
       <h3>{contest.title}</h3>
       <p><span className="display-sm">{contest.prize}</span> <span className="small muted">prize</span></p>
       <p className="small muted">Site: {sp?.name}</p>
-      <dl className="dl">
-        <dt>Deadline</dt><dd>{contest.deadline}</dd>
-        <dt>Co-host</dt><dd>{contest.coHost}</dd>
-        <dt>Entries</dt><dd>{contest.entries.length}</dd>
-      </dl>
+      {won ? (
+        <div className="stack-sm">
+          <p className="small"><span className="bold">Winner:</span> {won.title} by {get.user(won.architectId)?.name}</p>
+          {contest.plans?.some((p) => !p.done) && <p className="small muted">Next: {contest.plans.find((p) => !p.done).text} ({contest.plans.find((p) => !p.done).when})</p>}
+        </div>
+      ) : (
+        <dl className="dl">
+          <dt>{contest.status === 'live' ? 'Entries close' : 'Entries closed'}</dt><dd>{contest.deadline}</dd>
+          <dt>Co-host</dt><dd>{contest.coHost}</dd>
+          <dt>Entries</dt><dd>{contest.entries.length}</dd>
+        </dl>
+      )}
     </Link>
   );
 }

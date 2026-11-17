@@ -41,6 +41,9 @@ const spaceRows = [
   ['s10', 'Chowk well platform, Chhoti Chaupar', 'chowk steps', 26.9243, 75.8176, 'pending', 11, null, 'u-c2', 15],
   ['s11', 'Haveli entrance steps, Gangori Bazaar', 'gateway threshold', 26.9291, 75.8201, 'pending', 4, null, 'u-a2', 2, { private: true }],
   ['s12', 'Stepwell side steps, Nahargarh foothill', 'stepwell', 26.9363, 75.8155, 'pending', 10, { source: 'ai' }, 'u-c3', 6],
+  // Two spaces right by the east gateway, so "nearby" and "spaces within spaces" have examples.
+  ['s13', 'Bench ledge inside the Jaipur Darwaza arch', 'threshold', 26.91965, 75.83105, 'approved', 7, { source: 'architect', by: 'u-a3' }, 'u-c2', 14, { parentId: 's4' }],
+  ['s14', 'Chai stall steps outside Jaipur Darwaza', 'chowk steps', 26.91952, 75.83085, 'pending', 4, null, 'u-c1', 5],
 ];
 
 const qa = [
@@ -70,6 +73,7 @@ const spaces = spaceRows.map(([id, name, type, lat, lng, status, n, diagram, upl
     removed: false,
     removal: null,
     private: false,
+    parentId: null,
     ...(extra || {}),
   };
 });
@@ -110,6 +114,16 @@ const seed = {
       ],
     },
     {
+      id: 'c3', spaceId: 's3', status: 'live', title: 'Evening seating for the Badi Chaupar steps',
+      brief: 'The chowk steps fill up every evening, but there is nowhere to sit that is not a step. Propose seating and lighting that work with the bazaar, not against it.',
+      prize: '$3,000', deadline: '2027-01-15', coHost: 'Walled City heritage cell (placeholder)', coHostId: null,
+      eligibility: 'Licensed architects and accredited architecture students',
+      criteria: ['Keeps the steps open for passing through', 'Lighting that is safe and not glaring', 'Survives heavy daily use'],
+      entries: [
+        { id: 'e6', architectId: 'u-a2', title: 'Steps that become seats', submittedAt: '2026-11-10' },
+      ],
+    },
+    {
       id: 'c2', spaceId: 's5', status: 'judging', title: 'Stepwell terrace, Nahargarh foothill',
       brief: 'Make the terrace safe and usable after dark without changing the stepwell itself.',
       prize: '$1,800', deadline: '2026-11-01', coHost: "Ward residents' association (placeholder)", coHostId: null,
@@ -119,6 +133,53 @@ const seed = {
         { id: 'e3', architectId: 'u-a2', title: 'Lantern terrace', submittedAt: '2026-10-18' },
         { id: 'e4', architectId: 'u-a3', title: 'Edge and rail', submittedAt: '2026-10-25' },
         { id: 'e5', architectId: 'u-a4', title: 'Night steps', submittedAt: '2026-10-30' },
+      ],
+    },
+    {
+      id: 'c4', spaceId: 's6', status: 'judging', title: 'Plinth steps that drain in the monsoon',
+      brief: 'Water pools on the temple plinth steps for weeks every monsoon. Propose a fix for drainage that keeps the steps usable for sitting and selling.',
+      prize: '$1,500', deadline: '2026-11-10', coHost: "Johari Bazaar traders' association (placeholder)", coHostId: null,
+      eligibility: 'Licensed architects and accredited architecture students',
+      criteria: ['Drains within an hour of heavy rain', 'Keeps the steps usable', 'Can be built in the dry season'],
+      entries: [
+        { id: 'e7', architectId: 'u-a3', title: 'Channels under the treads', submittedAt: '2026-10-28' },
+        { id: 'e8', architectId: 'u-a4', title: 'Raised plinth edge', submittedAt: '2026-11-08' },
+      ],
+    },
+    {
+      id: 'c5', spaceId: 's4', status: 'closed', title: 'A place to wait at Jaipur Darwaza',
+      brief: 'People wait inside the gateway for buses with nowhere to sit and no water. Design benches and a water point that leave the arch clear for traffic on foot.',
+      prize: '$2,000', deadline: '2026-08-30', coHost: 'Walled City NGO (placeholder)', coHostId: null,
+      eligibility: 'Licensed architects and accredited architecture students',
+      criteria: ['Seats at least 12 people', 'Keeps the arch clear', 'Drinking water that is easy to maintain'],
+      winner: 'e9',
+      entries: [
+        { id: 'e9', architectId: 'u-a2', title: 'Benches in the arch', submittedAt: '2026-08-12' },
+        { id: 'e10', architectId: 'u-a3', title: 'Waiting wall', submittedAt: '2026-08-20' },
+        { id: 'e11', architectId: 'u-a1', title: 'Threshold shade', submittedAt: '2026-08-28' },
+      ],
+      plans: [
+        { when: 'Sep 2026', text: 'Winner announced; the co-host bought the design.', done: true },
+        { when: 'Oct to Dec 2026', text: 'Design development with the architect and people who wait here.', done: true },
+        { when: 'Feb 2027', text: 'Construction of the benches and the water point.', done: false },
+        { when: 'Apr 2027', text: 'Opening, then a follow-up survey on the platform.', done: false },
+      ],
+    },
+    {
+      id: 'c6', spaceId: 's1', status: 'closed', title: 'Shade for the Amer Road stepwell landing',
+      brief: 'The landing is unusable in May and June. Propose shade that can go up in a season and does not hide the stepwell.',
+      prize: '$2,200', deadline: '2026-06-30', coHost: "Amer Road residents' welfare association (placeholder)", coHostId: null,
+      eligibility: 'Licensed architects and accredited architecture students',
+      criteria: ['Shade for the hottest hours', 'Built within one season', 'Keeps views of the stepwell'],
+      winner: 'e12',
+      entries: [
+        { id: 'e12', architectId: 'u-a4', title: 'Canopy of stretched cotton', submittedAt: '2026-06-14' },
+        { id: 'e13', architectId: 'u-a2', title: 'Stone pergola', submittedAt: '2026-06-25' },
+      ],
+      plans: [
+        { when: 'Jul 2026', text: 'Winner announced; the co-host bought the design.', done: true },
+        { when: 'Sep 2026', text: 'Canopy built by the residents’ association.', done: true },
+        { when: 'Dec 2026', text: 'Check-in with residents on how the shade is working.', done: false },
       ],
     },
   ],

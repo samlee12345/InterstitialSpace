@@ -21,6 +21,8 @@ const fresh = (role = 'architect') => ({
   layout: 'single', // space page: 'single' (everything on one page) or 'tabs'
   weekSkip: 0, // demo control: pretend this many weeks have passed
   locateFinds: 'new', // demo control: "Use my location" lands on a 'new' place or an 'existing' space
+  createGeotag: true, // demo control: photos uploaded in Create new space carry location data
+  createNearby: true, // demo control: there are documented spaces within 50 m of those photos
   returnTo: null,
   toasts: [],
   seq: 1,
@@ -61,6 +63,8 @@ function reducer(s, a) {
       return { ...s, failNextPayment: a.on };
     case 'SET_LAYOUT':
       return { ...s, layout: a.layout };
+    case 'SET_CREATE':
+      return { ...s, [a.key]: a.value };
     case 'SET_LOCATE':
       return { ...s, locateFinds: a.value };
     case 'SKIP_WEEK':
@@ -134,7 +138,18 @@ function reducer(s, a) {
       return toast(n, 'Entry submitted');
     }
     case 'PICK_WINNER':
-      return toast({ ...s, contests: mapById(s.contests, a.contestId, (x) => ({ ...x, status: 'closed', winner: a.entryId })) }, 'Winner picked — prize released from escrow');
+      return toast({
+        ...s,
+        contests: mapById(s.contests, a.contestId, (x) => ({
+          ...x,
+          status: 'closed',
+          winner: a.entryId,
+          plans: [
+            { when: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }), text: 'Winner announced; the co-host bought the design.', done: true },
+            { when: 'Next', text: 'The co-host shares its plans for building the design.', done: false },
+          ],
+        })),
+      }, 'Winner picked — prize released from escrow');
 
     // ── Earnings and notifications ─────────────────────────
     case 'REQUEST_PAYOUT': {
@@ -177,7 +192,10 @@ function reducer(s, a) {
     }
     case 'CREATE_SPACE': {
       const sp = {
-        id: a.id, name: a.name, type: a.spaceType, lat: 26.9255 + (s.seq % 5) * 0.002, lng: 75.8205 + (s.seq % 7) * 0.002,
+        id: a.id, name: a.name, type: a.spaceType,
+        lat: a.lat ?? 26.9255 + (s.seq % 5) * 0.002, lng: a.lng ?? 75.8205 + (s.seq % 7) * 0.002, areaM: a.areaM || null,
+        // "The new space is inside this one" → parent. Only one parent.
+        parentId: Object.entries(a.relations || {}).find(([, r]) => r === 'parent')?.[0] || null,
         status: 'pending', readyForApproval: false, uploadedBy: a.userId, votes: 0,
         photos: Array.from({ length: a.photos }, (_, i) => ({ id: `${a.id}-ph${i + 1}`, credit: a.userId, onSite: a.full })),
         questionnaire: a.questionnaire, properties: a.properties, diagram: null, removed: false, removal: null, private: false,
@@ -185,7 +203,10 @@ function reducer(s, a) {
       };
       // The uploader's first experience: how it felt, with their photos.
       const first = { id: `cm-${s.seq}`, spaceId: a.id, userId: a.userId, text: a.questionnaire.feelings, onSite: a.full, photoIds: sp.photos.map((p) => p.id) };
-      const n = { ...s, seq: s.seq + 1, spaces: [sp, ...s.spaces], comments: [...s.comments, first], moderation: [...s.moderation, { spaceId: a.id, yes: 0, no: 0, voted: [], duplicates: [], mergeVotes: 0 }] };
+      // "This space is inside the new one" → the existing space gets the new one as parent.
+      const children = Object.entries(a.relations || {}).filter(([, r]) => r === 'child').map(([id]) => id);
+      const others = s.spaces.map((x) => (children.includes(x.id) ? { ...x, parentId: a.id } : x));
+      const n = { ...s, seq: s.seq + 1, spaces: [sp, ...others], comments: [...s.comments, first], moderation: [...s.moderation, { spaceId: a.id, yes: 0, no: 0, voted: [], duplicates: [], mergeVotes: 0 }] };
       return toast(n, 'Submitted — pending qualification');
     }
     case 'MERGE_PHOTOS': {

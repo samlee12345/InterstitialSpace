@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
-import { Button, Choice, Empty, FileDrop, ImageBox, Input, Page, RoleGate, Steps } from '../components/ui.jsx';
+import { Button, Choice, Empty, FileDrop, FormActions, ImageBox, Input, Page, RoleGate, Steps } from '../components/ui.jsx';
 import { Crumbs } from '../components/domain.jsx';
 import { POINTS } from '../lib/points.js';
 
@@ -86,10 +86,10 @@ function RedesignForm({ space }) {
           <Input label="Title" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} error={err.title} placeholder="e.g. Shaded seating along the lower steps" />
           <Input label="Description" textarea value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} error={err.description} hint="What changes, and which resident requests it answers." />
           <FileDrop label="Design files (drawings, model)" files={f.files} onChange={(files) => setF({ ...f, files })} error={err.files} />
-          <div className="row">
-            <Button variant="primary" onClick={next0}>Continue to price</Button>
+          <FormActions>
             <Button to={`/space/${space.id}`}>Cancel</Button>
-          </div>
+            <Button variant="primary" onClick={next0}>Continue to price</Button>
+          </FormActions>
         </div>
       )}
 
@@ -104,10 +104,10 @@ function RedesignForm({ space }) {
               <dt>Platform keeps</dt><dd>20%</dd>
             </dl>
           </div>
-          <div className="row">
-            <Button variant="primary" onClick={() => setStep(2)}>Continue to terms</Button>
+          <FormActions>
             <Button onClick={() => setStep(0)}>Back</Button>
-          </div>
+            <Button variant="primary" onClick={() => setStep(2)}>Continue to terms</Button>
+          </FormActions>
         </div>
       )}
 
@@ -132,10 +132,10 @@ function RedesignForm({ space }) {
           </div>
           <Choice type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} title="I accept these terms and confirm this is my own work" />
           {err.agree && <span className="error" role="alert">{err.agree}</span>}
-          <div className="row">
-            <Button variant="primary" onClick={publish}>Publish</Button>
+          <FormActions>
             <Button onClick={() => setStep(1)}>Back</Button>
-          </div>
+            <Button variant="primary" onClick={publish}>Publish</Button>
+          </FormActions>
         </div>
       )}
     </Page>
@@ -190,10 +190,10 @@ function DiagramForm({ space }) {
       <Input label="Notes on how it was measured (optional)" textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
       <Choice type="checkbox" checked={confirm} onChange={(e) => setConfirm(e.target.checked)} title="This drawing is measured on site or from a scan" />
       {err.confirm && <span className="error" role="alert">{err.confirm}</span>}
-      <div className="row">
-        <Button variant="primary" onClick={submit}>Add to Base Library</Button>
+      <FormActions>
         <Button to={`/space/${space.id}`}>Cancel</Button>
-      </div>
+        <Button variant="primary" onClick={submit}>Add to Base Library</Button>
+      </FormActions>
     </Page>
   );
 }

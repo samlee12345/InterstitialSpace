@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
-import { Badge, Banner, Button, Empty, Icon, ImageBox, Input, Mine, Modal, Page, PointsBadge, StatusBadges, Steps, TabPanel, Tabs } from '../components/ui.jsx';
-import { RedesignCard, contestStatus, typeLabel } from '../components/domain.jsx';
+import { Badge, Banner, Button, Empty, FormActions, Icon, ImageBox, Input, Mine, Modal, Page, PointsBadge, StatusBadges, Steps, TabPanel, Tabs } from '../components/ui.jsx';
+import { ContestPlans, RedesignCard, SpaceCard, contestStatus, contestWinner, typeLabel } from '../components/domain.jsx';
 import { POINTS } from '../lib/points.js';
 
 const TABS = [
   { id: 'experience', label: 'Experiences' },
   { id: 'diagram', label: 'Spatial diagram' },
   { id: 'redesigns', label: 'Redesigns' },
+  { id: 'related', label: 'Related spaces' },
   { id: 'contests', label: 'Contests' },
 ];
 
@@ -29,11 +30,14 @@ function LocationPrompt({ action, onPick, onClose }) {
   );
 }
 
+// In the tabs view the tab names the section and carries the count, so no heading here.
 function SectionHead({ id, title, note, children }) {
+  const { layout } = useDemo();
+  const tabs = layout === 'tabs';
   return (
     <div className="row between">
       <div className="stack-sm">
-        <h2 id={id}>{title}</h2>
+        {tabs ? <h2 id={id} className="visually-hidden">{title}</h2> : <h2 id={id}>{title}</h2>}
         {note && <p className="small muted">{note}</p>}
       </div>
       <div className="row">{children}</div>
@@ -224,7 +228,7 @@ function ExperienceWizard({ space, onClose, onPosted }) {
             </div>
             <span className="xs muted">Tip: include a person in the frame. It helps the AI judge scale for the spatial diagram.</span>
           </div>
-          <div className="row"><Button variant="primary" onClick={next}>Continue</Button><Button variant="quiet" onClick={() => setStep(0)}>Back</Button></div>
+          <FormActions><Button onClick={() => setStep(0)}>Back</Button><Button variant="primary" onClick={next}>Continue</Button></FormActions>
         </div>
       )}
       {step === 2 && (
@@ -236,7 +240,7 @@ function ExperienceWizard({ space, onClose, onPosted }) {
             <ChipGroup key={q.id} q={q} value={answers[q.id]} onChange={(v) => { setAnswers({ ...answers, [q.id]: v }); setErr(''); }} />
           )))}
           {err && <span className="error" role="alert">{err}</span>}
-          <div className="row"><Button variant="primary" onClick={post}>Post experience</Button><Button variant="quiet" onClick={() => setStep(1)}>Back</Button></div>
+          <FormActions><Button onClick={() => setStep(1)}>Back</Button><Button variant="primary" onClick={post}>Post experience</Button></FormActions>
         </div>
       )}
     </Modal>
@@ -329,8 +333,21 @@ function Experience({ space, setBanner }) {
 
 // ── Contest: only rendered when this space has a contest. The whole card opens the contest. ──
 function ContestCard({ contest }) {
-  const { isArchitect, user } = useDemo();
+  const { isArchitect, user, get } = useDemo();
   const entered = user && contest.entries.some((e) => e.architectId === user.id);
+  const won = contestWinner(contest);
+  if (won) {
+    return (
+      <section className="contest-card contest-closed" data-screen-label="Contest" aria-labelledby={`contest-${contest.id}`}>
+        <div className="stack-sm grow">
+          <div className="row"><Badge>Contest closed</Badge></div>
+          <h2 id={`contest-${contest.id}`}><Link className="stretched" to={`/contest/${contest.id}`}>{contest.title}</Link></h2>
+          <p className="small"><span className="bold">Winner:</span> {won.title} by {get.user(won.architectId)?.name}, {contest.prize} prize from {contest.coHost}.</p>
+          <ContestPlans contest={contest} compact />
+        </div>
+      </section>
+    );
+  }
   return (
     <section className="contest-card" data-screen-label="Contest" aria-labelledby={`contest-${contest.id}`}>
       <div className="stack-sm grow">
@@ -347,6 +364,36 @@ function ContestCard({ contest }) {
   );
 }
 
+// Interstitial spaces can sit inside other interstitial spaces.
+function useRelated(space) {
+  const { state, get } = useDemo();
+  const parent = space.parentId ? get.space(space.parentId) : null;
+  const children = state.spaces.filter((x) => x.parentId === space.id && !x.removed);
+  return { parent: parent && !parent.removed ? parent : null, children };
+}
+
+function RelatedSpaces({ space }) {
+  const { parent, children } = useRelated(space);
+  return (
+    <section className="stack" data-screen-label="Related spaces" aria-labelledby="related-heading">
+      <SectionHead id="related-heading" title={`Related spaces (${(parent ? 1 : 0) + children.length})`} note="Interstitial spaces can sit inside other interstitial spaces: a bench ledge inside a gateway, a doorstep inside a courtyard." />
+      {!parent && children.length === 0 && <Empty title="No related spaces"><p>This space isn’t part of another one, and no documented space sits inside it.</p></Empty>}
+      {parent && (
+        <div className="stack-sm">
+          <h3 className="h-xs">Part of</h3>
+          <div className="related-list"><SpaceCard space={parent} variant="row" headingLevel={4} /></div>
+        </div>
+      )}
+      {children.length > 0 && (
+        <div className="stack-sm">
+          <h3 className="h-xs">Spaces within this one ({children.length})</h3>
+          <div className="related-list">{children.map((c) => <SpaceCard key={c.id} space={c} variant="row" headingLevel={4} />)}</div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function Hero({ space }) {
   const { get } = useDemo();
   return (
@@ -355,6 +402,7 @@ function Hero({ space }) {
       <div className="space-hero-text">
         <div className="row"><Badge>{typeLabel(space.type)}</Badge><StatusBadges space={space} /><Mine userId={space.uploadedBy} /></div>
         <h1>{space.name}</h1>
+        {space.parentId && get.space(space.parentId) && <p className="small">Part of <Link className="hero-link" to={`/space/${space.parentId}`}>{get.space(space.parentId).name}</Link></p>}
         <p className="small">
           Jaipur, {space.lat.toFixed(4)}, {space.lng.toFixed(4)}. Documented by {get.user(space.uploadedBy)?.name}. {space.votes} votes.
         </p>
@@ -391,6 +439,15 @@ export default function Space() {
     );
   }
   const contests = state.contests.filter((c) => c.spaceId === space.id);
+  const related = { parent: space.parentId ? get.space(space.parentId) : null, children: state.spaces.filter((x) => x.parentId === space.id && !x.removed) };
+  // Contribution counts shown on the tabs.
+  const counts = {
+    experience: state.comments.filter((c) => c.spaceId === space.id).length,
+    diagram: space.diagram ? 1 : 0,
+    redesigns: state.redesigns.filter((r) => r.spaceId === space.id && r.published && !r.takenDown).length,
+    related: (related.parent ? 1 : 0) + related.children.length,
+    contests: contests.length,
+  };
 
   return (
     <Page>
@@ -418,14 +475,16 @@ export default function Space() {
           <Redesigns space={space} />
           <hr className="rule" />
           <Experience space={space} setBanner={setBanner} />
+          {(related.parent || related.children.length > 0) && (<><hr className="rule" /><RelatedSpaces space={space} /></>)}
         </>
       ) : (
         <>
-          <Tabs idBase="space" tabs={TABS} active={tab} onChange={(t) => setParams({ tab: t }, { replace: true })} />
+          <Tabs idBase="space" tabs={TABS.map((t) => ({ ...t, label: `${t.label} (${counts[t.id]})` }))} active={tab} onChange={(t) => setParams({ tab: t }, { replace: true })} />
           <TabPanel idBase="space" id={tab}>
             {tab === 'experience' && <Experience space={space} setBanner={setBanner} />}
             {tab === 'diagram' && <Diagram space={space} />}
             {tab === 'redesigns' && <Redesigns space={space} />}
+            {tab === 'related' && <RelatedSpaces space={space} />}
             {tab === 'contests' && (contests.length > 0 ? (
               contests.map((c) => <ContestCard key={c.id} contest={c} />)
             ) : (

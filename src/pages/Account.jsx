@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
-import { Badge, Button, Choice, Empty, FileDrop, Input, Modal, Page, RoleGate, StatusBadges } from '../components/ui.jsx';
+import { Badge, Button, Choice, Empty, FileDrop, FormActions, Input, Modal, Page, RoleGate, StatusBadges } from '../components/ui.jsx';
 import { Crumbs } from '../components/domain.jsx';
 import { fmtPoints } from '../lib/points.js';
 
@@ -221,7 +221,7 @@ export function Removal() {
           <FileDrop label="Deed or equivalent proof of ownership" files={f.deed} onChange={(deed) => setF({ ...f, deed })} samples={['deed-scan.pdf']} />
           <Input label="Anything the team should know (optional)" textarea value={f.why} onChange={(e) => setF({ ...f, why: e.target.value })} />
           {err && <span className="error" role="alert">{err}</span>}
-          <div className="row"><Button variant="primary" type="submit">Send removal request</Button><Button to={`/space/${space.id}`}>Cancel</Button></div>
+          <FormActions><Button to={`/space/${space.id}`}>Cancel</Button><Button variant="primary" type="submit">Send removal request</Button></FormActions>
         </form>
       )}
       {space.removal === 'review' && (

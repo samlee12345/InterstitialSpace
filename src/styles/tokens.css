@@ -75,9 +75,12 @@
   /* Layout */
   --width-page: 72rem;
   --width-narrow: 40rem;
+  --width-form: 40rem;
   --width-card-min: 15rem;
   --width-thumb: 5.5rem;
   --width-thumb-lg: 7rem;
+  --width-thumb-xl: 10rem;
+  --width-plan-when: 8rem;
   --size-icon: 1rem;
   --width-card-tight: 12rem;
   --width-browse-list: 40rem;
@@ -97,6 +100,7 @@
   --z-header: 10;
   --z-float: 20;
   --z-modal: 50;
+  --z-demo: 60;
   --z-toast: 40;
   --z-review: 1000;
 
