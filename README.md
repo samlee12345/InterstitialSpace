@@ -41,11 +41,13 @@ app" switches the prototype to that version in your browser only. The
 defaults everyone sees are in `src/design/choices.js`. To add another
 component, follow the comment at the top of `src/sandbox.jsx`.
 
-## Notes
+## Notes and discussions
 
 Press **N** on any page (or "Turn on notes" in the Demo bar) to start the
 notes tool, ported from the portfolio. Press N again, click any text, type a
-note, then ⌘↵. Notes are kept per page in your browser and survive reloads.
+note, then ⌘↵. Press **D** instead for a **discussion**: a point to raise
+with the team. Notes are purple and round, discussions are teal and square,
+and each kind has its own numbering, Copy and Clear buttons. Both are kept per page in your browser and survive reloads.
 "Copy all pages" puts every note on the clipboard, labelled by page and
 section, so testers can paste them into a message. Notes never leave the
 tester's browser. Each view keeps its own notes (for example the Tabs view of
@@ -60,10 +62,21 @@ a space page), and the Demo bar shows the count per page and per view.
 - `src/state/DemoContext.jsx` is the whole "backend": one reducer for roles,
   points, purchases, uploads, votes and notifications.
 - `src/lib/points.js` has every point rule.
-- **Space page, two views.** The main view is one page: contest banner (only
-  if the space has a contest), Spatial diagram, Redesigns, then Experiences.
-  The alternative is the original four tabs. Switch with "View: One page /
-  Tabs" at the top right of any space page, or in the Demo bar.
+- **Space page, two views.** The main view is one page: a photo header, a
+  contest card (only if the space has a contest; the whole card opens it),
+  Spatial diagram, Redesigns, then Experiences (an AI summary of what people
+  said, then each person's comment with their photos). The alternative is
+  four tabs. Switch in the Demo bar under Space page.
+- **Landing, two layouts.** Classic (hero, How it works, co-op, recent
+  spaces) and Map first, like OpenCelliD: the map fills the screen with a
+  search box and short description. Clicking a pin or a search result zooms
+  in and shows that space's card in the panel, with other spaces within
+  50 m; the card opens the space. "Use my location" is simulated: under
+  Landing > Map first in the Demo bar, choose whether it finds a new place
+  (offer to document it) or an existing space (Stepwell terrace). Searching
+  for a name that isn't there offers "Add this place".
+- **Map pins** are plain: solid for approved spaces, dashed and hollow for
+  pending ones. Space cards show votes, redesigns and photos.
 - Account pages (Portfolio, Earnings, My purchases, Create new space, Points &
   membership, Profile, plus Moderation, Flag queue and Host a contest for those
   roles) are in the dropdown under your name, top right.
@@ -75,7 +88,7 @@ a space page), and the Demo bar shows the count per page and per view.
 - **Demo bar.** The "Demo" pill (bottom right) opens a drawer; the page makes
   room for it instead of being covered. It has the role switcher, **Pages to
   review** (every page and view, marked Clickable or Simulated, with your
-  note count; opening one switches to a role that can see it; variations such
+  note and discussion counts; opening one switches to a role that can see it; variations such
   as Landing: Classic / Map first and Space page: One page / Tabs are nested
   under their page), and controls: "Make the next payment fail", "Skip ahead
   one week", notes, the sandbox and "Reset demo data". The page list is in
