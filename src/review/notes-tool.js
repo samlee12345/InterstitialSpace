@@ -192,6 +192,7 @@ function refreshToolbar() {
   const rest = el('div', 'nt-group');
   const others = countOtherPages();
   if (notes.length || others) rest.appendChild(button(others ? `Copy all pages (${others + notes.length})` : 'Copy all pages', 'nt-btn nt-secondary', (e) => copyAll(e.currentTarget)));
+  if (others) rest.appendChild(button('Clear all pages', 'nt-btn nt-danger', clearAll));
   rest.appendChild(button('Hide', 'nt-btn nt-secondary', toggleHide));
   rest.appendChild(button('Turn off', 'nt-btn nt-secondary', deactivate));
   tb.appendChild(rest);
@@ -484,6 +485,26 @@ function copyAll(btn) {
   pages.sort((a, b) => a[0].localeCompare(b[0]));
   const blocks = Object.keys(KINDS).flatMap((kind) => pages.map(([path, list]) => describe(list, path, kind)).filter(Boolean));
   writeClipboard(btn, blocks.join('\n\n'));
+}
+
+// Deletes notes and discussions on every page, after one confirmation.
+function clearAll() {
+  const totals = { note: 0, discussion: 0 };
+  Object.values(notesCounts()).forEach((c) => { totals.note += c.note; totals.discussion += c.discussion; });
+  const pages = Object.values(notesCounts()).filter((c) => c.note + c.discussion > 0).length;
+  const what = [
+    totals.note && `${totals.note} ${totals.note === 1 ? 'note' : 'notes'}`,
+    totals.discussion && `${totals.discussion} ${totals.discussion === 1 ? 'discussion' : 'discussions'}`,
+  ].filter(Boolean).join(' and ');
+  if (!window.confirm(`Delete ${what} on ${pages} ${pages === 1 ? 'page' : 'pages'}? Copy them first if you need them. This can’t be undone.`)) return;
+  try {
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i += 1) { const k = localStorage.key(i); if (k.startsWith(PREFIX)) keys.push(k); }
+    keys.forEach((k) => localStorage.removeItem(k));
+  } catch { /* ignore */ }
+  notes = [];
+  announce();
+  rerenderAll();
 }
 
 function clearKind(kind) {
