@@ -153,6 +153,22 @@ export function Coop() {
 
 // Everything the user has done on each space: documented it, posted experiences,
 // added photos, drew its diagram, published redesigns, entered its contests.
+// Status with a coloured icon and a word, so it doesn't rely on colour alone.
+const STATUS = {
+  pending: { label: 'Pending', icon: <><circle cx="10" cy="10" r="8.5" /><path d="M7.6 7.6a2.4 2.4 0 1 1 3.3 2.2c-.6.3-.9.8-.9 1.4v.5" /><circle cx="10" cy="14.4" r=".6" className="dot" /></> },
+  rejected: { label: 'Declined', icon: <><circle cx="10" cy="10" r="8.5" /><path d="M7 7l6 6M13 7l-6 6" /></> },
+  approved: { label: 'Approved', icon: <><circle cx="10" cy="10" r="8.5" /><path d="M6 10.3l2.7 2.7L14 7.6" /></> },
+};
+function StatusIcon({ status }) {
+  const st = STATUS[status] || STATUS.pending;
+  return (
+    <span className={`status-icon status-${status}`}>
+      <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{st.icon}</svg>
+      {st.label}
+    </span>
+  );
+}
+
 export function Contributions() {
   const { state, user } = useDemo();
   if (!user) return <Page tag="simulated"><RoleGate title="Sign in to see your contributions">Visitors have no contributions.</RoleGate></Page>;
@@ -168,9 +184,17 @@ export function Contributions() {
     if (rd) did.push(`${rd} ${rd === 1 ? 'redesign' : 'redesigns'}`);
     const en = state.contests.filter((c) => c.spaceId === s.id).flatMap((c) => c.entries).filter((e) => e.architectId === user.id).length;
     if (en) did.push(`${en} contest ${en === 1 ? 'entry' : 'entries'}`);
-    return { s, did };
+    // The most recent date of anything you contributed here.
+    const dates = [
+      s.uploadedBy === user.id && s.addedAt,
+      ...exp.map((c) => c.updatedAt || c.date),
+      ...state.redesigns.filter((r) => r.spaceId === s.id && r.architectId === user.id).map((r) => new Date(r.createdAt).toISOString().slice(0, 10)),
+      ...state.contests.filter((c) => c.spaceId === s.id).flatMap((c) => c.entries).filter((e) => e.architectId === user.id).map((e) => e.submittedAt),
+      ...state.diagramUploads.filter((d) => d.spaceId === s.id && d.userId === user.id).map((d) => d.date),
+    ].filter(Boolean).sort();
+    return { s, did, latest: dates[dates.length - 1] || null };
   }).filter((r) => r.did.length);
-  const live = rows.filter((r) => !r.s.removed);
+  const live = rows.filter((r) => !r.s.removed).sort((a, b) => (b.latest || '').localeCompare(a.latest || ''));
   return (
     <Page>
       <header className="stack-sm">
@@ -184,13 +208,14 @@ export function Contributions() {
         ) : (
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Space</th><th>Status</th><th>What you contributed</th></tr></thead>
+              <thead><tr><th>Space</th><th>Status</th><th>What you contributed</th><th>Latest contribution</th></tr></thead>
               <tbody>
-                {live.map(({ s, did }) => (
+                {live.map(({ s, did, latest }) => (
                   <tr key={s.id}>
                     <td><Link to={`/space/${s.id}`}>{s.name}</Link></td>
-                    <td><span className="row"><StatusBadges space={s} />{s.status === 'approved' && <Badge>Approved</Badge>}</span></td>
+                    <td><StatusIcon status={s.status} /></td>
                     <td>{did.join(', ')}</td>
+                    <td>{latest ? new Date(latest).toLocaleDateString(undefined, { timeZone: 'UTC' }) : '—'}</td>
                   </tr>
                 ))}
               </tbody>

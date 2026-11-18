@@ -134,29 +134,31 @@ function redesignCount(state, id) {
   return state.redesigns.filter((r) => r.spaceId === id && r.published && !r.takenDown && !r.archived).length;
 }
 
-// The selected space in the side panel, plus the other spaces within 50 m.
-function SelectedSpace({ space, onBack, onSelect }) {
-  const { visibleSpaces } = useDemo();
-  const nearby = visibleSpaces
-    .filter((s) => s.id !== space.id)
-    .map((s) => ({ s, d: distanceM(space, s) }))
-    .filter((x) => x.d <= NEARBY_M)
-    .sort((a, b) => a.d - b.d);
+// The selected space, shown in the search panel under the search box, with its
+// connected spaces: the space it sits inside and the spaces inside it.
+function SelectedSpace({ space, onClose, onSelect }) {
+  const { state, get } = useDemo();
+  const parent = space.parentId ? get.space(space.parentId) : null;
+  const children = state.spaces.filter((s) => s.parentId === space.id && !s.removed && !s.private);
+  const connected = [...(parent && !parent.removed ? [{ s: parent, rel: 'Contains this space' }] : []), ...children.map((s) => ({ s, rel: 'Inside this space' }))];
   return (
-    <div className="stack">
-      <div><button type="button" className="link-btn small" onClick={onBack}>Back to search</button></div>
+    <div className="stack-sm selected-space">
+      <div className="row between">
+        <span className="xs muted">Selected on the map</span>
+        <button type="button" className="link-btn small" onClick={onClose}>Clear<span className="visually-hidden"> selection</span></button>
+      </div>
       <SpaceCard space={space} variant="row" headingLevel={2} />
-      <section className="stack-sm" aria-labelledby="nearby-h">
-        <h3 id="nearby-h" className="demo-h">Other spaces within {NEARBY_M} m</h3>
-        {nearby.length === 0 ? (
-          <p className="small muted">No other documented spaces within {NEARBY_M} m.</p>
+      <section className="stack-sm" aria-labelledby="connected-h">
+        <h3 id="connected-h" className="demo-h">Connected spaces ({connected.length})</h3>
+        {connected.length === 0 ? (
+          <p className="small muted">Not part of another space, and no spaces inside it.</p>
         ) : (
           <ul className="list small">
-            {nearby.map(({ s, d }) => (
+            {connected.map(({ s, rel }) => (
               <li key={s.id}>
                 <button type="button" className="result-btn" onClick={() => onSelect(s)}>
                   <span className="bold">{s.name}</span>
-                  <span className="muted">{Math.round(d)} m away, {s.votes} votes</span>
+                  <span className="muted">{rel}, {s.votes} votes</span>
                 </button>
               </li>
             ))}
@@ -185,7 +187,7 @@ function MapLanding() {
   const pins = q.trim() && !selected ? results : visibleSpaces;
   const focus = selected ? { lat: selected.lat, lng: selected.lng } : locate === 'new' ? me : null;
 
-  const select = (s) => { setSelectedId(s.id); setLocate('idle'); setTimeout(() => panel.current?.querySelector('a, button')?.focus(), 0); };
+  const select = (s) => { setSelectedId(s.id); setLocate('idle'); setTimeout(() => panel.current?.querySelector('.selected-space a')?.focus(), 0); };
   const back = () => { setSelectedId(null); setLocate('idle'); setMe(null); };
   const addPlace = (name) => {
     const to = `/space/new${name ? `?name=${encodeURIComponent(name)}` : ''}`;
@@ -202,69 +204,71 @@ function MapLanding() {
     }, 900);
   };
 
-  let content;
+  // The intro and search always stay in the panel; results, the selected space
+  // or the location result appear under them.
+  let below = null;
   if (selected) {
-    content = (
+    below = (
       <>
         {me && <p className="note small">You’re here: this space is {Math.round(distanceM(me, selected))} m from your location.</p>}
-        <SelectedSpace space={selected} onBack={back} onSelect={select} />
+        <SelectedSpace space={selected} onClose={back} onSelect={select} />
       </>
     );
   } else if (locate === 'locating') {
-    content = <div className="row" role="status"><div className="spinner" aria-hidden="true" /><span>Finding your location…</span></div>;
+    below = <div className="row" role="status"><div className="spinner" aria-hidden="true" /><span>Finding your location…</span></div>;
   } else if (locate === 'new') {
-    content = (
-      <div className="stack">
-        <div><button type="button" className="link-btn small" onClick={back}>Back to search</button></div>
-        <h2 className="h-sm">Nothing documented here yet</h2>
+    below = (
+      <div className="stack-sm selected-space">
+        <div className="row between"><h2 className="h-sm">Nothing documented here yet</h2><button type="button" className="link-btn small" onClick={back}>Clear</button></div>
         <p className="small">You’re at {me.lat.toFixed(4)}, {me.lng.toFixed(4)}. No space on the platform is within {NEARBY_M} m. If you’re standing somewhere worth documenting, add it: photos taken here count in full.</p>
         <div><Button variant="primary" onClick={() => addPlace('')}>{isMember ? 'Document this place' : 'Sign up to document this place'}</Button></div>
       </div>
     );
-  } else {
-    content = (
-      <>
-        <h1>The stoop, the stepwell, the courtyard in between.</h1>
-        <p className="small">A map of everyday in-between spaces in Jaipur, documented by the people who use them. Architects propose redesigns, and the platform is a co-op owned by its members.</p>
-        <form onSubmit={(e) => { e.preventDefault(); if (results.length === 1) select(results[0]); }}>
-          <label htmlFor="map-q" className="small bold">Search for a space</label>
-          <input id="map-q" className="input" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Stepwell, Johari Bazaar, shade…" autoComplete="off" />
-        </form>
-        <div><Button onClick={locateMe}><Icon name="locate" />Use my location</Button></div>
-        {q.trim() && (
-          <div className="map-results" aria-live="polite">
-            {results.length > 0 ? (
-              <>
-                <p className="xs muted">{results.length} {results.length === 1 ? 'space' : 'spaces'} on the map</p>
-                <ul className="list small">
-                  {results.slice(0, 5).map((s) => {
-                    const n = redesignCount(state, s.id);
-                    return (
-                      <li key={s.id} onMouseEnter={() => setHover(s.id)} onMouseLeave={() => setHover(null)}>
-                        <button type="button" className="result-btn" onClick={() => select(s)}>
-                          <span className="bold">{s.name}</span>
-                          <span className="row muted">
-                            <span className="stat"><Icon name="vote" />{s.votes} votes</span>
-                            <span className="stat"><Icon name="redesign" />{n} {n === 1 ? 'redesign' : 'redesigns'}</span>
-                          </span>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-                {results.length > 5 && <Link className="small" to="/browse">See all {results.length} in Browse</Link>}
-              </>
-            ) : (
-              <div className="stack-sm">
-                <p className="small">No space called “{q.trim()}” yet.</p>
-                <div><Button variant="primary" onClick={() => addPlace(q.trim())}>{isMember ? 'Add this place' : 'Sign up to add this place'}</Button></div>
-              </div>
-            )}
+  } else if (q.trim()) {
+    below = (
+      <div className="map-results" aria-live="polite">
+        {results.length > 0 ? (
+          <>
+            <p className="xs muted">{results.length} {results.length === 1 ? 'space' : 'spaces'} on the map</p>
+            <ul className="list small">
+              {results.slice(0, 5).map((s) => {
+                const n = redesignCount(state, s.id);
+                return (
+                  <li key={s.id} onMouseEnter={() => setHover(s.id)} onMouseLeave={() => setHover(null)}>
+                    <button type="button" className="result-btn" onClick={() => select(s)}>
+                      <span className="bold">{s.name}</span>
+                      <span className="row muted">
+                        <span className="stat"><Icon name="vote" />{s.votes} votes</span>
+                        <span className="stat"><Icon name="redesign" />{n} {n === 1 ? 'redesign' : 'redesigns'}</span>
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            {results.length > 5 && <Link className="small" to="/browse">See all {results.length} in Browse</Link>}
+          </>
+        ) : (
+          <div className="stack-sm">
+            <p className="small">No space called “{q.trim()}” yet.</p>
+            <div><Button variant="primary" onClick={() => addPlace(q.trim())}>{isMember ? 'Add this place' : 'Sign up to add this place'}</Button></div>
           </div>
         )}
-      </>
+      </div>
     );
   }
+  const content = (
+    <>
+      <h1>The stoop, the stepwell, the courtyard in between.</h1>
+      <p className="small">A map of everyday in-between spaces in Jaipur, documented by the people who use them. Architects propose redesigns, and the platform is a co-op owned by its members.</p>
+      <form onSubmit={(e) => { e.preventDefault(); if (results.length === 1) select(results[0]); }}>
+        <label htmlFor="map-q" className="small bold">Search for a space</label>
+        <input id="map-q" className="input" type="search" value={q} onChange={(e) => { setQ(e.target.value); if (selectedId) setSelectedId(null); }} placeholder="Stepwell, Johari Bazaar, shade…" autoComplete="off" />
+      </form>
+      <div><Button onClick={locateMe}><Icon name="locate" />Use my location</Button></div>
+      {below}
+    </>
+  );
 
   return (
     <main id="main" tabIndex={-1} data-screen-label="page" className="map-landing">

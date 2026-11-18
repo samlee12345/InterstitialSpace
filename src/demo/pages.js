@@ -15,7 +15,7 @@ export const PAGE_GROUPS = [
       { id: 'browse', label: 'Browse spaces', to: '/browse', kind: 'simulated', match: exact('/browse') },
       { id: 'space', label: 'Space page', to: '/space/s2', kind: 'clickable', match: re(/^\/space\/(?!new$)[^/]+$/), views: [{ id: 'tabs', label: 'Header: portrait photo beside the title', choice: ['spaceHeader', 'portrait'] }, { id: 'strip', label: 'Header: photo strip under the title', choice: ['spaceHeader', 'strip'] }, { id: 'compact', label: 'Header: compact, thumbnail in the title row', choice: ['spaceHeader', 'compact'] }], variants: [
         ['Approved', '/space/s2'], ['Pending', '/space/s7'], ['No contest', '/space/s7'], ['Ongoing contest', '/space/s2'],
-        ['Judging contest', '/space/s5'], ['Closed contest', '/space/s4'], ['Has related spaces', '/space/s4'], ['No related spaces', '/space/s2'],
+        ['Judging contest', '/space/s5'], ['Closed contest', '/space/s4'], ['Has connected spaces', '/space/s4'], ['No connected spaces', '/space/s2'],
       ] },
       { id: 'space-new', label: 'Create new space', to: '/space/new', kind: 'simulated', role: 'community', match: exact('/space/new'), controls: 'create', views: [{ id: '', label: 'A: Nearby spaces in the questionnaire', choice: ['createFlow', 'inline'] }, { id: 'overlay', label: 'B: Upload photos first', choice: ['createFlow', 'overlay'] }, { id: 'confirm', label: 'C: Confirm nearby spaces after the map', choice: ['createFlow', 'confirm'] }] },
       { id: 'signup', label: 'Sign up', to: '/signup', kind: 'simulated', role: 'visitor', match: exact('/signup') },
@@ -54,7 +54,7 @@ export const PAGE_GROUPS = [
   {
     group: 'Moderator, co-host, owner',
     pages: [
-      { id: 'moderation', label: 'Spaces to approve', to: '/moderation', kind: 'simulated', role: 'moderator', match: exact('/moderation') },
+      { id: 'moderation', label: 'Spaces pending approval', to: '/moderation', kind: 'simulated', role: 'moderator', match: exact('/moderation') },
       { id: 'moderation-review', label: 'Review a space', to: '/moderation/s7', kind: 'simulated', role: 'moderator', match: re(/^\/moderation\//) },
       { id: 'flags', label: 'Flag queue', to: '/flags', kind: 'simulated', role: 'moderator', match: exact('/flags') },
       { id: 'contest-request', label: 'Host a contest', to: '/contest/request', kind: 'simulated', role: 'paid', match: exact('/contest/request') },

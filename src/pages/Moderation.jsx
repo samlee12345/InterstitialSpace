@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
-import { Badge, Button, Empty, ImageBox, Input, Page, RoleGate, Select, StatusBadges, Tally } from '../components/ui.jsx';
+import { Badge, Button, Choice, Empty, FormActions, ImageBox, Input, Page, RoleGate, Select, StatusBadges, Tally } from '../components/ui.jsx';
+import { overlapping } from '../lib/geo.js';
 import { POINTS } from '../lib/points.js';
-import { Crumbs } from '../components/domain.jsx';
+import { AreaMap, Crumbs } from '../components/domain.jsx';
 
 function Gate() {
   return (
@@ -28,7 +29,102 @@ function StatusCard() {
   );
 }
 
-const emptyRow = (spaceId) => ({ spaceId, yes: 0, no: 0, voted: [], duplicates: [], mergeVotes: 0 });
+const emptyRow = (spaceId) => ({ spaceId, yes: 0, no: 0, voted: [], votes: {}, notes: [], duplicates: [], mergeVotes: 0 });
+// Totals: earlier anonymous votes plus each reviewer's current vote.
+export const tally = (m) => {
+  const v = Object.values(m.votes || {});
+  return { yes: m.yes + v.filter((x) => x.vote === 'yes').length, no: m.no + v.filter((x) => x.vote === 'no').length };
+};
+const myVote = (m, userId) => (m.votes || {})[userId] || (m.voted.includes(userId) ? { vote: 'yes' } : null);
+export const reviewRow = (state, spaceId) => state.moderation.find((x) => x.spaceId === spaceId) || emptyRow(spaceId);
+
+// What a reviewer checks before voting yes.
+export const CRITERIA = [
+  'It sits between other places: a threshold, edge, step or leftover space',
+  'People use it: the photos or experiences show it in use',
+  'It is open to the public',
+  'The location and the drawn area match the photos',
+  'It isn’t already on the platform: no overlapping space is the same place',
+];
+
+// The vote: used on the review page and in the "Moderate" popup on a space page.
+export function ReviewForm({ space, onDone }) {
+  const { state, dispatch, user, isModerator, visibleSpaces } = useDemo();
+  const m = reviewRow(state, space.id);
+  const mine = myVote(m, user.id);
+  const [editing, setEditing] = useState(!mine);
+  const [choice, setChoice] = useState(mine?.vote || null);
+  const [checks, setChecks] = useState(mine?.checks || []);
+  const [reason, setReason] = useState(mine?.reason || '');
+  const [moveTo, setMoveTo] = useState(mine?.moveTo || '');
+  const [err, setErr] = useState('');
+  const t = tally(m);
+  const near = overlapping(space, visibleSpaces);
+  const toggle = (c) => setChecks(checks.includes(c) ? checks.filter((x) => x !== c) : [...checks, c]);
+  const submit = () => {
+    if (choice === 'yes' && checks.length < CRITERIA.length) return setErr('Tick every criterion to approve. If one doesn’t hold, vote no and say why.');
+    if (choice === 'no' && reason.trim().length < 10) return setErr('Give a reason. It is shown publicly and sent to the contributor.');
+    setErr('');
+    dispatch({ type: 'MOD_VOTE', spaceId: space.id, userId: user.id, yes: choice === 'yes', checks, reason: reason.trim(), moveTo: choice === 'no' ? moveTo || null : null });
+    setEditing(false);
+    return onDone?.();
+  };
+  const moveNow = () => {
+    if (!moveTo) return setErr('Choose the existing space to move the contributions to.');
+    if (reason.trim().length < 10) return setErr('Give a reason. It is shown publicly and sent to the contributor.');
+    dispatch({ type: 'MOD_MOVE', spaceId: space.id, intoId: moveTo, userId: user.id, reason: reason.trim() });
+    return onDone?.();
+  };
+  if (space.uploadedBy === user.id) return <p className="note small">You created this space, so you can’t review it.</p>;
+  return (
+    <div className="stack">
+      <div className="stack-sm">
+        <Tally yes={t.yes} no={t.no} />
+        <p className="small muted">3 yes votes approve it; 3 no votes decline it. You can change your vote at any time.</p>
+        {space.status !== 'pending' && <p className="bold">{space.status === 'approved' ? 'Approved: 3 yes votes reached.' : space.movedTo ? 'Declined and moved to an existing space.' : 'Declined: 3 no votes reached.'}</p>}
+      </div>
+      {!editing ? (
+        <div className="stack-sm">
+          <p className="bold">You voted {mine.vote === 'yes' ? 'yes, it qualifies' : 'no, it doesn’t qualify'}.</p>
+          {mine.reason && <p className="small">Your reason: {mine.reason}</p>}
+          <div><Button onClick={() => setEditing(true)}>Edit your vote</Button></div>
+        </div>
+      ) : (
+        <>
+          <fieldset className="stack-sm plain">
+            <legend className="bold">Check before you vote</legend>
+            {CRITERIA.map((c) => <Choice key={c} type="checkbox" checked={checks.includes(c)} onChange={() => toggle(c)} title={c} />)}
+          </fieldset>
+          <fieldset className="stack-sm plain">
+            <legend className="bold">Does it qualify as an interstitial space?</legend>
+            <div className="row">
+              <Choice name={`vote-${space.id}`} checked={choice === 'yes'} onChange={() => { setChoice('yes'); setErr(''); }} title="Yes, approve it" />
+              <Choice name={`vote-${space.id}`} checked={choice === 'no'} onChange={() => { setChoice('no'); setErr(''); }} title="No, decline it" />
+            </div>
+          </fieldset>
+          {choice === 'no' && (
+            <>
+              <Input label="Reason (public)" textarea value={reason} onChange={(e) => setReason(e.target.value)} hint="Anyone can read this. The contributor can appeal or resubmit." />
+              <Select
+                label="Alternative: it’s part of an existing space"
+                value={moveTo}
+                onChange={(e) => setMoveTo(e.target.value)}
+                options={[{ value: '', label: 'No, it isn’t' }, ...near.map(({ s }) => ({ value: s.id, label: s.name })), ...visibleSpaces.filter((s) => s.id !== space.id && s.status === 'approved' && !near.some((n) => n.s.id === s.id)).map((s) => ({ value: s.id, label: s.name }))]}
+              />
+              {moveTo && <p className="small muted">{isModerator ? 'As a moderator you can decline it now and move its photos, experiences and votes to that space.' : 'Your suggestion is shown to the moderators, who can move the contributions.'}</p>}
+            </>
+          )}
+          {err && <span className="error" role="alert">{err}</span>}
+          <FormActions>
+            {mine && <Button onClick={() => setEditing(false)}>Cancel</Button>}
+            {choice === 'no' && moveTo && isModerator && <Button onClick={moveNow}>Decline and move contributions</Button>}
+            <Button variant="primary" disabled={!choice} onClick={submit}>{mine ? 'Update vote' : 'Submit vote'}</Button>
+          </FormActions>
+        </>
+      )}
+    </div>
+  );
+}
 
 // Reported updates wait here for a moderator.
 function UpdateReports() {
@@ -59,44 +155,70 @@ function UpdateReports() {
   );
 }
 
+// Who designed a space: named by an architect, confirmed by a moderator.
+function DesignerClaims() {
+  const { state, dispatch, get } = useDemo();
+  const pending = state.designerClaims.filter((c) => c.status === 'pending');
+  return (
+    <section className="stack" aria-labelledby="designers-h">
+      <h2 id="designers-h" className="h-sm">Designer credits ({pending.length})</h2>
+      {pending.length === 0 && <p className="note">No designer credits waiting.</p>}
+      <ul className="list">
+        {pending.map((c) => (
+          <li key={c.id} className="stack-sm">
+            <span><Link className="bold" to={`/architect/${c.designer}`}>{get.user(c.designer)?.name}</Link> designed <Link to={`/space/${c.spaceId}`}>{get.space(c.spaceId)?.name}</Link><span className="small muted">, says {get.user(c.by)?.name} on {c.date}</span></span>
+            {c.note && <p className="small">{c.note}</p>}
+            <div className="row">
+              <Button variant="primary" onClick={() => dispatch({ type: 'DESIGNER_RESOLVE', id: c.id, ok: true })}>Confirm designer</Button>
+              <Button onClick={() => dispatch({ type: 'DESIGNER_RESOLVE', id: c.id, ok: false })}>Decline</Button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 export function Moderation() {
-  const { state, user, isModerator, isArchitect } = useDemo();
+  const { state, user, isModerator, isArchitect, get } = useDemo();
   const [city, setCity] = useState('all');
   if (!isModerator && !isArchitect) return <Gate />;
   // Every pending space is listed as soon as it is created; no diagram needed.
   const pending = state.spaces.filter((s) => !s.removed && s.status === 'pending');
   const cities = [...new Set(pending.map((s) => s.city || 'Jaipur'))].sort();
   const rows = pending
-    .filter((s) => s.uploadedBy !== user.id && (city === 'all' || (s.city || 'Jaipur') === city))
+    .filter((s) => city === 'all' || (s.city || 'Jaipur') === city)
     .map((space) => ({ ...(state.moderation.find((m) => m.spaceId === space.id) || emptyRow(space.id)), space }));
-  const own = pending.filter((s) => s.uploadedBy === user.id).length;
   return (
     <Page tag="simulated">
       <div className="split">
         <div className="stack">
-          <h1>Spaces to approve</h1>
+          <h1>Spaces pending approval</h1>
           <p className="prose muted">Every new space waits here until architects confirm it is an interstitial space. Pick any. Nothing is assigned. Three yes votes approve a space; community votes then decide which spaces get redesigned.</p>
           <Select label="City" value={city} onChange={(e) => setCity(e.target.value)} options={[{ value: 'all', label: 'All cities' }, ...cities.map((c) => ({ value: c, label: c }))]} />
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Space</th><th>City</th><th>Photos</th><th>Diagrams</th><th>Votes so far</th><th /></tr></thead>
+              <thead><tr><th>Space</th><th>Contributor</th><th>City</th><th>Votes so far</th><th><span className="visually-hidden">Action</span></th></tr></thead>
               <tbody>
-                {rows.map((m) => (
-                  <tr key={m.spaceId}>
-                    <td><span className="bold">{m.space.name}</span><br /><span className="small muted">Added {m.space.addedAt}</span></td>
-                    <td>{m.space.city || 'Jaipur'}</td>
-                    <td>{m.space.photos.length}</td>
-                    <td>{m.space.diagrams.length || 'None yet'}</td>
-                    <td><Tally yes={m.yes} no={m.no} /></td>
-                    <td><Button to={`/moderation/${m.spaceId}`}>{m.voted.includes(user.id) ? 'View' : 'Review'}</Button></td>
-                  </tr>
-                ))}
+                {rows.map((m) => {
+                  const t = tally(m);
+                  const own = m.space.uploadedBy === user.id;
+                  return (
+                    <tr key={m.spaceId}>
+                      <td><span className="bold">{m.space.name}</span><br /><span className="small muted">Added {m.space.addedAt}</span></td>
+                      <td>{get.user(m.space.uploadedBy)?.name}</td>
+                      <td>{m.space.city || 'Jaipur'}</td>
+                      <td><Tally yes={t.yes} no={t.no} /></td>
+                      <td>{own ? <span className="small muted">You created this</span> : <Button to={`/moderation/${m.spaceId}`}>{myVote(m, user.id) ? 'Edit vote' : 'Review'}</Button>}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
           {rows.length === 0 && <p className="note">Nothing waiting{city !== 'all' ? ` in ${city}` : ''}.</p>}
-          {own > 0 && <p className="small muted">{own} of your own upload{own > 1 ? 's are' : ' is'} hidden from this list. You can’t review your own uploads.</p>}
-          {isModerator && <><hr className="rule" /><UpdateReports /><div><Button to="/flags">Open the flag queue</Button></div></>}
+          <p className="small muted">You can’t review spaces you created.</p>
+          {isModerator && <><hr className="rule" /><UpdateReports /><DesignerClaims /><div><Button to="/flags">Open the flag queue</Button></div></>}
         </div>
         <StatusCard />
       </div>
@@ -106,90 +228,82 @@ export function Moderation() {
 
 export function ModerationReview() {
   const { id } = useParams();
-  const { state, dispatch, user, isModerator, isArchitect, get, cfg } = useDemo();
-  const [no, setNo] = useState(false);
-  const [reason, setReason] = useState('');
-  const [err, setErr] = useState('');
+  const { state, dispatch, user, isModerator, isArchitect, get, visibleSpaces } = useDemo();
+  const [note, setNote] = useState('');
   if (!isModerator && !isArchitect) return <Gate />;
   const space = get.space(id);
-  const m = space && (state.moderation.find((x) => x.spaceId === id) || emptyRow(id));
-  if (!space || !m) return <Page narrow><Empty title="Nothing to review"><div><Button to="/moderation">Back to the list</Button></div></Empty></Page>;
-  if (space.uploadedBy === user.id) return <Page narrow tag="simulated"><Empty title="You can’t review your own upload"><div><Button to="/moderation">Back to the list</Button></div></Empty></Page>;
-  const voted = m.voted.includes(user.id);
-  const decided = space.status !== 'pending';
-
-  const reject = () => {
-    if (reason.trim().length < 10) return setErr('Give a reason. It is shown publicly and sent to the contributor.');
-    setErr('');
-    return dispatch({ type: 'MOD_VOTE', spaceId: id, userId: user.id, yes: false, reason: reason.trim() });
-  };
+  if (!space) return <Page narrow><Empty title="Nothing to review"><p>This space doesn’t exist.</p></Empty></Page>;
+  const m = reviewRow(state, id);
+  const near = overlapping(space, visibleSpaces);
+  const extra = space.photos.length - 4;
 
   return (
     <Page tag="simulated">
-      <Crumbs items={[['/moderation', 'Spaces to approve'], [null, space.name]]} />
+      <Crumbs items={[['/moderation', 'Spaces pending approval'], [null, space.name]]} />
       <div className="split">
-        <div className="stack">
-          <div className="row"><StatusBadges space={space} />{space.status === 'approved' && <Badge kind="solid">Approved</Badge>}</div>
-          <h1>{space.name}</h1>
-          <p className="small muted">Uploaded by {get.user(space.uploadedBy)?.name}. <Link to={`/space/${space.id}`}>Open the public page</Link></p>
-          <div className="grid">{space.photos.slice(0, 6).map((p, i) => <ImageBox key={p.id} label={`Photo ${i + 1}`} />)}</div>
-          <div className="card">
-            <h3>Questionnaire</h3>
+        <div className="stack-lg">
+          <header className="stack-sm">
+            <div className="row"><StatusBadges space={space} />{space.status === 'approved' && <Badge kind="solid">Approved</Badge>}</div>
+            <h1>{space.name}</h1>
+            <p className="small muted">Created by {get.user(space.uploadedBy)?.name} on {space.addedAt}. <Link to={`/space/${space.id}`}>Open the public page</Link></p>
+          </header>
+
+          <section className="stack-sm" aria-label="Photos">
+            <div className="review-photos">
+              {space.photos.slice(0, 4).map((p, i) => <ImageBox key={p.id} label={i === 3 && extra > 0 ? `+${extra} more` : `Photo ${i + 1}`} />)}
+            </div>
+            <p className="small muted">{space.photos.length} photos. <Link to={`/space/${space.id}`}>See all on the space page</Link></p>
+          </section>
+
+          <section className="card stack-sm" aria-labelledby="loc-h">
+            <h2 id="loc-h" className="h-sm">Location and area</h2>
+            <p className="small">Check the point matches where the photos were taken and the drawn area covers the space, no more.</p>
+            <AreaMap space={space} others={near.map((x) => x.s)} label={`${space.lat.toFixed(4)}, ${space.lng.toFixed(4)}`} />
+            <h3 className="h-xs">Overlapping spaces ({near.length})</h3>
+            {near.length === 0 ? (
+              <p className="small muted">No other space’s area overlaps this one.</p>
+            ) : (
+              <ul className="list small">
+                {near.map(({ s, d, inside }) => (
+                  <li key={s.id} className="row between">
+                    <span><Link to={`/space/${s.id}`}>{s.name}</Link> <span className="muted">{s.status === 'pending' ? 'Pending. ' : ''}{inside ? 'One area sits inside the other' : 'Areas overlap'}, centres {Math.round(d)} m apart</span></span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="card stack-sm" aria-labelledby="q-h">
+            <h2 id="q-h" className="h-sm">Questionnaire</h2>
             <dl className="dl">
               <dt>Feelings</dt><dd>{space.questionnaire.feelings}</dd>
               <dt>Transition</dt><dd>{space.questionnaire.transition}</dd>
               <dt>Materiality</dt><dd>{space.questionnaire.materiality}</dd>
               <dt>Sensory</dt><dd>{space.questionnaire.sensory}</dd>
             </dl>
-          </div>
-
-          <section className="card">
-            <h3>Same place?</h3>
-            {m.duplicates.length === 0 ? (
-              <p className="small muted">No other entries within {cfg.duplicateRadiusM} m.</p>
-            ) : (
-              <>
-                <p className="small">Possible duplicate within {cfg.duplicateRadiusM} m:</p>
-                {m.duplicates.map((d) => (
-                  <div key={d} className="row between">
-                    <Link to={`/space/${d}`}>{get.space(d)?.name}</Link>
-                    <Button disabled={m.mergeVoted || m.mergeVotes >= 3} onClick={() => dispatch({ type: 'MOD_MERGE_VOTE', spaceId: id })}>Mark as the same place</Button>
-                  </div>
-                ))}
-                <Tally yes={m.mergeVotes} no={0} />
-                <p className="small muted">A merge needs 3 of 5 moderators. {m.mergeVotes >= 3 ? 'Reached: the entries will be merged and the contributor notified.' : ''}</p>
-              </>
-            )}
           </section>
 
-          <section className="card">
-            <h3>Documentation so far</h3>
-            <p className="small">{space.photos.length} photos, {space.diagrams.length} spatial diagram{space.diagrams.length === 1 ? '' : 's'}. You can approve a space before it has a diagram.</p>
+          <section className="stack-sm" aria-labelledby="notes-h">
+            <h2 id="notes-h" className="h-sm">Reviewers’ notes ({(m.notes || []).length + Object.values(m.votes || {}).filter((v) => v.reason).length})</h2>
+            <p className="small muted">Only reviewers see these. Reasons for no votes are also shown publicly.</p>
+            <ul className="list small">
+              {(m.notes || []).map((x, i) => <li key={`n${i}`}><span className="bold">{get.user(x.by)?.name}</span> <span className="muted">{x.date}</span><br />{x.text}</li>)}
+              {Object.entries(m.votes || {}).filter(([, v]) => v.reason).map(([by, v]) => (
+                <li key={by}><span className="bold">{get.user(by)?.name}</span> <Badge>Voted no</Badge> <span className="muted">{v.date}</span><br />{v.reason}{v.moveTo && <> Suggests moving it to <Link to={`/space/${v.moveTo}`}>{get.space(v.moveTo)?.name}</Link>.</>}</li>
+              ))}
+            </ul>
+            {space.uploadedBy !== user.id && (
+              <form className="stack-sm" onSubmit={(e) => { e.preventDefault(); if (note.trim()) { dispatch({ type: 'MOD_NOTE', spaceId: id, userId: user.id, text: note.trim() }); setNote(''); } }}>
+                <Input label="Add a note for other reviewers" textarea value={note} onChange={(e) => setNote(e.target.value)} />
+                <div><Button type="submit" disabled={!note.trim()}>Add note</Button></div>
+              </form>
+            )}
           </section>
         </div>
 
-        <aside className="stack">
-          <div className="card">
-            <h3>Does it qualify as an interstitial space?</h3>
-            <Tally yes={m.yes} no={m.no} />
-            <p className="small muted">Architects vote. 3 yes votes approve it; 3 no votes reject it. There is no deadline.</p>
-            {decided ? (
-              <p className="bold">{space.status === 'approved' ? 'Approved: 3 yes votes reached.' : 'Did not qualify: 3 no votes reached.'}</p>
-            ) : voted ? (
-              <p className="bold">You voted. +{POINTS.review} points.</p>
-            ) : no ? (
-              <>
-                <Input label="Reason (public)" textarea value={reason} onChange={(e) => setReason(e.target.value)} error={err} hint="Anyone can read this. The contributor can appeal or resubmit." />
-                <div className="row"><Button variant="primary" onClick={reject}>Submit “does not qualify”</Button><Button onClick={() => setNo(false)}>Cancel</Button></div>
-              </>
-            ) : (
-              <div className="row">
-                <Button variant="primary" onClick={() => dispatch({ type: 'MOD_VOTE', spaceId: id, userId: user.id, yes: true })}>Yes, it qualifies</Button>
-                <Button onClick={() => setNo(true)}>No, it doesn’t</Button>
-              </div>
-            )}
-          </div>
-          <Button to="/moderation">Back to the list</Button>
+        <aside className="card stack review-aside">
+          <h2 className="h-sm">Your review</h2>
+          <ReviewForm key={space.id} space={space} />
         </aside>
       </div>
     </Page>

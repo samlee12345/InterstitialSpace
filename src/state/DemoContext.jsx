@@ -125,7 +125,14 @@ function reducer(s, a) {
       if (p.kind === 'redesign') {
         const r = s.redesigns.find((x) => x.id === p.itemId);
         n = { ...n, redesigns: mapById(n.redesigns, p.itemId, (x) => ({ ...x, sales: x.sales + 1 })) };
-        n = notify(n, r.architectId, 'sale', `Your redesign “${r.title}” was bought. You earn 80% of ${p.amount}.`, '/earnings');
+        n = notify(n, r.architectId, 'sale', `Your redesign “${r.title}” was bought${p.rights === 'full' ? ' with full design rights' : ''}. You earn 80% of ${p.amount}.`, '/earnings');
+        // "Connect me with the architect": a message in the platform and (simulated) an email.
+        if (p.connect) {
+          const buyer = s.users.find((u) => u.id === p.userId);
+          n = notify(n, r.architectId, 'sale', `${buyer.name} bought “${r.title}” and wants to work with you to build it. Reply to ${p.email}. (Also sent by email.)`, `/item/${r.id}`);
+          n = { ...n, buildRequests: [{ id: `br-${p.id}`, itemId: r.id, architectId: r.architectId, buyerId: p.userId, email: p.email, date: p.date }, ...(n.buildRequests || [])] };
+          n = toast(n, `${s.users.find((u) => u.id === r.architectId)?.name} was notified in the platform and by email`);
+        }
       }
       return toast(n, 'Purchase confirmed');
     }
@@ -191,7 +198,7 @@ function reducer(s, a) {
       }
       let n = {
         ...s,
-        comments: [...s.comments, { id: `cm-${s.seq}`, spaceId: a.spaceId, userId: a.userId, text: a.text, onSite: a.onSite, photoIds: ids, answers: a.answers || null }],
+        comments: [...s.comments, { id: `cm-${s.seq}`, spaceId: a.spaceId, userId: a.userId, text: a.text, onSite: a.onSite, photoIds: ids, answers: a.answers || null, date: today() }],
         spaces: mapById(s.spaces, a.spaceId, (x) => ({ ...x, photos: [...x.photos, ...ids.map((id) => ({ id, credit: a.userId, onSite: a.onSite }))] })),
       };
       n = awardToast(n, a.userId, interactPoints(a.onSite), a.onSite ? 'experience posted (on site)' : 'experience posted (off site, half points)');
@@ -215,11 +222,11 @@ function reducer(s, a) {
         pendingPoints: uploadPoints({ photos: a.photos, scans: a.scans, fields: a.fields || 0, full: a.full }),
       };
       // The uploader's first experience: how it felt, with their photos.
-      const first = { id: `cm-${s.seq}`, spaceId: a.id, userId: a.userId, text: a.questionnaire.feelings, onSite: a.full, photoIds: sp.photos.map((p) => p.id) };
+      const first = { id: `cm-${s.seq}`, spaceId: a.id, userId: a.userId, text: a.questionnaire.feelings, onSite: a.full, photoIds: sp.photos.map((p) => p.id), date: today() };
       // "This space is inside the new one" → the existing space gets the new one as parent.
       const children = Object.entries(a.relations || {}).filter(([, r]) => r === 'child').map(([id]) => id);
       const others = s.spaces.map((x) => (children.includes(x.id) ? { ...x, parentId: a.id } : x));
-      const n = { ...s, seq: s.seq + 1, spaces: [sp, ...others], comments: [...s.comments, first], moderation: [...s.moderation, { spaceId: a.id, yes: 0, no: 0, voted: [], duplicates: [], mergeVotes: 0 }] };
+      const n = { ...s, seq: s.seq + 1, spaces: [sp, ...others], comments: [...s.comments, first], moderation: [...s.moderation, { spaceId: a.id, yes: 0, no: 0, voted: [], votes: {}, notes: [], duplicates: [], mergeVotes: 0 }] };
       return toast(n, 'Submitted — pending qualification');
     }
     case 'MERGE_PHOTOS': {
@@ -232,37 +239,73 @@ function reducer(s, a) {
         seq: s.seq + 1,
         comments: prev
           ? s.comments.map((c) => (c === prev ? { ...c, text: a.text, photoIds: [...(c.photoIds || []), ...ids], updatedAt: today() } : c))
-          : [...s.comments, { id: `cm-${s.seq}`, spaceId: a.spaceId, userId: a.userId, text: a.text, onSite: a.full, photoIds: ids }],
+          : [...s.comments, { id: `cm-${s.seq}`, spaceId: a.spaceId, userId: a.userId, text: a.text, onSite: a.full, photoIds: ids, date: today() }],
         spaces: mapById(s.spaces, a.spaceId, (x) => ({ ...x, photos: [...x.photos, ...ids.map((id) => ({ id, credit: a.userId, onSite: a.full }))] })),
       };
       return toast(n, 'Experience and photos added to the existing entry');
     }
 
     // ── Moderation ─────────────────────────────────────────
+    // Reviews: each reviewer has one vote per space and can change it. Earlier
+    // anonymous seed votes stay in row.yes / row.no.
     case 'MOD_VOTE': {
-      if (!s.moderation.some((m) => m.spaceId === a.spaceId)) s = { ...s, moderation: [...s.moderation, { spaceId: a.spaceId, yes: 0, no: 0, voted: [], duplicates: [], mergeVotes: 0 }] };
+      const blank = { spaceId: a.spaceId, yes: 0, no: 0, voted: [], votes: {}, notes: [], duplicates: [], mergeVotes: 0 };
+      if (!s.moderation.some((m) => m.spaceId === a.spaceId)) s = { ...s, moderation: [...s.moderation, blank] };
       const row = s.moderation.find((m) => m.spaceId === a.spaceId);
-      const yes = row.yes + (a.yes ? 1 : 0);
-      const no = row.no + (a.yes ? 0 : 1);
+      const first = !(row.votes || {})[a.userId] && !row.voted.includes(a.userId);
+      const votes = { ...(row.votes || {}), [a.userId]: { vote: a.yes ? 'yes' : 'no', reason: a.reason || '', moveTo: a.moveTo || null, checks: a.checks || [], date: today() } };
+      const tally = (v) => (v === 'yes' ? row.yes : row.no) + Object.values(votes).filter((x) => x.vote === v).length;
+      const yes = tally('yes');
+      const no = tally('no');
       const sp = s.spaces.find((x) => x.id === a.spaceId);
+      const status = yes >= 3 ? 'approved' : no >= 3 ? 'rejected' : 'pending';
       let n = {
         ...s,
-        moderation: s.moderation.map((m) => (m.spaceId === a.spaceId ? { ...m, yes, no, voted: [...m.voted, a.userId] } : m)),
-        users: mapById(s.users, a.userId, (u) => ({ ...u, reviewsThisYear: (u.reviewsThisYear || 0) + 1 })),
+        moderation: s.moderation.map((m) => (m.spaceId === a.spaceId ? { ...m, votes } : m)),
+        users: first ? mapById(s.users, a.userId, (u) => ({ ...u, reviewsThisYear: (u.reviewsThisYear || 0) + 1 })) : s.users,
         spaces: mapById(s.spaces, a.spaceId, (x) => ({
           ...x,
-          status: yes >= 3 ? 'approved' : no >= 3 ? 'rejected' : x.status,
-          rejections: a.yes ? x.rejections || [] : [...(x.rejections || []), { by: a.userId, reason: a.reason }],
+          status,
+          rejections: Object.entries(votes).filter(([, v]) => v.vote === 'no').map(([by, v]) => ({ by, reason: v.reason })),
         })),
       };
-      n = awardToast(n, a.userId, POINTS.review, 'moderator review');
-      if (yes >= 3 && sp.status !== 'approved') {
+      n = first ? awardToast(n, a.userId, POINTS.review, 'approval review') : toast(n, 'Your vote was changed');
+      if (status === 'approved' && !sp.qualifiedAwarded) {
         const pts = sp.pendingPoints ?? uploadPoints({ photos: sp.photos.filter((p) => p.credit === sp.uploadedBy).length });
         n = award(n, sp.uploadedBy, pts, `Upload qualified: ${sp.name}`);
+        n = { ...n, spaces: mapById(n.spaces, a.spaceId, (x) => ({ ...x, qualifiedAwarded: true })) };
         n = notify(n, sp.uploadedBy, 'points', `“${sp.name}” qualified. +${fmtPoints(pts)} points.`, `/space/${a.spaceId}`);
       }
-      if (!a.yes) n = notify(n, sp.uploadedBy, 'points', `A moderator voted that “${sp.name}” does not qualify: ${a.reason} You can appeal or resubmit.`, `/space/${a.spaceId}`);
+      if (!a.yes) n = notify(n, sp.uploadedBy, 'points', `A reviewer voted that “${sp.name}” does not qualify: ${a.reason} You can appeal or resubmit.`, `/space/${a.spaceId}`);
       return n;
+    }
+    // Notes reviewers leave for each other on a pending space.
+    case 'MOD_NOTE':
+      return toast({ ...s, moderation: s.moderation.map((m) => (m.spaceId === a.spaceId ? { ...m, notes: [...(m.notes || []), { by: a.userId, text: a.text, date: today() }] } : m)) }, 'Note added for other reviewers');
+    // A moderator declines a pending space that is part of an existing one and
+    // moves everything contributed to it onto that space.
+    case 'MOD_MOVE': {
+      const from = s.spaces.find((x) => x.id === a.spaceId);
+      const into = s.spaces.find((x) => x.id === a.intoId);
+      let comments = s.comments;
+      s.comments.filter((c) => c.spaceId === from.id && !c.archived).forEach((c) => {
+        const theirs = comments.find((x) => x.spaceId === into.id && x.userId === c.userId && !x.archived);
+        comments = theirs
+          ? comments.filter((x) => x !== c).map((x) => (x === theirs ? { ...x, photoIds: [...(x.photoIds || []), ...(c.photoIds || [])], text: `${x.text} ${c.text}` } : x))
+          : comments.map((x) => (x === c ? { ...x, spaceId: into.id } : x));
+      });
+      let n = {
+        ...s,
+        comments,
+        redesigns: s.redesigns.map((r) => (r.spaceId === from.id ? { ...r, spaceId: into.id } : r)),
+        spaces: s.spaces.map((x) => {
+          if (x.id === from.id) return { ...x, status: 'rejected', movedTo: into.id, photos: [], diagrams: [], votes: 0, rejections: [...(x.rejections || []), { by: a.userId, reason: a.reason }] };
+          if (x.id === into.id) return { ...x, photos: [...x.photos, ...from.photos], diagrams: [...x.diagrams, ...from.diagrams], votes: x.votes + from.votes };
+          return x;
+        }),
+      };
+      n = notify(n, from.uploadedBy, 'points', `“${from.name}” is part of “${into.name}”, so your photos and experience were moved there. ${a.reason}`, `/space/${into.id}`);
+      return toast(n, `Declined — contributions moved to ${into.name}`);
     }
     case 'MOD_MERGE_VOTE':
       return toast(
@@ -318,6 +361,29 @@ function reducer(s, a) {
       return toast({ ...s, users: mapById(s.users, a.userId, (u) => ({ ...u, city: a.city, country: a.country, links: a.links })) }, 'Profile saved');
     case 'INTRO_SEEN':
       return { ...s, introSeen: true };
+    // Someone uploads a model or scan; the one generated model is (re)built from everything.
+    case 'UPLOAD_MODEL': {
+      const sp = s.spaces.find((x) => x.id === a.spaceId);
+      const hasModel = s.models.some((m) => m.spaceId === a.spaceId && !m.takenDown && !m.archived);
+      let n = {
+        ...s,
+        seq: s.seq + 1,
+        spaces: mapById(s.spaces, a.spaceId, (x) => ({ ...x, modelUploads: [...(x.modelUploads || []), { id: `mu-${s.seq}`, by: a.userId, files: a.files, date: today() }] })),
+        models: hasModel ? s.models : [...s.models, { id: `m-${s.seq}`, spaceId: a.spaceId, title: `3D model — ${sp.name}`, files: ['model.obj'], takenDown: false }],
+      };
+      n = awardToast(n, a.userId, POINTS.diagram, '3D model uploaded; the space’s model will be rebuilt');
+      return n;
+    }
+    // Architects name who designed a space; a moderator confirms.
+    case 'DESIGNER_CLAIM':
+      return toast({ ...s, seq: s.seq + 1, designerClaims: [{ id: `dc-${s.seq}`, spaceId: a.spaceId, designer: a.designer, by: a.by, note: a.note, date: today(), status: 'pending' }, ...s.designerClaims] }, 'Sent to a moderator to confirm');
+    case 'DESIGNER_RESOLVE': {
+      const c = s.designerClaims.find((x) => x.id === a.id);
+      let n = { ...s, designerClaims: s.designerClaims.map((x) => (x.id === a.id ? { ...x, status: a.ok ? 'confirmed' : 'rejected' } : x)) };
+      if (a.ok) n = { ...n, spaces: mapById(n.spaces, c.spaceId, (x) => ({ ...x, designer: c.designer })) };
+      n = notify(n, c.by, 'points', a.ok ? 'Your designer credit was confirmed.' : 'Your designer credit wasn’t confirmed.', `/space/${c.spaceId}`);
+      return toast(n, a.ok ? 'Designer confirmed' : 'Designer credit declined');
+    }
     case 'SET_ARCHITECT_KIND':
       return { ...s, architectKind: a.kind };
 

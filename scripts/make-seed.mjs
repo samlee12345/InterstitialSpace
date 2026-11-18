@@ -71,6 +71,8 @@ const spaces = spaceRows.map(([id, name, type, lat, lng, status, n, diagram, upl
       ? [{ id: `dg-${id}`, ...diagram, credits: diagram.source === 'ai' ? [...new Set(ph.map((p) => p.credit))] : [], date: '2026-09-01' }]
       : [],
     archive: [], // past rounds, moved here when a reported update is confirmed
+    // Radius of the space's area in metres, by type (a city gate is far larger than a doorstep).
+    areaM: { 'gateway threshold': 60, stepwell: 25, courtyard: 18, 'chowk steps': 12, threshold: 6 }[type] || 10,
     city: 'Jaipur',
     country: 'India',
     // Spread over the summer and autumn so "Latest added" has something to sort.
@@ -87,6 +89,7 @@ const seed = {
   _note: 'PLACEHOLDER DATA — invented for a class demo. Not real documentation, people, prices or organisations.',
   config: {
     priceLabel: '$XX', priceValue: 40, fullRightsMultiplier: 10,
+    fullRightsLabel: '$X,XXX', // set price for full design rights, same for every redesign
     modelPointsCost: 100, architectShare: 0.8, hostingShare: 0.15,
     paidFreeModels: 10, paidTierPointsCost: 50,
     duplicateRadiusM: 50, aiDiagramMinPhotos: 10, manualDiagramMinPhotos: 5,
@@ -222,12 +225,12 @@ const seed = {
     { id: 'n13', to: 'u-p1', type: 'coop', text: 'New co-op decision open for voting: paid-tier price.', read: true },
   ],
   moderation: [
-    { spaceId: 's7', yes: 2, no: 1, voted: [], duplicates: [], mergeVotes: 0 },
-    { spaceId: 's12', yes: 1, no: 0, voted: [], duplicates: ['s5'], mergeVotes: 2 },
-    { spaceId: 's8', yes: 0, no: 0, voted: [], duplicates: ['s4'], mergeVotes: 0 },
-    { spaceId: 's9', yes: 0, no: 0, voted: [], duplicates: [], mergeVotes: 0 },
-    { spaceId: 's10', yes: 0, no: 0, voted: [], duplicates: [], mergeVotes: 0 },
-    { spaceId: 's11', yes: 0, no: 0, voted: [], duplicates: [], mergeVotes: 0 },
+    { spaceId: 's7', yes: 2, no: 1, voted: [], votes: {}, notes: [], duplicates: [], mergeVotes: 0 },
+    { spaceId: 's12', yes: 1, no: 0, voted: [], votes: {}, notes: [], duplicates: ['s5'], mergeVotes: 2 },
+    { spaceId: 's8', yes: 0, no: 0, voted: [], votes: {}, notes: [{ by: 'u-a3', text: 'The drawn area runs into the east gate. Is the west niche its own space or part of the gateway?', date: '2026-11-12' }, { by: 'u-a4', text: 'Photos show a separate bench niche on the west side, so I lean towards its own space, inside the gate.', date: '2026-11-14' }], duplicates: ['s4'], mergeVotes: 0 },
+    { spaceId: 's9', yes: 0, no: 0, voted: [], votes: {}, notes: [], duplicates: [], mergeVotes: 0 },
+    { spaceId: 's10', yes: 0, no: 0, voted: [], votes: {}, notes: [], duplicates: [], mergeVotes: 0 },
+    { spaceId: 's11', yes: 0, no: 0, voted: [], votes: {}, notes: [], duplicates: [], mergeVotes: 0 },
   ],
   flags: [
     { id: 'f1', itemId: 'r5', reason: 'Handrail dimensions do not match the measured diagram.', status: 'open' },
@@ -271,7 +274,14 @@ seed.spaces.forEach((sp, si) => {
     c.photoIds = ids;
   });
 });
-seed.comments.forEach((c) => { c.photoIds = c.photoIds || []; });
+seed.comments.forEach((c, i) => {
+  c.photoIds = c.photoIds || [];
+  // When the experience was posted, for "3 days ago" on the space page.
+  c.date = c.date || new Date(Date.UTC(2026, 10, 16) - ((i * 41) % 400) * 86400000).toISOString().slice(0, 10);
+});
+// Chowk steps at Badi Chaupar: the architect who designed it, confirmed by a moderator.
+seed.spaces.find((x) => x.id === 's3').designer = 'u-a3';
+seed.designerClaims = [];
 
 // When each seeded redesign was published (drives the one-a-week limit).
 ['2026-08-02', '2026-10-05', '2026-09-14', '2026-07-21', '2026-10-30', '2026-09-20'].forEach((d, i) => { seed.redesigns[i].createdAt = Date.parse(d); });
@@ -293,6 +303,6 @@ seed.notifications.forEach((n) => { n.link = links[n.id]; });
 seed.spaces.find((x) => x.id === 's2').diagrams.push({ id: 'dg-s2-b', source: 'architect', by: 'u-a2', credits: [], date: '2026-10-20', label: 'Long section through the courtyard and lane' });
 // Every pending space is on the approvals list, diagram or not.
 seed.spaces.filter((x) => x.status === 'pending' && !seed.moderation.some((m) => m.spaceId === x.id))
-  .forEach((x) => seed.moderation.push({ spaceId: x.id, yes: 0, no: 0, voted: [], duplicates: [], mergeVotes: 0 }));
+  .forEach((x) => seed.moderation.push({ spaceId: x.id, yes: 0, no: 0, voted: [], votes: {}, notes: [], duplicates: [], mergeVotes: 0 }));
 writeFileSync(out, JSON.stringify(seed, null, 2));
 console.log(`Wrote ${out}: ${spaces.length} spaces, ${seed.redesigns.length} redesigns, ${seed.models.length} models`);

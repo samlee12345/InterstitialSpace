@@ -116,6 +116,10 @@
   --review-accent-soft: #c9c0f5;
   --review-on-accent: #ffffff;
   --review-surface: #fbfaff;
+  /* Status colours: the only colour in the product UI, asked for on Contributions. */
+  --status-approved: #1a7f37;
+  --status-declined: #c62828;
+  --status-pending: var(--gray-500);
   --review-discuss: #0f766e;
   --review-discuss-strong: #115e59;
   --review-discuss-soft: #99d5cf;

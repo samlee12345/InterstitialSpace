@@ -16,7 +16,8 @@ function useItem(id) {
 }
 
 const LICENCE = { title: 'Use + adapt licence', text: 'Use the files and adapt them for your own project. You cannot redistribute them.' };
-const FULL = { title: 'Full design rights (agencies)', text: 'Not a fixed price. The price and terms are agreed between you and the architect, and the architect must be credited.' };
+const FULL = { title: 'Full design rights (agencies)', text: 'The right to build this design and adapt it for construction, at a set price. The architect keeps copyright and must be credited.' };
+const rightsTitle = (r) => (r === 'full' ? FULL.title : LICENCE.title);
 
 function download(name) {
   const blob = new Blob([`Placeholder file for the class demo: ${name}\nNo real drawings are included in the prototype.\n`], { type: 'text/plain' });
@@ -34,9 +35,7 @@ export function Item() {
   const [rights, setRights] = useState('licence');
   const [report, setReport] = useState(false);
   const [reason, setReason] = useState('');
-  const [askOpen, setAskOpen] = useState(false);
-  const [msg, setMsg] = useState('');
-  const [asked, setAsked] = useState(false);
+  const [connect, setConnect] = useState(false);
 
   if (!found) return <Page narrow><Empty title="Listing not found"><div><Button to="/browse">Browse spaces</Button></div></Empty></Page>;
   const { kind, item, space, seller } = found;
@@ -125,46 +124,27 @@ export function Item() {
           ) : (
             <>
               <span className="small muted">Price</span>
-              <span className="display">{rights === 'full' ? 'By agreement' : cfg.priceLabel}</span>
+              <span className="display">{rights === 'full' ? cfg.fullRightsLabel : cfg.priceLabel}</span>
               {kind === 'model' && <p className="small">or {cfg.modelPointsCost} points. You have {fmtPoints(user.points)}.</p>}
               {kind === 'redesign' ? (
                 <fieldset className="stack-sm plain">
                   <legend className="small bold">Choose rights</legend>
                   <Choice name="rights" value="licence" checked={rights === 'licence'} onChange={() => setRights('licence')} title={`${LICENCE.title} — ${cfg.priceLabel}`}>{LICENCE.text}</Choice>
-                  <Choice name="rights" value="full" checked={rights === 'full'} onChange={() => setRights('full')} title={FULL.title}>{FULL.text}</Choice>
+                  <Choice name="rights" value="full" checked={rights === 'full'} onChange={() => setRights('full')} title={`${FULL.title} — ${cfg.fullRightsLabel}`}>{FULL.text}</Choice>
                 </fieldset>
               ) : (
                 <p className="small"><span className="bold">{LICENCE.title}.</span> {LICENCE.text}</p>
               )}
-              {rights === 'full' ? (
-                asked ? <p className="note">Message sent. {seller.name} will reply by email to agree a price and terms with you.</p> : <Button variant="primary" onClick={() => setAskOpen(true)}>Ask the architect</Button>
-              ) : (
-                <Button variant="primary" to={`/checkout?item=${item.id}`}>Continue to checkout</Button>
+              {kind === 'redesign' && (
+                <Choice type="checkbox" checked={connect} onChange={(e) => setConnect(e.target.checked)} title="Connect me with the architect to build the space">
+                  After you buy, {seller.name} gets a message in the platform and by email with your contact details.
+                </Choice>
               )}
+              <Button variant="primary" to={`/checkout?item=${item.id}${rights === 'full' ? '&rights=full' : ''}${connect ? '&connect=1' : ''}`}>Continue to checkout</Button>
             </>
           )}
         </aside>
       </div>
-      {askOpen && (
-        <Modal title="Ask about full design rights" onClose={() => setAskOpen(false)}>
-          <p>Full rights are agreed directly between you and {seller.name}. Say who you are and what you plan to build; they reply with a price and terms. The architect must be credited.</p>
-          <Input label="Your message" textarea value={msg} onChange={(e) => setMsg(e.target.value)} placeholder="We are a municipal agency planning to build this at…" />
-          <div className="row">
-            <Button
-              variant="primary"
-              disabled={msg.trim().length < 10}
-              onClick={() => {
-                dispatch({ type: 'REQUEST_RIGHTS', itemId: item.id, from: user.name, message: msg.trim() });
-                setAskOpen(false);
-                setAsked(true);
-              }}
-            >
-              Send message
-            </Button>
-            <Button onClick={() => setAskOpen(false)}>Cancel</Button>
-          </div>
-        </Modal>
-      )}
     </Page>
   );
 }
@@ -193,9 +173,12 @@ export function Checkout() {
   if (!user) return <Page narrow tag="clickable"><RoleGate title="Sign in to check out">Visitors cannot buy.</RoleGate></Page>;
   if (!found) return <Page narrow><Empty title="Nothing to check out"><div><Button to="/browse">Browse spaces</Button></div></Empty></Page>;
   const { kind, item, space, seller } = found;
+  const rights = kind === 'redesign' && params.get('rights') === 'full' ? 'full' : 'licence';
+  const connect = kind === 'redesign' && params.get('connect') === '1';
+  const price = rights === 'full' ? cfg.fullRightsLabel : cfg.priceLabel;
   const enough = user.points >= cfg.modelPointsCost;
   const free = kind === 'model' && user.paid && user.freeModelsLeft > 0;
-  const amount = method === 'points' ? `${cfg.modelPointsCost} points` : method === 'free' ? 'Free (paid tier)' : cfg.priceLabel;
+  const amount = method === 'points' ? `${cfg.modelPointsCost} points` : method === 'free' ? 'Free (paid tier)' : price;
 
   const validate = () => {
     const e = {};
@@ -223,7 +206,7 @@ export function Checkout() {
       const id = `p-${Date.now()}`;
       dispatch({
         type: 'PURCHASE',
-        purchase: { id, userId: user.id, itemId: item.id, kind, title: item.title, rights: 'licence', method, amount, card: method === 'card' ? f.number.slice(-4) : null, version: item.version || 1, date: new Date().toISOString().slice(0, 10), receipt: `ISP-${String(Date.now()).slice(-6)}`, email: f.email },
+        purchase: { id, userId: user.id, itemId: item.id, kind, title: item.title, rights, connect, method, amount, card: method === 'card' ? f.number.slice(-4) : null, version: item.version || 1, date: new Date().toISOString().slice(0, 10), receipt: `ISP-${String(Date.now()).slice(-6)}`, email: f.email },
       });
       return nav(`/purchase/${id}`, { replace: true });
     }, 900);
@@ -231,7 +214,7 @@ export function Checkout() {
 
   return (
     <Page tag="clickable">
-      <Crumbs items={[[`/space/${space.id}`, space.name], [`/item/${item.id}`, item.title], [null, 'Checkout']]} />
+      <div><Link className="back-link small" to={`/item/${item.id}`}>← Back to listing</Link></div>
       <h1>Checkout</h1>
       <div className="split">
         <div className="stack">
@@ -297,10 +280,10 @@ export function Checkout() {
 
           <div className="stack-sm">
             <Button variant="primary" onClick={pay} disabled={phase === 'paying'}>
-              {phase === 'paying' ? 'Processing…' : method === 'card' ? `Pay ${cfg.priceLabel}` : method === 'points' ? `Pay ${cfg.modelPointsCost} points` : 'Download for free'}
+              {phase === 'paying' ? 'Processing…' : method === 'card' ? `Pay ${price}` : method === 'points' ? `Pay ${cfg.modelPointsCost} points` : 'Download for free'}
             </Button>
-            <p className="xs muted">By paying you accept the purchase licence: use and adapt, no redistribution. <Link to="/terms">Terms of Use</Link></p>
-            <div><Button variant="quiet" to={`/item/${item.id}`}>Back to listing</Button></div>
+            <p className="xs muted">{rights === 'full' ? 'By paying you buy the right to build this design; the architect keeps copyright and must be credited.' : 'By paying you accept the purchase licence: use and adapt, no redistribution.'} <Link to="/terms">Terms of Use</Link></p>
+            {connect && <p className="small">After payment, {seller.name} is asked to get in touch about building it.</p>}
           </div>
         </div>
 
@@ -311,12 +294,12 @@ export function Checkout() {
             <div className="stack-sm grow">
               <span className="bold">{item.title}</span>
               <span className="small muted">{kind === 'redesign' ? `Redesign by ${seller.name}` : 'Measured model, Base Library'}</span>
-              <span className="small muted">{LICENCE.title}</span>
+              <span className="small muted">{rightsTitle(rights)}</span>
             </div>
           </div>
           <hr className="rule" />
           <dl className="dl dl-sum">
-            <dt>Subtotal</dt><dd>{method === 'card' ? cfg.priceLabel : amount}</dd>
+            <dt>Subtotal</dt><dd>{method === 'card' ? price : amount}</dd>
             <dt>Tax</dt><dd>{method === 'card' ? 'Included' : 'None'}</dd>
             <dt className="bold">Total</dt><dd className="bold">{amount}</dd>
           </dl>
@@ -335,7 +318,8 @@ function Receipt({ p }) {
       <h3>Receipt {p.receipt}</h3>
       <dl className="dl">
         <dt>Item</dt><dd>{p.title}</dd>
-        <dt>Rights</dt><dd>{LICENCE.title}</dd>
+        <dt>Rights</dt><dd>{rightsTitle(p.rights)}</dd>
+        {p.connect && <><dt>Build request</dt><dd>Sent to the architect in the platform and by email</dd></>}
         <dt>Paid with</dt><dd>{p.method === 'card' ? `Card${p.card ? ` ending ${p.card}` : ''}` : p.method === 'points' ? 'Points' : 'Paid-tier free download'}</dd>
         <dt>Total</dt><dd>{p.amount}</dd>
         <dt>Date</dt><dd>{p.date}</dd>
@@ -352,8 +336,8 @@ export function Purchase() {
   const p = state.purchases.find((x) => x.id === id && x.userId === user?.id);
   if (!p) return <Page narrow tag="clickable"><Empty title="Purchase not found"><p>It may belong to another role, or the demo data was reset.</p><div><Button to="/purchases">My purchases</Button></div></Empty></Page>;
   return (
-    <Page narrow tag="clickable">
-      <div className="alert">
+    <Page tag="clickable">
+      <div className="alert alert-wide">
         <h1>Purchase confirmed</h1>
         <p>Your files are ready. The download link never expires, and you can download again from My purchases.</p>
         <div><Button variant="primary" onClick={() => download(p.title)}>Download files</Button></div>

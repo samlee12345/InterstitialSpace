@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { areaM2, radiusOf, shapeOf, toXY } from '../lib/geo.js';
 import { useDemo } from '../state/DemoContext.jsx';
 import { Badge, Icon, ImageBox, Mine, PointsBadge, StatusBadges } from './ui.jsx';
 import { useChoices } from '../design/choices.js';
@@ -288,5 +289,41 @@ export function Crumbs({ items }) {
         </span>
       ))}
     </nav>
+  );
+}
+
+// ── Read-only area map: a space's drawn area and any spaces that overlap it ──
+// Centre is the space; other spaces are placed by their real offset in metres.
+export function AreaMap({ space, others = [], label = 'Map placeholder' }) {
+  const shape = shapeOf(space);
+  const items = [{ s: space, shape, p: { x: 0, y: 0 }, main: true }, ...others.map((s) => ({ s, shape: shapeOf(s), p: toXY(space, s) }))];
+  // Fit everything: the furthest edge from the centre, with a margin.
+  const reach = Math.max(...items.map(({ p, shape: sh }) => Math.hypot(p.x, p.y) + radiusOf(sh)));
+  const spanX = Math.max(40, reach * 2.4);
+  const spanY = spanX * (9 / 16);
+  const pct = (q) => ({ left: 50 + (q.x / spanX) * 100, top: 50 - (q.y / spanY) * 100 });
+  return (
+    <figure className="captioned">
+      <div className="map area-map area-map-static" role="img" aria-label={`Map of ${space.name}${others.length ? ` and ${others.length} overlapping space${others.length === 1 ? '' : 's'}` : ''}`}>
+        <span className="map-label">{label}</span>
+        <svg className="area-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          {items.map(({ s, shape: sh, p, main }) => {
+            const c = pct(p);
+            return sh.mode === 'circle'
+              ? <ellipse key={s.id} className={main ? 'area-main' : 'area-other'} cx={c.left} cy={c.top} rx={(sh.r / spanX) * 100} ry={(sh.r / spanY) * 100} vectorEffect="non-scaling-stroke" />
+              : <polygon key={s.id} className={main ? 'area-main' : 'area-other'} points={sh.pts.map((q) => pct({ x: p.x + q.x, y: p.y + q.y })).map((q) => `${q.left},${q.top}`).join(' ')} vectorEffect="non-scaling-stroke" />;
+          })}
+        </svg>
+        {items.map(({ s, p, main }) => {
+          const c = pct(p);
+          return (
+            <span key={s.id} className={main ? 'pin-me' : `pin pin-static ${s.status === 'approved' ? 'pin-approved' : 'pin-pending'}`} style={{ left: `${c.left}%`, top: `${c.top}%` }} aria-hidden="true">
+              {!main && <span className="area-pin-label">{s.name.split(',')[0]}</span>}
+            </span>
+          );
+        })}
+      </div>
+      <figcaption>Solid outline: this space’s drawn area, about {Math.round(areaM2(shape))} m². Dashed: overlapping spaces. Map about {Math.round(spanX)} m across.</figcaption>
+    </figure>
   );
 }
