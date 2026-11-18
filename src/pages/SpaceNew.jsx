@@ -5,6 +5,7 @@ import { Badge, Button, FormActions, Icon, ImageBox, Input, Modal, Page, RoleGat
 import { typeLabel } from '../components/domain.jsx';
 import { useChoices } from '../design/choices.js';
 import { POINTS, fmtPoints, uploadPoints } from '../lib/points.js';
+import { radiusOf, shapeOf } from '../lib/geo.js';
 
 /* Create new interstitial space, in three versions (Demo bar: Create new space):
  *  A "inline":  Photos → Area → Questionnaire (opens with "Is it one of these
@@ -14,6 +15,10 @@ import { POINTS, fmtPoints, uploadPoints } from '../lib/points.js';
  *               a side panel.
  *  C "confirm": Photos → Area → Questionnaire → Review; leaving the Area step
  *               opens a confirmation overlay listing spaces in the drawn area.
+ *  D "popover": like C, but each overlapping space is answered from a popover
+ *               on its map dot. "Inside my new space" grows the area to cover
+ *               it; "my new space is inside it" grows the area to reach into it;
+ *               "same space" offers to add an experience to that space instead.
  * The photo location is fixed; people draw the space's extent around it. Nearby
  * spaces are those inside the drawn area or within a few metres of its edge. */
 
@@ -48,15 +53,40 @@ function segDist(p, a, b) {
   const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / (dx * dx + dy * dy || 1)));
   return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
 }
-// 'inside', 'edge' (within EDGE_M of the outline) or null
-function placeIn(p, shape) {
+// Where another space (centre p, area radius rOther) sits relative to the drawn
+// shape: 'inside' (its centre is inside), 'edge' (the areas overlap or come
+// within EDGE_M), or null.
+function placeIn(p, shape, rOther = 0) {
   if (shape.mode === 'circle') {
     const d = Math.hypot(p.x, p.y);
-    return d <= shape.r ? 'inside' : d <= shape.r + EDGE_M ? 'edge' : null;
+    return d <= shape.r ? 'inside' : d <= shape.r + rOther + EDGE_M ? 'edge' : null;
   }
   if (insidePoly(p, shape.pts)) return 'inside';
   const d = Math.min(...shape.pts.map((a, i) => segDist(p, a, shape.pts[(i + 1) % shape.pts.length])));
-  return d <= EDGE_M ? 'edge' : null;
+  return d <= rOther + EDGE_M ? 'edge' : null;
+}
+
+// Grow the drawn shape so it covers a box (used to cover another space's area,
+// or to reach a point inside it). Rectangles become the bounding box.
+function growTo(shape, minX, minY, maxX, maxY) {
+  if (shape.mode === 'circle') {
+    const far = Math.max(...[[minX, minY], [minX, maxY], [maxX, minY], [maxX, maxY]].map(([x, y]) => Math.hypot(x, y)));
+    return { ...shape, r: Math.max(shape.r, Math.ceil(far)) };
+  }
+  const xs = [...shape.pts.map((q) => q.x), minX, maxX];
+  const ys = [...shape.pts.map((q) => q.y), minY, maxY];
+  const [x0, x1, y0, y1] = [Math.floor(Math.min(...xs)), Math.ceil(Math.max(...xs)), Math.floor(Math.min(...ys)), Math.ceil(Math.max(...ys))];
+  return { ...shape, pts: [{ x: x0, y: y1 }, { x: x1, y: y1 }, { x: x1, y: y0 }, { x: x0, y: y0 }] };
+}
+// "It is inside my new space": cover all of its area.
+const coverAll = (shape, p, r) => growTo(shape, p.x - r, p.y - r, p.x + r, p.y + r);
+// "My new space is inside it": reach a couple of metres into the nearest part of its area.
+function reachInto(shape, p, r) {
+  const d = Math.hypot(p.x, p.y);
+  if (d <= r) return shape; // the photo point is already inside it
+  const t = { x: p.x * (1 - (r - 2) / d), y: p.y * (1 - (r - 2) / d) };
+  if (shape.mode === 'circle' ? Math.hypot(t.x, t.y) <= shape.r : insidePoly(t, shape.pts)) return shape;
+  return growTo(shape, t.x, t.y, t.x, t.y);
 }
 export function areaM2(shape) {
   if (shape.mode === 'circle') return Math.PI * shape.r * shape.r;
@@ -101,15 +131,19 @@ function PhotoPicker({ photos, setPhotos, geotag, point, error, compact }) {
 }
 
 // ── Area editor: fixed photo point, zoom, four corners or a circle ──
-function AreaEditor({ center, shape, setShape, candidates }) {
+function AreaEditor({ center, shape, setShape, candidates, popover, relations = {}, onRelate }) {
   const { visibleSpaces } = useDemo();
   const [zoom, setZoom] = useState(2);
+  const [openId, setOpenId] = useState(null);
   const box = useRef(null);
   const drag = useRef(null);
   const spanX = ZOOMS[zoom];
   const spanY = spanX * ASPECT;
   const pct = (p) => ({ left: 50 + (p.x / spanX) * 100, top: 50 - (p.y / spanY) * 100 });
-  const others = visibleSpaces.map((s) => ({ s, p: toXY(center, s) })).filter(({ p }) => Math.abs(p.x) < spanX / 2 && Math.abs(p.y) < spanY / 2);
+  // Other spaces whose area shows in the current view.
+  const others = visibleSpaces
+    .map((s) => ({ s, p: toXY(center, s), r: radiusOf(shapeOf(s)) }))
+    .filter(({ p, r }) => Math.abs(p.x) - r < spanX / 2 && Math.abs(p.y) - r < spanY / 2);
   const ids = new Set(candidates.map((c) => c.s.id));
 
   const move = (e) => {
@@ -171,22 +205,67 @@ function AreaEditor({ center, shape, setShape, candidates }) {
       <div ref={box} className="map area-map" style={{ '--map-zoom': ZOOMS[2] / spanX }}>
         <span className="map-label">Map placeholder: Jaipur. Dashed pins are pending.</span>
         <svg className="area-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          {others.map(({ s, p, r }) => {
+            const at = pct(p);
+            return <ellipse key={s.id} className={`area-other ${ids.has(s.id) ? 'area-other-hit' : ''}`} cx={at.left} cy={at.top} rx={(r / spanX) * 100} ry={(r / spanY) * 100} vectorEffect="non-scaling-stroke" />;
+          })}
           {shape.mode === 'rect'
-            ? <polygon points={outline} vectorEffect="non-scaling-stroke" />
-            : <ellipse cx="50" cy="50" rx={rPct.x} ry={rPct.y} vectorEffect="non-scaling-stroke" />}
+            ? <polygon className="area-new" points={outline} vectorEffect="non-scaling-stroke" />
+            : <ellipse className="area-new" cx="50" cy="50" rx={rPct.x} ry={rPct.y} vectorEffect="non-scaling-stroke" />}
         </svg>
         {others.map(({ s, p }) => {
           const at = pct(p);
-          return <span key={s.id} className={`pin pin-static ${s.status === 'approved' ? 'pin-approved' : 'pin-pending'} ${ids.has(s.id) ? 'pin-active' : ''}`} style={{ left: `${at.left}%`, top: `${at.top}%` }} title={s.name} aria-hidden="true" />;
+          const cls = `pin ${s.status === 'approved' ? 'pin-approved' : 'pin-pending'} ${ids.has(s.id) ? 'pin-active' : ''}`;
+          if (!popover) return <span key={s.id} className={`${cls} pin-static`} style={{ left: `${at.left}%`, top: `${at.top}%` }} title={s.name} aria-hidden="true" />;
+          const rel = relations[s.id];
+          return (
+            <span key={s.id} className="pin-anchor" style={{ left: `${at.left}%`, top: `${at.top}%` }}>
+              <button
+                type="button"
+                className={`${cls} ${rel ? 'pin-answered' : ''}`}
+                aria-label={`${s.name}${ids.has(s.id) ? ', overlaps your area' : ''}${rel ? `, marked: ${RELATIONS.find(([v]) => v === rel)[1]}` : ''}`}
+                aria-expanded={openId === s.id}
+                onClick={() => setOpenId(openId === s.id ? null : s.id)}
+              />
+              {openId === s.id && (
+                <span className="map-popover" role="dialog" aria-label={s.name}>
+                  <a className="bold small" href={`#/space/${s.id}`} target="_blank" rel="noopener noreferrer">{s.name}<span className="visually-hidden"> (opens in a new tab)</span></a>
+                  <label className="small" htmlFor={`rel-pop-${s.id}`}>How does it relate to your space?</label>
+                  <select id={`rel-pop-${s.id}`} className="input" value={rel || ''} onChange={(e) => { onRelate(s, e.target.value); setOpenId(null); }}>
+                    <option value="" disabled>Choose…</option>
+                    {RELATIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                  </select>
+                  <button type="button" className="link-btn xs" onClick={() => setOpenId(null)}>Close</button>
+                </span>
+              )}
+            </span>
+          );
         })}
         <span className="pin-me" style={{ left: '50%', top: '50%' }} role="img" aria-label="Where your photos were taken (fixed)" />
         {shape.mode === 'rect' ? shape.pts.map((p, i) => handle(i + 1, p, `Corner ${i + 1}`)) : handle('r', { x: shape.r, y: 0 }, `Circle edge, radius ${shape.r} m`)}
       </div>
       <p className="small" aria-live="polite">
         About {Math.round(areaM2(shape))} m². {candidates.length
-          ? `${candidates.length} documented ${candidates.length === 1 ? 'space is' : 'spaces are'} in or next to this area (highlighted).`
-          : 'No documented spaces in or next to this area.'}
+          ? `${candidates.length} documented ${candidates.length === 1 ? 'space overlaps' : 'spaces overlap'} this area (highlighted).`
+          : 'No documented spaces overlap this area.'}
+        {popover && candidates.length > 0 && ' Select each highlighted dot to say how it relates to your space.'}
       </p>
+      {popover && candidates.length > 0 && (
+        <ul className="list small overlap-list" aria-label="Overlapping spaces">
+          {candidates.map(({ s }) => (
+            <li key={s.id} className="row between">
+              <span className="bold">{s.name}</span>
+              <label className="row">
+                <span className="visually-hidden">How does {s.name} relate to your space?</span>
+                <select className="input input-sm" value={relations[s.id] || ''} onChange={(e) => onRelate(s, e.target.value)}>
+                  <option value="" disabled>Choose…</option>
+                  {RELATIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                </select>
+              </label>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
@@ -258,7 +337,8 @@ export default function SpaceNew() {
   const { createFlow } = useChoices();
   const nav = useNavigate();
   const searchName = new URLSearchParams(useLocation().search).get('name') || '';
-  const flow = ['overlay', 'confirm'].includes(createFlow) ? createFlow : 'inline';
+  const flow = ['overlay', 'confirm', 'popover'].includes(createFlow) ? createFlow : 'inline';
+  const [sameAsk, setSameAsk] = useState(null); // version D: "Same space" confirmation
   const point = state.createNearby ? PHOTO_POINT.nearby : PHOTO_POINT.alone;
   const [photos, setPhotos] = useState([]);
   const [photosDone, setPhotosDone] = useState(false); // version B: overlay finished
@@ -277,7 +357,7 @@ export default function SpaceNew() {
   if (!user) return <Page><RoleGate title="Sign in to document a space">Any account holder can create a space.</RoleGate><div><Button to="/signup">Sign up</Button></div></Page>;
 
   const candidates = visibleSpaces
-    .map((s) => ({ s, where: placeIn(toXY(point, s), shape) }))
+    .map((s) => ({ s, where: placeIn(toXY(point, s), shape, radiusOf(shapeOf(s))) }))
     .filter((c) => c.where)
     .sort((a, b) => (a.where === b.where ? 0 : a.where === 'inside' ? -1 : 1));
   // Forget answers for spaces no longer in the area.
@@ -319,7 +399,19 @@ export default function SpaceNew() {
   };
 
   const pts = uploadPoints({ photos: photos.length, fields: detailsDone(f), full: true });
-  const area = <AreaEditor center={point} shape={shape} setShape={setShape} candidates={candidates} />;
+  // Version D: answering on the map can grow the drawn area.
+  const relate = (sp, rel) => {
+    if (rel === 'same') { setSameAsk(sp); return; }
+    const p = toXY(point, sp);
+    const r = radiusOf(shapeOf(sp));
+    if (rel === 'child') setShape(coverAll(shape, p, r));
+    if (rel === 'parent') setShape(reachInto(shape, p, r));
+    const next = { ...relations, [sp.id]: rel };
+    if (rel === 'parent') Object.keys(next).forEach((k) => { if (k !== sp.id && next[k] === 'parent') next[k] = 'none'; });
+    setRelations(next);
+    setErr('');
+  };
+  const area = <AreaEditor center={point} shape={shape} setShape={setShape} candidates={candidates} popover={flow === 'popover'} relations={relations} onRelate={relate} />;
   const relationsBlock = candidates.length > 0 && <Relations candidates={candidates} relations={liveRelations} setRelations={setRelations} />;
   const questionnaireBlock = merge ? (
     <div className="stack">
@@ -369,7 +461,16 @@ export default function SpaceNew() {
     );
     body = [photoStep, area, qBlock, review][step];
     // Version C: leaving the map asks about the spaces in the drawn area first.
-    const fromArea = () => { if (flow === 'confirm' && candidates.length) setConfirmOpen(true); else go(2)(); };
+    // Version D: every overlapping space needs an answer from the map first.
+    const fromArea = () => {
+      if (flow === 'popover') {
+        const open = candidates.filter((c) => !relations[c.s.id]);
+        if (open.length) return setErr(`Say how your space relates to ${open.map((c) => c.s.name).join(' and ')}: select ${open.length === 1 ? 'its dot' : 'their dots'} on the map.`);
+        return go(2)();
+      }
+      if (flow === 'confirm' && candidates.length) return setConfirmOpen(true);
+      return go(2)();
+    };
     actions = [
       <><Button to="/browse">Cancel</Button><Button variant="primary" onClick={go(1, checkPhotos)}>Continue</Button></>,
       <><Button onClick={go(0)}>Back</Button><Button variant="primary" onClick={fromArea}>Continue</Button></>,
@@ -411,6 +512,15 @@ export default function SpaceNew() {
           <FormActions>
             <Button onClick={() => setOverlayOpen(false)}>Cancel</Button>
             <Button variant="primary" onClick={() => { const m = checkPhotos(); setErr(m); if (m) return; setOverlayOpen(false); setPhotosDone(true); setStep(0); }}>Continue</Button>
+          </FormActions>
+        </Modal>
+      )}
+      {sameAsk && (
+        <Modal title={`Add your experience to ${sameAsk.name}?`} onClose={() => setSameAsk(null)}>
+          <p>You said this is the same space. Instead of creating a new one, your {photos.length} photo{photos.length === 1 ? '' : 's'} and experience will be added to {sameAsk.name}.</p>
+          <FormActions>
+            <Button onClick={() => setSameAsk(null)}>Cancel</Button>
+            <Button variant="primary" onClick={() => nav(`/space/${sameAsk.id}?tab=experience&experience=1`, { state: { photos: photos.length } })}>Add my experience there</Button>
           </FormActions>
         </Modal>
       )}

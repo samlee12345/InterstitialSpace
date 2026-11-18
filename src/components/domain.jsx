@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { areaM2, radiusOf, shapeOf, toXY } from '../lib/geo.js';
 import { useDemo } from '../state/DemoContext.jsx';
-import { Badge, Icon, ImageBox, Mine, PointsBadge, StatusBadges } from './ui.jsx';
+import { Badge, Button, FormActions, Icon, ImageBox, Mine, Modal, PointsBadge, StatusBadges } from './ui.jsx';
 import { useChoices } from '../design/choices.js';
 
 // Space card layouts to compare in the sandbox. The chosen one is in design/choices.js.
@@ -325,5 +326,61 @@ export function AreaMap({ space, others = [], label = 'Map placeholder' }) {
       </div>
       <figcaption>Solid outline: this space’s drawn area, about {Math.round(areaM2(shape))} m². Dashed: overlapping spaces. Map about {Math.round(spanX)} m across.</figcaption>
     </figure>
+  );
+}
+
+// ── Collaborators: find people on the platform, or invite someone by email ──
+// value: [{ id } | { email }]
+export function Collaborators({ value, onChange }) {
+  const { state, user, get } = useDemo();
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState('');
+  const people = state.users.filter((u) => u.id !== user.id && !value.some((c) => c.id === u.id));
+  const term = q.trim().toLowerCase();
+  const matches = term ? people.filter((u) => u.name.toLowerCase().includes(term)) : people.slice(0, 6);
+  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(q.trim());
+  const add = (c) => { onChange([...value, c]); setQ(''); };
+  const label = (c) => (c.id ? get.user(c.id)?.name : c.email);
+  return (
+    <div className="field">
+      <span className="label">Collaborators (optional)</span>
+      <span className="xs muted">They’re credited with you and notified. People not on the platform get an email invitation.</span>
+      {value.length > 0 && (
+        <ul className="collab-list" aria-label="Collaborators">
+          {value.map((c) => (
+            <li key={c.id || c.email} className="collab">
+              <span>{label(c)}{c.email && <span className="muted"> (invited)</span>}</span>
+              <button type="button" className="link-btn xs" onClick={() => onChange(value.filter((x) => x !== c))} aria-label={`Remove ${label(c)}`}>Remove</button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div><Button onClick={() => setOpen(true)}>Add collaborator</Button></div>
+      {open && (
+        <Modal title="Invite collaborators" onClose={() => setOpen(false)}>
+          <div className="field">
+            <label className="label" htmlFor="collab-q">Find people by name, or enter an email</label>
+            <input id="collab-q" className="input" type="search" value={q} onChange={(e) => setQ(e.target.value)} autoComplete="off" placeholder="e.g. Architect B, or name@studio.com" />
+          </div>
+          <ul className="list small" aria-live="polite">
+            {matches.map((u) => (
+              <li key={u.id} className="row between">
+                <span><span className="bold">{u.name}</span> <span className="muted">{u.role === 'architect' ? (u.licence || 'Architect') : 'Member'}</span></span>
+                <Button onClick={() => add({ id: u.id })}>Add<span className="visually-hidden"> {u.name}</span></Button>
+              </li>
+            ))}
+            {term && matches.length === 0 && !isEmail && <li className="muted">No one called “{q.trim()}”. Enter their email to invite them.</li>}
+            {isEmail && (
+              <li className="row between">
+                <span>Invite <span className="bold">{q.trim()}</span> by email</span>
+                <Button onClick={() => add({ email: q.trim() })}>Invite</Button>
+              </li>
+            )}
+          </ul>
+          {value.length > 0 && <p className="small">Added: {value.map(label).join(', ')}</p>}
+          <FormActions><Button variant="primary" onClick={() => setOpen(false)}>Done</Button></FormActions>
+        </Modal>
+      )}
+    </div>
   );
 }

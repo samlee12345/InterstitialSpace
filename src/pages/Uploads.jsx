@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
 import { Button, Choice, Empty, FileDrop, FormActions, ImageBox, Input, Page, RoleGate, Select, Steps } from '../components/ui.jsx';
-import { Crumbs, ELIGIBILITY } from '../components/domain.jsx';
+import { Collaborators, Crumbs, ELIGIBILITY } from '../components/domain.jsx';
 import { useChoices } from '../design/choices.js';
 import { POINTS } from '../lib/points.js';
 
@@ -45,7 +45,7 @@ function RedesignForm({ space, contestId: fromRoute }) {
   const contest = contestId ? get.contest(contestId) : null;
   const isEntry = !!contest && contest.status === 'live';
   const [step, setStep] = useState(0);
-  const [f, setF] = useState({ title: '', description: '', files: [], units: '', agency: true, attest: false });
+  const [f, setF] = useState({ title: '', description: '', files: [], units: '', agency: true, attest: false, collaborators: [] });
   const [err, setErr] = useState({});
   const [from, setFrom] = useState('new'); // contest entries: 'new' or the id of one of your redesigns
   const limit = uploadLimit(user.id, space.id);
@@ -107,11 +107,11 @@ function RedesignForm({ space, contestId: fromRoute }) {
   const finish = () => {
     const title = f.title.trim();
     if (isEntry) {
-      const entry = { id: `e-${Date.now()}`, submittedAt: new Date().toISOString().slice(0, 10), architectId: user.id, title, statement: f.description.trim(), files: f.files, fromRedesign: from === 'new' ? null : from, ...details };
+      const entry = { id: `e-${Date.now()}`, submittedAt: new Date().toISOString().slice(0, 10), architectId: user.id, title, statement: f.description.trim(), files: f.files, fromRedesign: from === 'new' ? null : from, collaborators: f.collaborators, ...details };
       dispatch({ type: 'SUBMIT_ENTRY', contestId: contest.id, entry });
       return nav(`/space/${space.id}`, { replace: true, state: { banner: { title: 'Contest entry submitted', text: `“${title}” is entered in “${contest.title}”. The co-host judges after ${contest.deadline}; you’ll get a notification with the result.`, links: [[`/contest/${contest.id}`, 'Contest details'], ['/portfolio', 'Open your portfolio']] } } });
     }
-    dispatch({ type: 'PUBLISH_REDESIGN', id: `r-${Date.now()}`, spaceId: space.id, userId: user.id, title, description: f.description.trim(), files: f.files, details });
+    dispatch({ type: 'PUBLISH_REDESIGN', id: `r-${Date.now()}`, spaceId: space.id, userId: user.id, title, description: f.description.trim(), files: f.files, details, collaborators: f.collaborators });
     return nav(`/space/${space.id}?tab=redesigns`, {
       replace: true,
       state: { banner: { title: 'Redesign published', text: `“${title}” is live on this space, marked “Yours”. You earned ${POINTS.redesign} points. It also appears in your portfolio and the architect ranking.`, links: [['/portfolio', 'Open your portfolio'], ['/ranking', 'See the ranking']] } },
@@ -157,6 +157,7 @@ function RedesignForm({ space, contestId: fromRoute }) {
           <Input label={<>Title<Req /></>} value={f.title} onChange={(e) => upd({ title: e.target.value })} error={err.title} placeholder="e.g. Shaded seating along the lower steps" />
           <Input label={<>Description<Req /></>} textarea value={f.description} onChange={(e) => upd({ description: e.target.value })} error={err.description} hint={isEntry ? 'How your design meets the co-host’s criteria.' : 'What changes, and which resident requests it answers.'} />
           <FileDrop label={<>Design files: CAD drawings and 3D model<Req /></>} files={f.files} onChange={(files) => upd({ files })} error={err.files} accept={REDESIGN_FILES} samples={['drawings.dwg', 'model.skp']} />
+          <Collaborators value={f.collaborators} onChange={(collaborators) => setF({ ...f, collaborators })} />
           <FormActions>
             <Button to={isEntry ? `/contest/${contest.id}` : `/space/${space.id}`}>Cancel</Button>
             <Button variant="primary" onClick={next(1, check0)}>Continue</Button>
@@ -265,6 +266,7 @@ function DiagramForm({ space }) {
   const [step, setStep] = useState(0);
   const [files, setFiles] = useState([]);
   const [notes, setNotes] = useState('');
+  const [collaborators, setCollaborators] = useState([]);
   const [measured, setMeasured] = useState(false);
   const [agree, setAgree] = useState(false);
   const [err, setErr] = useState({});
@@ -283,7 +285,7 @@ function DiagramForm({ space }) {
   };
   const submit = () => {
     if (!agree) { setErr({ agree: 'Agree to the Base Library licence to add your diagram.' }); return; }
-    dispatch({ type: 'UPLOAD_DIAGRAM', spaceId: space.id, userId: user.id, files, notes, modelId: `m-${Date.now()}` });
+    dispatch({ type: 'UPLOAD_DIAGRAM', spaceId: space.id, userId: user.id, files, notes, collaborators, modelId: `m-${Date.now()}` });
     nav(`/space/${space.id}?tab=diagram`, {
       replace: true,
       state: { banner: { title: 'Spatial diagram added to the Base Library', text: `Your diagram is on this space, marked “Yours”. You earned ${POINTS.diagram} points. The platform keeps the download fee for spatial diagrams. The space’s 3D model will be regenerated with it.`, links: [['/portfolio', 'Open your portfolio']] } },
@@ -310,6 +312,7 @@ function DiagramForm({ space }) {
               ))}
             </ul>
           )}
+          <Collaborators value={collaborators} onChange={setCollaborators} />
           <Input label="Notes on how it was measured (optional)" textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
           <Choice type="checkbox" checked={measured} onChange={(e) => { setMeasured(e.target.checked); setErr({ ...err, measured: undefined }); }} title={<>This drawing is measured on site or from a scan<Req /></>} />
           {err.measured && <span className="error" role="alert">{err.measured}</span>}

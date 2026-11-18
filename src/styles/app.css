@@ -491,3 +491,18 @@ ul.space-head-photos .imgbox span { font-size: var(--text-xs); }
 .status-approved svg { color: var(--status-approved); }
 .status-rejected svg { color: var(--status-declined); }
 .status-pending svg { color: var(--status-pending); }
+
+/* Round 12: other spaces' areas and the map popover on Create new space */
+.area-svg .area-other { fill: none; stroke: var(--color-text-muted); stroke-width: var(--border-thin); stroke-dasharray: 4 4; }
+.area-svg .area-other-hit { stroke: var(--color-border-strong); stroke-width: var(--border-thick); }
+.pin-anchor { position: absolute; width: 0; height: 0; z-index: 4; }
+.pin-anchor > .pin { position: absolute; left: 0; top: 0; }
+.pin-answered { box-shadow: 0 0 0 var(--border-thick) var(--color-surface), 0 0 0 calc(var(--border-thick) * 2) var(--color-border-strong); }
+.map-popover { position: absolute; left: var(--space-3); top: var(--space-3); z-index: 6; width: var(--width-popover, 15rem); display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3); background: var(--color-surface); border: var(--border-thin) solid var(--color-border-strong); border-radius: var(--radius-md); box-shadow: var(--shadow-2); }
+.map-popover .link-btn { align-self: flex-end; }
+.input-sm { padding-block: var(--space-1); min-height: 0; }
+.overlap-list li { align-items: center; }
+.space-head-actions { flex-wrap: nowrap; }
+.vote-line { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.collab-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.collab { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-1) var(--space-3); border: var(--border-thin) solid var(--color-border-strong); border-radius: var(--radius-pill); font-size: var(--text-sm); }

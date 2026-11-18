@@ -17,7 +17,7 @@ export const PAGE_GROUPS = [
         ['Approved', '/space/s2'], ['Pending', '/space/s7'], ['No contest', '/space/s7'], ['Ongoing contest', '/space/s2'],
         ['Judging contest', '/space/s5'], ['Closed contest', '/space/s4'], ['Has connected spaces', '/space/s4'], ['No connected spaces', '/space/s2'],
       ] },
-      { id: 'space-new', label: 'Create new space', to: '/space/new', kind: 'simulated', role: 'community', match: exact('/space/new'), controls: 'create', views: [{ id: '', label: 'A: Nearby spaces in the questionnaire', choice: ['createFlow', 'inline'] }, { id: 'overlay', label: 'B: Upload photos first', choice: ['createFlow', 'overlay'] }, { id: 'confirm', label: 'C: Confirm nearby spaces after the map', choice: ['createFlow', 'confirm'] }] },
+      { id: 'space-new', label: 'Create new space', to: '/space/new', kind: 'simulated', role: 'community', match: exact('/space/new'), controls: 'create', views: [{ id: '', label: 'A: Nearby spaces in the questionnaire', choice: ['createFlow', 'inline'] }, { id: 'overlay', label: 'B: Upload photos first', choice: ['createFlow', 'overlay'] }, { id: 'confirm', label: 'C: Confirm nearby spaces after the map', choice: ['createFlow', 'confirm'] }, { id: 'popover', label: 'D: Choose on the map', choice: ['createFlow', 'popover'] }] },
       { id: 'signup', label: 'Sign up', to: '/signup', kind: 'simulated', role: 'visitor', match: exact('/signup') },
       { id: 'login', label: 'Log in', to: '/login', kind: 'simulated', role: 'visitor', match: exact('/login') },
       { id: 'architects', label: 'For architects (verification)', to: '/architects', kind: 'simulated', role: 'visitor', match: exact('/architects') },

@@ -45,6 +45,12 @@ const award = (s, userId, pts, text) => ({
 });
 const awardToast = (s, userId, pts, text) => toast(award(s, userId, pts, text), `+${fmtPoints(pts)} points — ${text}`);
 
+// People added as collaborators on an upload are credited and told about it.
+const notifyCollaborators = (s, list, fromId, what, link) => {
+  const from = s.users.find((u) => u.id === fromId)?.name;
+  return (list || []).filter((c) => c.id).reduce((n, c) => notify(n, c.id, 'points', `${from} added you as a collaborator on ${what}.`, link), s);
+};
+
 function reducer(s, a) {
   switch (a.type) {
     case 'SET_ROLE':
@@ -76,9 +82,10 @@ function reducer(s, a) {
 
     // ── Architect: redesigns ───────────────────────────────
     case 'PUBLISH_REDESIGN': {
-      const r = { id: a.id, spaceId: a.spaceId, architectId: a.userId, title: a.title, description: a.description, files: a.files, details: a.details || null, version: 1, published: true, takenDown: false, sales: 0, createdAt: Date.now() + s.weekSkip * WEEK };
+      const r = { id: a.id, spaceId: a.spaceId, architectId: a.userId, title: a.title, description: a.description, files: a.files, details: a.details || null, collaborators: a.collaborators || [], version: 1, published: true, takenDown: false, sales: 0, createdAt: Date.now() + s.weekSkip * WEEK };
       let n = { ...s, redesigns: [r, ...s.redesigns] };
       n = awardToast(n, a.userId, POINTS.redesign, 'redesign published');
+      n = notifyCollaborators(n, a.collaborators, a.userId, `the redesign “${a.title}”`, `/item/${a.id}`);
       return notify(n, a.userId, 'points', `+5 points for publishing “${a.title}”.`, '/points');
     }
     case 'EDIT_REDESIGN': {
@@ -102,12 +109,12 @@ function reducer(s, a) {
       const hasModel = s.models.some((m) => m.spaceId === a.spaceId && !m.takenDown && !m.archived);
       let n = {
         ...s,
-        spaces: mapById(s.spaces, a.spaceId, (x) => ({ ...x, diagrams: [...x.diagrams, { id: `dg-${a.modelId}`, source: 'architect', by: a.userId, credits: [], date: today(), label: a.label || null }] })),
+        spaces: mapById(s.spaces, a.spaceId, (x) => ({ ...x, diagrams: [...x.diagrams, { id: `dg-${a.modelId}`, source: 'architect', by: a.userId, collaborators: a.collaborators || [], credits: [], date: today(), label: a.label || null }] })),
         models: hasModel ? s.models : [...s.models, { id: a.modelId, spaceId: a.spaceId, title: `3D model — ${sp.name}`, files: ['model.obj'], takenDown: false }],
         diagramUploads: [{ id: a.modelId, spaceId: a.spaceId, userId: a.userId, date: today(), files: a.files, notes: a.notes }, ...s.diagramUploads],
       };
       n = awardToast(n, a.userId, POINTS.diagram, 'spatial diagram added to the Base Library');
-      return n;
+      return notifyCollaborators(n, a.collaborators, a.userId, `a spatial diagram of “${sp.name}”`, `/space/${a.spaceId}?tab=diagram`);
     }
     case 'AI_DIAGRAM':
       return {
@@ -144,6 +151,7 @@ function reducer(s, a) {
       const c = s.contests.find((x) => x.id === a.contestId);
       let n = { ...s, contests: mapById(s.contests, a.contestId, (x) => ({ ...x, entries: [...x.entries, a.entry] })) };
       n = notify(n, a.entry.architectId, 'contest', `Your entry “${a.entry.title}” was received for “${c.title}”.`, `/contest/${a.contestId}`);
+      n = notifyCollaborators(n, a.entry.collaborators, a.entry.architectId, `the contest entry “${a.entry.title}”`, `/contest/${a.contestId}`);
       return toast(n, 'Entry submitted');
     }
     case 'PICK_WINNER':
@@ -187,6 +195,10 @@ function reducer(s, a) {
       const sp = s.spaces.find((x) => x.id === a.spaceId);
       const ids = Array.from({ length: a.photos }, (_, i) => `${sp.id}-x${s.seq}-${i}`);
       const prev = s.comments.find((c) => c.spaceId === a.spaceId && c.userId === a.userId && !c.archived);
+      // Votes to redesign come from experiences: rating the need 6 or more counts as one vote.
+      const isVote = (ans) => (ans?.need ?? -1) >= 6;
+      const delta = (isVote(a.answers) ? 1 : 0) - (isVote(prev?.answers) ? 1 : 0);
+      if (delta) s = { ...s, spaces: mapById(s.spaces, a.spaceId, (x) => ({ ...x, votes: Math.max(0, x.votes + delta) })) };
       if (prev) {
         const n = {
           ...s,
@@ -376,11 +388,11 @@ function reducer(s, a) {
     }
     // Architects name who designed a space; a moderator confirms.
     case 'DESIGNER_CLAIM':
-      return toast({ ...s, seq: s.seq + 1, designerClaims: [{ id: `dc-${s.seq}`, spaceId: a.spaceId, designer: a.designer, by: a.by, note: a.note, date: today(), status: 'pending' }, ...s.designerClaims] }, 'Sent to a moderator to confirm');
+      return toast({ ...s, seq: s.seq + 1, designerClaims: [{ id: `dc-${s.seq}`, spaceId: a.spaceId, designer: a.designer, external: a.external || null, by: a.by, note: a.note, date: today(), status: 'pending' }, ...s.designerClaims] }, 'Sent to a moderator to confirm');
     case 'DESIGNER_RESOLVE': {
       const c = s.designerClaims.find((x) => x.id === a.id);
       let n = { ...s, designerClaims: s.designerClaims.map((x) => (x.id === a.id ? { ...x, status: a.ok ? 'confirmed' : 'rejected' } : x)) };
-      if (a.ok) n = { ...n, spaces: mapById(n.spaces, c.spaceId, (x) => ({ ...x, designer: c.designer })) };
+      if (a.ok) n = { ...n, spaces: mapById(n.spaces, c.spaceId, (x) => ({ ...x, designer: c.designer, designerExternal: c.external })) };
       n = notify(n, c.by, 'points', a.ok ? 'Your designer credit was confirmed.' : 'Your designer credit wasn’t confirmed.', `/space/${c.spaceId}`);
       return toast(n, a.ok ? 'Designer confirmed' : 'Designer credit declined');
     }

@@ -183,9 +183,13 @@ function MapLanding() {
   const [me, setMe] = useState(null);
   const panel = useRef(null);
   const selected = selectedId ? get.space(selectedId) : null;
-  const results = q.trim() ? visibleSpaces.filter((s) => matchesSearch(s, q)) : [];
+  // "lat, lon" finds spaces near that point, nearest first; anything else matches names and places.
+  const point = parseLatLng(q);
+  const results = !q.trim() ? [] : point
+    ? visibleSpaces.filter((s) => distanceM(point, s) <= 500).sort((a, b) => distanceM(point, a) - distanceM(point, b))
+    : visibleSpaces.filter((s) => matchesSearch(s, q));
   const pins = q.trim() && !selected ? results : visibleSpaces;
-  const focus = selected ? { lat: selected.lat, lng: selected.lng } : locate === 'new' ? me : null;
+  const focus = selected ? { lat: selected.lat, lng: selected.lng } : locate === 'new' ? me : point && q.trim() ? point : null;
 
   const select = (s) => { setSelectedId(s.id); setLocate('idle'); setTimeout(() => panel.current?.querySelector('.selected-space a')?.focus(), 0); };
   const back = () => { setSelectedId(null); setLocate('idle'); setMe(null); };
@@ -210,7 +214,12 @@ function MapLanding() {
   if (selected) {
     below = (
       <>
-        {me && <p className="note small">You’re here: this space is {Math.round(distanceM(me, selected))} m from your location.</p>}
+        {me && (
+          <div className="note small stack-sm">
+            <span>You’re here: this space is {Math.round(distanceM(me, selected))} m from your location.</span>
+            <span>Somewhere else here worth documenting? <button type="button" className="link-btn" onClick={() => addPlace('')}>Document a new space here</button></span>
+          </div>
+        )}
         <SelectedSpace space={selected} onClose={back} onSelect={select} />
       </>
     );
@@ -229,7 +238,7 @@ function MapLanding() {
       <div className="map-results" aria-live="polite">
         {results.length > 0 ? (
           <>
-            <p className="xs muted">{results.length} {results.length === 1 ? 'space' : 'spaces'} on the map</p>
+            <p className="xs muted">{results.length} {results.length === 1 ? 'space' : 'spaces'}{point ? ` within 500 m of ${point.lat}, ${point.lng}` : ' on the map'}</p>
             <ul className="list small">
               {results.slice(0, 5).map((s) => {
                 const n = redesignCount(state, s.id);
@@ -250,8 +259,8 @@ function MapLanding() {
           </>
         ) : (
           <div className="stack-sm">
-            <p className="small">No space called “{q.trim()}” yet.</p>
-            <div><Button variant="primary" onClick={() => addPlace(q.trim())}>{isMember ? 'Add this place' : 'Sign up to add this place'}</Button></div>
+            <p className="small">{point ? `No documented spaces within 500 m of ${point.lat}, ${point.lng}.` : `No space called “${q.trim()}” yet.`}</p>
+            <div><Button variant="primary" onClick={() => addPlace(point ? '' : q.trim())}>{isMember ? 'Add this place' : 'Sign up to add this place'}</Button></div>
           </div>
         )}
       </div>
@@ -263,7 +272,7 @@ function MapLanding() {
       <p className="small">A map of everyday in-between spaces in Jaipur, documented by the people who use them. Architects propose redesigns, and the platform is a co-op owned by its members.</p>
       <form onSubmit={(e) => { e.preventDefault(); if (results.length === 1) select(results[0]); }}>
         <label htmlFor="map-q" className="small bold">Search for a space</label>
-        <input id="map-q" className="input" type="search" value={q} onChange={(e) => { setQ(e.target.value); if (selectedId) setSelectedId(null); }} placeholder="Stepwell, Johari Bazaar, shade…" autoComplete="off" />
+        <input id="map-q" className="input" type="search" value={q} onChange={(e) => { setQ(e.target.value); if (selectedId) setSelectedId(null); }} placeholder="Search location or lat, lon" autoComplete="off" />
       </form>
       <div><Button onClick={locateMe}><Icon name="locate" />Use my location</Button></div>
       {below}

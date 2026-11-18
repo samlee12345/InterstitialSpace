@@ -31,7 +31,7 @@ function download(name) {
 export function Item() {
   const { id } = useParams();
   const found = useItem(id);
-  const { state, dispatch, user, isMember, cfg, here } = useDemo();
+  const { state, dispatch, user, isMember, cfg, here, get } = useDemo();
   const [rights, setRights] = useState('licence');
   const [report, setReport] = useState(false);
   const [reason, setReason] = useState('');
@@ -69,7 +69,7 @@ export function Item() {
           <h1>{item.title}</h1>
           {seller && (
             <p className="row">
-              <span>by <Link to={`/architect/${seller.id}`}>{seller.name}</Link></span>
+              <span>by <Link to={`/architect/${seller.id}`}>{seller.name}</Link>{item.collaborators?.length > 0 && <> with {item.collaborators.map((c) => (c.id ? get.user(c.id)?.name : c.email)).join(', ')}</>}</span>
               <PointsBadge userId={seller.id} />
             </p>
           )}

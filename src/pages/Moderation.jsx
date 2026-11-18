@@ -166,7 +166,7 @@ function DesignerClaims() {
       <ul className="list">
         {pending.map((c) => (
           <li key={c.id} className="stack-sm">
-            <span><Link className="bold" to={`/architect/${c.designer}`}>{get.user(c.designer)?.name}</Link> designed <Link to={`/space/${c.spaceId}`}>{get.space(c.spaceId)?.name}</Link><span className="small muted">, says {get.user(c.by)?.name} on {c.date}</span></span>
+            <span>{c.external ? <span className="bold">{c.external.name} <span className="muted">(not on the platform{c.external.link ? `: ${c.external.link}` : ''})</span></span> : <Link className="bold" to={`/architect/${c.designer}`}>{get.user(c.designer)?.name}</Link>} designed <Link to={`/space/${c.spaceId}`}>{get.space(c.spaceId)?.name}</Link><span className="small muted">, says {get.user(c.by)?.name} on {c.date}</span></span>
             {c.note && <p className="small">{c.note}</p>}
             <div className="row">
               <Button variant="primary" onClick={() => dispatch({ type: 'DESIGNER_RESOLVE', id: c.id, ok: true })}>Confirm designer</Button>

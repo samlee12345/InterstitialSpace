@@ -12,20 +12,6 @@ import { POINTS } from '../lib/points.js';
 // Names in a short sentence: "A, B and 3 others".
 const nameList = (names, max = 2) => (names.length <= max + 1 ? names.join(', ').replace(/, ([^,]*)$/, ' and $1') : `${names.slice(0, max).join(', ')} and ${names.length - max} others`);
 
-// Simulated browser location prompt, so the demo behaves the same on every machine.
-function LocationPrompt({ action, onPick, onClose }) {
-  return (
-    <Modal title="Share your location?" onClose={onClose}>
-      <p>We check whether you are at this space when you {action}. On site earns {POINTS.interactOnSite} points; off site, or without location, earns {POINTS.interactOffSite}.</p>
-      <div className="stack-sm">
-        <Button variant="primary" onClick={() => onPick(true)}>Allow — I am at this space</Button>
-        <Button onClick={() => onPick(false)}>Allow — I am somewhere else</Button>
-        <Button onClick={() => onPick(false)}>Don’t allow</Button>
-      </div>
-    </Modal>
-  );
-}
-
 // In the tabs view the tab names the section and carries the count, so no heading here.
 function SectionHead({ id, title, note, children }) {
   return (
@@ -70,7 +56,7 @@ function Diagrams({ space }) {
       {space.diagrams.map((d, i) => {
         const credit = d.source === 'ai'
           ? `Drawn by AI from ${space.photos.length} photos by ${nameList(d.credits.map((id) => get.user(id)?.name))}`
-          : `Measured and drawn by ${get.user(d.by)?.name}`;
+          : `Measured and drawn by ${nameList([get.user(d.by)?.name, ...(d.collaborators || []).map((c) => (c.id ? get.user(c.id)?.name : c.email))])}`;
         return (
           <article key={d.id} className="stack-sm diagram-set" aria-label={`Spatial diagram ${i + 1}`}>
             <div className="row between">
@@ -279,12 +265,12 @@ function Scale({ value, onChange }) {
   );
 }
 
-function ExperienceWizard({ space, mine, onClose, onPosted }) {
+function ExperienceWizard({ space, mine, onClose, onPosted, initialPhotos = 0 }) {
   const { dispatch, user } = useDemo();
   const [step, setStep] = useState(0);
   const [onSite, setOnSite] = useState(null);
   const [text, setText] = useState(mine?.text || '');
-  const [photos, setPhotos] = useState(0);
+  const [photos, setPhotos] = useState(initialPhotos);
   const [answers, setAnswers] = useState(mine?.answers || {});
   const [err, setErr] = useState('');
   const pickLocation = (v) => { setOnSite(v); setStep(1); };
@@ -307,6 +293,7 @@ function ExperienceWizard({ space, mine, onClose, onPosted }) {
       {step === 0 && (
         <div className="stack">
           {mine && <p className="note small">You can have one experience per space. Changing it replaces what you posted before; new photos are added to yours.</p>}
+          {initialPhotos > 0 && <p className="note small">Your {initialPhotos} photo{initialPhotos === 1 ? ' is' : 's are'} carried over from creating a space.</p>}
           <p>Are you at {space.name} right now? Sharing your location confirms it. Experiences posted on site earn {POINTS.interactOnSite} points; off site, or without location, {POINTS.interactOffSite}.</p>
           <div className="stack-sm">
             <Button variant="primary" onClick={() => pickLocation(true)}><Icon name="locate" />Share location: I’m here</Button>
@@ -348,6 +335,7 @@ function ExperienceWizard({ space, mine, onClose, onPosted }) {
       {step === 3 && (
         <div className="stack">
           <Scale value={answers.need} onChange={(v) => { setAnswers({ ...answers, need: v }); setErr(''); }} />
+          <p className="xs muted">6 or more counts as a vote to redesign this space.</p>
           {needsYes && (
             <ChipGroup q={{ id: 'why', type: 'multi', legend: 'Why should it be redesigned?', hint: 'Pick all that apply.', required: true, options: REDESIGN_REASONS }} value={answers.why} onChange={(v) => { setAnswers({ ...answers, why: v }); setErr(''); }} />
           )}
@@ -360,24 +348,20 @@ function ExperienceWizard({ space, mine, onClose, onPosted }) {
 }
 
 // ── Experiences: AI summary, then each member's comment with their photos ──
-function Experience({ space, setBanner }) {
-  const { state, user, get, need } = useDemo();
+function Experience({ space }) {
+  const { state, user, get } = useDemo();
   const now = Date.now() + state.weekSkip * 7 * 86400000;
-  const [adding, setAdding] = useState(false);
   // Most relevant first: verified contributors, then more points.
   const posts = state.comments
     .filter((c) => c.spaceId === space.id && !c.archived)
     .sort((a, b) => (get.user(b.userId).verified ? 1 : 0) - (get.user(a.userId).verified ? 1 : 0) || get.user(b.userId).points - get.user(a.userId).points);
-  const mine = user && posts.find((c) => c.userId === user.id);
   const scored = posts.filter((c) => c.answers?.need !== undefined);
   const avg = scored.length ? (scored.reduce((n, c) => n + c.answers.need, 0) / scored.length).toFixed(1) : null;
   const q = space.questionnaire;
 
   return (
     <section className="stack" data-screen-label="Experiences" aria-labelledby="exp-heading">
-      <SectionHead id="exp-heading" title={`Experiences (${posts.length})`} note="How people use and feel about this space, with their photos. One per person; you can update yours.">
-        <Button variant="primary" onClick={() => need('comment') && setAdding(true)}>{mine ? 'Update your experience' : 'Add your experience'}</Button>
-      </SectionHead>
+      <SectionHead id="exp-heading" title={`Experiences (${posts.length})`} note="How people use and feel about this space, with their photos. One per person; you can update yours with “Add your experience” above." />
 
       <div className="summary-box">
         <div className="row between">
@@ -429,14 +413,6 @@ function Experience({ space, setBanner }) {
         ))}
         {posts.length === 0 && <li className="muted">No experiences yet. Be the first to add one.</li>}
       </ul>
-      {adding && (
-        <ExperienceWizard
-          space={space}
-          mine={mine}
-          onClose={() => setAdding(false)}
-          onPosted={(n, updated) => setBanner({ title: updated ? 'Experience updated' : 'Experience posted', text: updated ? 'Your experience on this space now shows your changes.' : `Your experience${n ? ` and ${n} photo${n > 1 ? 's' : ''}` : ''} now show on this space, marked “Yours”.` })}
-        />
-      )}
     </section>
   );
 }
@@ -548,25 +524,6 @@ function ReportUpdate({ space, onClose }) {
   );
 }
 
-// Votes to redesign, right-aligned in the header above the tabs.
-function VoteBox({ space }) {
-  const { dispatch, user, need } = useDemo();
-  const [voting, setVoting] = useState(false);
-  return (
-    <div className="vote-box">
-      <span className="vote-count"><span className="display-sm">{space.votes}</span> <span className="small">votes to redesign</span></span>
-      <Button variant="primary" onClick={() => need('vote') && setVoting(true)}><Icon name="vote" />Vote to redesign</Button>
-      {voting && (
-        <LocationPrompt
-          action="vote"
-          onPick={(onSite) => { dispatch({ type: 'VOTE_SPACE', spaceId: space.id, userId: user.id, onSite }); setVoting(false); }}
-          onClose={() => setVoting(false)}
-        />
-      )}
-    </div>
-  );
-}
-
 function OptionsMenu({ space, onReport, onDesignate }) {
   const { need, isArchitect } = useDemo();
   return (
@@ -583,25 +540,43 @@ function DesignateDesigner({ space, onClose }) {
   const { state, dispatch, user } = useDemo();
   const architects = state.users.filter((u) => u.role === 'architect');
   const [who, setWho] = useState(space.designer || user.id);
+  const [ext, setExt] = useState({ name: '', link: '' });
   const [note, setNote] = useState('');
   const [sent, setSent] = useState(false);
+  const [err, setErr] = useState('');
+  const outside = who === 'outside';
   const pending = state.designerClaims.find((c) => c.spaceId === space.id && c.status === 'pending');
   if (sent || pending) {
     return (
       <Modal title="Designer sent for confirmation" onClose={onClose}>
-        <p>A moderator will check that {state.users.find((u) => u.id === (pending?.designer || who))?.name} designed {space.name}. It shows on the space once confirmed.</p>
+        <p>A moderator will check that {pending?.external?.name || ext.name || state.users.find((u) => u.id === (pending?.designer || who))?.name} designed {space.name}. It shows on the space once confirmed.</p>
         <FormActions><Button variant="primary" onClick={onClose}>Done</Button></FormActions>
       </Modal>
     );
   }
   return (
     <Modal title="Designate designer" onClose={onClose}>
-      <p className="small">Who designed or built {space.name}? Only architect profiles can be named. A moderator confirms it before it shows on the space.</p>
-      <Select label="Architect" value={who} onChange={(e) => setWho(e.target.value)} options={architects.map((u) => ({ value: u.id, label: u.name }))} />
+      <p className="small">Who designed or built {space.name}? Name an architect on the platform, or someone who isn’t. A moderator confirms it before it shows on the space.</p>
+      <Select label="Architect" value={who} onChange={(e) => { setWho(e.target.value); setErr(''); }} options={[...architects.map((u) => ({ value: u.id, label: u.name })), { value: 'outside', label: 'Someone not on the platform' }]} />
+      {outside && (
+        <>
+          <Input label="Their name or studio" value={ext.name} onChange={(e) => { setExt({ ...ext, name: e.target.value }); setErr(''); }} error={err} />
+          <Input label="Website or email (optional)" value={ext.link} onChange={(e) => setExt({ ...ext, link: e.target.value })} hint="We’ll invite them to claim the credit." />
+        </>
+      )}
       <Input label="How do you know? (for the moderator)" textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Our studio designed the steps in 2019; drawings available." />
       <FormActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button variant="primary" onClick={() => { dispatch({ type: 'DESIGNER_CLAIM', spaceId: space.id, designer: who, by: user.id, note: note.trim() }); setSent(true); }}>Send for confirmation</Button>
+        <Button
+          variant="primary"
+          onClick={() => {
+            if (outside && !ext.name.trim()) { setErr('Enter their name or studio.'); return; }
+            dispatch({ type: 'DESIGNER_CLAIM', spaceId: space.id, designer: outside ? null : who, external: outside ? { name: ext.name.trim(), link: ext.link.trim() } : null, by: user.id, note: note.trim() });
+            setSent(true);
+          }}
+        >
+          Send for confirmation
+        </Button>
       </FormActions>
     </Modal>
   );
@@ -609,11 +584,12 @@ function DesignateDesigner({ space, onClose }) {
 
 // Header with three layouts (Demo bar, Space page): the photo is portrait.
 // Details, then the pending notice (with Moderate), then votes and Options.
-function Header({ space, onReport, onDesignate, onModerate }) {
+function Header({ space, onReport, onDesignate, onModerate, onAddExperience, hasMine }) {
   const { get, user, isArchitect, isModerator } = useDemo();
   const { spaceHeader } = useChoices();
   const layout = ['strip', 'compact'].includes(spaceHeader) ? spaceHeader : 'portrait';
   const designer = space.designer && get.user(space.designer);
+  const ext = space.designerExternal;
   const canModerate = (isArchitect || isModerator) && space.status === 'pending' && space.uploadedBy !== user?.id;
   const text = (
     <div className="space-head-text stack">
@@ -626,6 +602,7 @@ function Header({ space, onReport, onDesignate, onModerate }) {
           {space.updatedAt && ` Updated ${space.updatedAt}.`}
         </p>
         {designer && <p className="small">Designed by <Link to={`/architect/${designer.id}`}>{designer.name}</Link></p>}
+        {!designer && ext && <p className="small">Designed by {ext.name} <span className="muted">(not on the platform)</span></p>}
       </div>
       {space.status === 'pending' && (
         <div className="note row between pending-note">
@@ -637,7 +614,8 @@ function Header({ space, onReport, onDesignate, onModerate }) {
         <p className="note">Declined: this is part of <Link to={`/space/${space.movedTo}`}>{get.space(space.movedTo).name}</Link>, so its contributions were moved there.</p>
       )}
       <div className="space-head-actions">
-        <VoteBox space={space} />
+        <span className="vote-line"><span className="bold">{space.votes}</span> votes to redesign</span>
+        <Button variant="primary" onClick={onAddExperience}>{hasMine ? 'Update your experience' : 'Add your experience'}</Button>
         <OptionsMenu space={space} onReport={onReport} onDesignate={onDesignate} />
       </div>
     </div>
@@ -671,10 +649,16 @@ export default function Space() {
   const [params, setParams] = useSearchParams();
   const loc = useLocation();
   const nav = useNavigate();
-  const { state, get, user, isPaid } = useDemo();
+  const { state, get, user, isPaid, need } = useDemo();
   const [reporting, setReporting] = useState(false);
   const [designating, setDesignating] = useState(false);
   const [moderating, setModerating] = useState(false);
+  // "Add your experience" lives in the header; ?experience=1 opens it (from Create new space → same space).
+  const [adding, setAdding] = useState(params.get('experience') === '1');
+  const [carried] = useState(loc.state?.photos || 0);
+  useEffect(() => {
+    if (params.get('experience')) setParams({ tab: 'experience' }, { replace: true });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const space = get.space(id);
   const tab = TABS.some((t) => t.id === params.get('tab')) ? params.get('tab') : 'experience';
   const banner = loc.state?.banner;
@@ -699,6 +683,7 @@ export default function Space() {
   const contests = state.contests.filter((c) => c.spaceId === space.id);
   const related = { parent: space.parentId ? get.space(space.parentId) : null, children: state.spaces.filter((x) => x.parentId === space.id && !x.removed) };
   const pendingUpdate = state.updateReports.find((r) => r.spaceId === space.id && r.status === 'pending');
+  const mine = user && state.comments.find((c) => c.spaceId === space.id && c.userId === user.id && !c.archived);
   // Contribution counts shown on the tabs.
   const counts = {
     experience: state.comments.filter((c) => c.spaceId === space.id && !c.archived).length,
@@ -714,7 +699,7 @@ export default function Space() {
     <Page>
       <nav className="small row" aria-label="Breadcrumb"><Link to="/browse">Browse spaces</Link><span className="muted">/</span><span className="muted">{space.name}</span></nav>
       <Banner banner={banner} onClose={() => setBanner(null)} />
-      <Header space={space} onReport={() => setReporting(true)} onDesignate={() => setDesignating(true)} onModerate={() => setModerating(true)} />
+      <Header space={space} onReport={() => setReporting(true)} onDesignate={() => setDesignating(true)} onModerate={() => setModerating(true)} onAddExperience={() => need('comment') && setAdding(true)} hasMine={!!mine} />
       {pendingUpdate && (
         <p className="note">An update was reported on {pendingUpdate.date}: “{pendingUpdate.text}” A moderator is checking it. If it’s confirmed, contributions so far move to Archived.</p>
       )}
@@ -727,7 +712,7 @@ export default function Space() {
 
       <Tabs idBase="space" tabs={TABS.map((t) => ({ ...t, label: `${t.label} (${counts[t.id]})` }))} active={tab} onChange={(t) => setParams({ tab: t }, { replace: true })} />
       <TabPanel idBase="space" id={tab}>
-        {tab === 'experience' && <Experience space={space} setBanner={setBanner} />}
+        {tab === 'experience' && <Experience space={space} />}
         {tab === 'diagram' && <Diagrams space={space} />}
         {tab === 'model' && <Model3D space={space} />}
         {tab === 'redesigns' && <Redesigns space={space} />}
@@ -743,6 +728,15 @@ export default function Space() {
         ))}
       </TabPanel>
       {reporting && <ReportUpdate space={space} onClose={() => setReporting(false)} />}
+      {adding && user && (
+        <ExperienceWizard
+          space={space}
+          mine={mine}
+          initialPhotos={carried}
+          onClose={() => setAdding(false)}
+          onPosted={(n, updated) => setBanner({ title: updated ? 'Experience updated' : 'Experience posted', text: updated ? 'Your experience on this space now shows your changes.' : `Your experience${n ? ` and ${n} photo${n > 1 ? 's' : ''}` : ''} now show on this space, marked “Yours”.` })}
+        />
+      )}
       {designating && <DesignateDesigner space={space} onClose={() => setDesignating(false)} />}
       {moderating && (
         <Modal title={`Moderate ${space.name}`} onClose={() => setModerating(false)} wide>
