@@ -541,3 +541,34 @@ ul.space-head-photos .imgbox span { font-size: var(--text-xs); }
 .terms .dl { gap: var(--space-3) var(--space-4); }
 .terms .dl dt { color: var(--color-text); font-weight: var(--weight-medium); }
 .toc { margin: 0; padding-left: var(--space-5); display: grid; gap: var(--space-1); }
+
+/* Sign-up flows: the step's buttons sit in a footer pinned to the bottom of the
+   page, so hints and errors appearing above them never move them. */
+.flow { display: flex; flex-direction: column; gap: var(--space-5); min-height: calc(100dvh - 12rem); }
+.flow-foot { margin-top: auto; position: sticky; bottom: 0; z-index: 5; display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-3) 0 calc(var(--space-4) + 2.75rem); background: var(--color-bg); border-top: var(--border-thin) solid var(--color-border); }
+.flow-actions:empty { display: none; }
+.flow-actions .form-actions { margin: 0; }
+.path-card { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); width: 100%; text-align: left; font: inherit; color: var(--color-text); background: var(--color-surface); border: var(--border-thin) solid var(--color-border-strong); border-radius: var(--radius-md); padding: var(--space-4); cursor: pointer; }
+.path-card:hover { background: var(--color-sunken); }
+.path-card:focus-visible { outline: var(--border-thick) solid var(--color-action); outline-offset: 2px; }
+.path-card .stack-sm { display: flex; flex-direction: column; }
+.path-card-arrow { font-size: var(--text-xl, 1.5rem); line-height: 1; color: var(--color-text-muted); }
+.input-with-button { display: flex; gap: var(--space-2); align-items: stretch; }
+.input-with-button .input { flex: 1; min-width: 0; }
+.input-with-button .btn { flex: none; }
+.input-code { max-width: 12ch; letter-spacing: 0.3em; font-variant-numeric: tabular-nums; }
+.ok { color: var(--status-approved); font-weight: var(--weight-medium); }
+
+/* Every dialog has a close button in its title row. */
+.modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
+.modal-x { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; margin: calc(var(--space-1) * -1) calc(var(--space-2) * -1) 0 0; padding: 0; color: var(--color-text); background: transparent; border: var(--border-thin) solid transparent; border-radius: var(--radius-md); cursor: pointer; }
+.modal-x:hover { background: var(--color-sunken); }
+.modal-x:focus-visible { outline: var(--border-thick) solid var(--color-action); outline-offset: 1px; }
+
+/* Tooltip on hover or keyboard focus of its trigger. */
+.tip { position: relative; display: inline-block; }
+.tip-bubble { position: absolute; left: 50%; bottom: calc(100% + var(--space-2)); transform: translateX(-50%); width: max-content; max-width: 18rem; padding: var(--space-2) var(--space-3); background: var(--color-action); color: var(--color-text-inverse); font-size: var(--text-xs); line-height: 1.4; border-radius: var(--radius-md); box-shadow: var(--shadow-2); opacity: 0; visibility: hidden; transition: opacity 0.12s ease-out; pointer-events: none; z-index: 20; text-align: left; }
+.tip-bubble::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: var(--color-action); }
+.tip:hover .tip-bubble, .tip:focus-within .tip-bubble { opacity: 1; visibility: visible; }
+.check-row { display: grid; grid-template-columns: auto 1fr; gap: 0 var(--space-2); align-items: center; font-size: var(--text-sm); cursor: pointer; }
+.check-row .xs { grid-column: 2; }

@@ -254,7 +254,7 @@ export function Modal({ title, onClose, wide, children }) {
   useEffect(() => {
     const opener = document.activeElement;
     const box = ref.current;
-    (box.querySelector('input, textarea, select') || box.querySelector(FOCUSABLE) || box).focus();
+    (box.querySelector('input, textarea, select') || [...box.querySelectorAll(FOCUSABLE)].find((x) => !x.classList.contains('modal-x')) || box).focus();
     const onKey = (e) => {
       if (e.key === 'Escape') { e.stopPropagation(); onClose?.(); return; }
       if (e.key !== 'Tab') return;
@@ -274,7 +274,14 @@ export function Modal({ title, onClose, wide, children }) {
   return (
     <div className="overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose?.()}>
       <div ref={ref} className={`modal ${wide ? 'modal-wide' : ''}`} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1}>
-        <h2 id={titleId}>{title}</h2>
+        <div className="modal-head">
+          <h2 id={titleId}>{title}</h2>
+          {onClose && (
+            <button type="button" className="modal-x" onClick={onClose} aria-label="Close">
+              <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" /></svg>
+            </button>
+          )}
+        </div>
         {children}
       </div>
     </div>

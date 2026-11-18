@@ -177,6 +177,21 @@ been added. Use it to click through long forms quickly in the demo.
   timeline), on the contest page and on the space page.
 - **Map pins** are plain: solid for approved spaces, dashed and hollow for
   pending ones. Space cards show votes, redesigns and photos.
+- **For architects (round 14).** Choices are whole cards that move you on,
+  no radio buttons. Students: "Send code" sits beside the school email
+  field, the code checks itself once six digits are in, and Next stays
+  disabled until it's confirmed; step 2 asks for the school, graduation
+  year and this term's class registration (to see architecture courses).
+  Every path ends on "Your account": full name, email, create and confirm
+  password, website and LinkedIn. The step's Back and Next live in a footer
+  pinned to the bottom of the page, with "Not an architect?" under them, so
+  they never move when hints or errors appear. Profile has "Convert to an
+  architect account" for community members.
+- **Dialogs** all have a close X in the title row (focus still starts on the
+  first real control). **Log in** has "Remember me" (off by default) and a
+  tooltip on "get verified as an architect". **Browse** has no header
+  button; an empty search shows a small heading and "Create new
+  interstitial space", prefilled with what you searched.
 - **Ghost points (round 13).** Only paid members collect points, and only
   they are paid out (surplus share and redesign sales). Free members see
   ghost points: a dashed badge in the header and dashed cards on Points,

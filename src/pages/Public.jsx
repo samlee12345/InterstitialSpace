@@ -381,10 +381,7 @@ export function Browse() {
     <Page tag="simulated" wide>
       <div className="browse">
         <div className="stack">
-          <div className="row between">
-            <h1>Browse spaces</h1>
-            <Button variant="primary" to="/space/new" onClick={(e) => !need('upload') && e.preventDefault()}>Create new interstitial space</Button>
-          </div>
+          <h1>Browse spaces</h1>
           <div className="field">
             <label htmlFor="browse-q">Search</label>
             <input id="browse-q" className="input" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Enter address or lat, lon" autoComplete="off" aria-describedby="browse-q-hint" />
@@ -417,12 +414,10 @@ export function Browse() {
             {point && ` within ${NEAR_POINT_M} m of ${point.lat}, ${point.lng}, nearest first`}
           </p>
           {list.length === 0 ? (
-            <div className="note stack-sm">
-              <span>No spaces match{q.trim() ? ` “${q.trim()}”` : ''}.</span>
-              <div className="row">
-                <button type="button" className="link-btn" onClick={() => { setQ(''); setStatus('all'); setType('all'); setCountry('all'); setCity('all'); }}>Clear search and filters</button>
-                {q.trim() && <Link to={`/space/new?name=${encodeURIComponent(q.trim())}`} onClick={(e) => !need('upload') && e.preventDefault()}>Add “{q.trim()}” as a new space</Link>}
-              </div>
+            <div className="stack-sm browse-empty">
+              <h2 className="h-sm">No spaces match{q.trim() ? ` “${q.trim()}”` : ''}</h2>
+              <p className="small muted">Try another search, or document it yourself if it’s missing.</p>
+              <div><Button variant="primary" to={`/space/new${q.trim() ? `?name=${encodeURIComponent(q.trim())}` : ''}`} onClick={(e) => !need('upload') && e.preventDefault()}>Create new interstitial space</Button></div>
             </div>
           ) : (
             <div className="grid grid-tight">

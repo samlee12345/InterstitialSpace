@@ -277,7 +277,7 @@ export function Profile() {
       <section className="stack" aria-labelledby="tier-h">
         <h2 id="tier-h" className="h-sm">Account</h2>
         <dl className="dl">
-          <dt>Account type</dt><dd>{tier}</dd>
+          <dt>Account type</dt><dd>{tier}{!isArchitect && <> <Link to="/architects?convert=1">Convert to an architect account</Link></>}</dd>
           <dt>Plan</dt><dd>{user.paid ? 'Paid tier, billed monthly' : 'Free'} <Link to="/points">{user.paid ? 'Manage' : 'See the paid tier'}</Link></dd>
           {isArchitect && <><dt>Verification</dt><dd>{user.licence}</dd><dt>Ranking</dt><dd>No. {rankOf(user.id)}</dd></>}
           <dt>Co-op</dt><dd>Member, one vote</dd>
