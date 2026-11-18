@@ -44,6 +44,8 @@ const spaceRows = [
   // Two spaces right by the east gateway, so "nearby" and "spaces within spaces" have examples.
   ['s13', 'Bench ledge inside the Jaipur Darwaza arch', 'threshold', 26.91965, 75.83105, 'approved', 7, { source: 'architect', by: 'u-a1' }, 'u-c2', 14, { parentId: 's4' }],
   ['s14', 'Chai stall steps outside Jaipur Darwaza', 'chowk steps', 26.91952, 75.83085, 'pending', 4, null, 'u-c1', 5],
+  // Inside the Chandpole courtyard, so the fully populated example has a connected space.
+  ['s15', 'Water tap niche, Chandpole haveli courtyard', 'threshold', 26.92684, 75.80944, 'approved', 5, null, 'u-c2', 3, { parentId: 's2' }],
 ];
 
 const qa = [
@@ -196,8 +198,11 @@ const seed = {
     { id: 'cm1', spaceId: 's1', userId: 'u-c2', text: 'We sit here every evening. It needs shade in May and June.', onSite: true },
     { id: 'cm2', spaceId: 's1', userId: 'u-c3', text: 'The lower steps are slippery after rain.', onSite: false },
     { id: 'cm3', spaceId: 's1', userId: 'u-a2', text: 'The landing proportions are worth keeping exactly as they are.', onSite: true },
-    { id: 'cm4', spaceId: 's2', userId: 'u-c1', text: 'Children play here after school. Please keep it open to the lane.', onSite: true },
-    { id: 'cm5', spaceId: 's2', userId: 'u-c2', text: 'A water tap would change everything.', onSite: true },
+    { id: 'cm4', spaceId: 's2', userId: 'u-c1', text: 'Children play here after school. Please keep it open to the lane.', onSite: true, answers: { need: 6, why: ['Underutilized'], fix: 'Seating', feel: ['Social'], senses: ['Children playing'] } },
+    { id: 'cm5', spaceId: 's2', userId: 'u-c2', text: 'A water tap would change everything.', onSite: true, answers: { need: 8, why: ['Underutilized'], fix: 'Water', feel: ['Hot'], senses: ['Quiet'] } },
+    { id: 'cm11', spaceId: 's2', userId: 'u-a3', text: 'The proportions are good. It needs shade and a tap, not a new plan.', onSite: true, answers: { need: 4, why: [], fix: 'Shade', feel: ['Calm'], senses: ['Echo'] } },
+    { id: 'cm12', spaceId: 's2', userId: 'u-c3', text: 'Too hot to sit in after eleven. We use the lane instead.', onSite: false, answers: { need: 7, why: ['Unused'], fix: 'Shade', feel: ['Exposed'], senses: ['Heat'] } },
+    { id: 'cm13', spaceId: 's2', userId: 'u-c2', text: 'Before the repaving there was a shed here and nobody came in.', onSite: true, archived: '2026-07-30' },
     { id: 'cm6', spaceId: 's3', userId: 'u-c3', text: 'Best place to watch the bazaar. Nowhere to sit that is not a step.', onSite: true },
     { id: 'cm7', spaceId: 's3', userId: 'u-c1', text: 'Too dark at night.', onSite: false },
     { id: 'cm8', spaceId: 's4', userId: 'u-c2', text: 'People wait here for buses with no bench.', onSite: true },
@@ -301,6 +306,21 @@ seed.notifications.forEach((n) => { n.link = links[n.id]; });
 
 // A second spatial diagram on the Chandpole courtyard, so spaces show more than one.
 seed.spaces.find((x) => x.id === 's2').diagrams.push({ id: 'dg-s2-b', source: 'architect', by: 'u-a2', credits: [], date: '2026-10-20', label: 'Long section through the courtyard and lane' });
+// Round 13: the Chandpole courtyard (s2) is the fully populated example. Every
+// tab has something: photos, experiences with ratings, three spatial diagrams
+// (one by AI), the 3D model with uploaded scans, redesigns, a connected space,
+// a contest and an archived round. Its designer isn't on the platform.
+{
+  const s2 = seed.spaces.find((x) => x.id === 's2');
+  s2.photos = photos('s2', 14);
+  s2.diagrams.unshift({ id: 'dg-s2-ai', source: 'ai', credits: [...new Set(s2.photos.map((p) => p.credit))], date: '2026-08-14', label: 'AI diagram from community photos' });
+  s2.designerExternal = { name: 'Original builders, haveli family (placeholder)', link: '' };
+  s2.modelUploads = [
+    { id: 'mu-s2-1', by: 'u-a2', files: ['courtyard-scan.e57'], date: '2026-10-02' },
+    { id: 'mu-s2-2', by: 'u-a4', files: ['massing.3dm'], date: '2026-10-28' },
+  ];
+  s2.archive = [{ date: '2026-07-30', reason: 'The shed against the north wall was taken down and the floor was repaved.', votes: 12, photos: photos('s2old', 6), diagrams: [{ id: 'dg-s2-old', source: 'ai', credits: [], date: '2026-06-20' }] }];
+}
 // Every pending space is on the approvals list, diagram or not.
 seed.spaces.filter((x) => x.status === 'pending' && !seed.moderation.some((m) => m.spaceId === x.id))
   .forEach((x) => seed.moderation.push({ spaceId: x.id, yes: 0, no: 0, voted: [], votes: {}, notes: [], duplicates: [], mergeVotes: 0 }));

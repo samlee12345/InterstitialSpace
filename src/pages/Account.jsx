@@ -13,25 +13,38 @@ export function Points() {
   const ledger = state.ledger.filter((l) => l.userId === user.id);
   const totalLifetime = state.users.reduce((t, u) => t + (u.lifetime || 0), 0);
   const share = (user.lifetime / totalLifetime) * cfg.surplusPoolPlaceholder;
-  const canPoints = user.points >= cfg.paidTierPointsCost;
+  const ghost = !user.paid;
   return (
     <Page tag="simulated">
       <h1>Points and membership</h1>
+      {ghost && (
+        <p className="note">
+          You’re on the free tier, so the points below are <strong>ghost points</strong>: a tally of what your contributions would have earned. Only paid members collect real points, and only real points become a share of the year-end surplus.
+        </p>
+      )}
       <div className="grid">
-        <div className="card">
-          <span className="small muted">Your points</span>
+        <div className={`card${ghost ? ' card-ghost' : ''}`}>
+          <span className="small muted">{ghost ? 'Your ghost points' : 'Your points'}</span>
           <span className="display">{fmtPoints(user.points)}</span>
-          <span className="small muted">{fmtPoints(user.lifetime)} earned in total. Shown as a badge on your contributions, to members only.</span>
+          <span className="small muted">
+            {ghost
+              ? 'What you would have collected this year as a paid member. Ghost points can’t be spent or paid out.'
+              : `${fmtPoints(user.lifetime)} collected this year. Shown as a badge on your contributions, to members only.`}
+          </span>
         </div>
-        <div className="card">
-          <span className="small muted">Estimated year-end surplus share</span>
+        <div className={`card${ghost ? ' card-ghost' : ''}`}>
+          <span className="small muted">{ghost ? 'Unrealized year-end surplus share' : 'Estimated year-end surplus share'}</span>
           <span className="display">${share.toFixed(2)}</span>
-          <span className="small muted">Estimate in USD from a placeholder surplus of ${cfg.surplusPoolPlaceholder.toLocaleString()}. Based on all points you earned this year; points you spent still count.</span>
+          <span className="small muted">
+            {ghost
+              ? `The amount you’d be paid if you were a paid member collecting actual points. Estimate in USD from a placeholder surplus of $${cfg.surplusPoolPlaceholder.toLocaleString()}. You won’t receive it on the free tier.`
+              : `Estimate in USD from a placeholder surplus of $${cfg.surplusPoolPlaceholder.toLocaleString()}. Based on all points you collected this year; points you spent still count.`}
+          </span>
         </div>
         <div className="card">
           <span className="small muted">Co-op</span>
           <span className="display">1 vote</span>
-          <span className="small muted">Every account is a member with one vote.</span>
+          <span className="small muted">Every account is a member with one vote, free or paid.</span>
           <Link to="/co-op">See co-op decisions</Link>
         </div>
       </div>
@@ -44,13 +57,14 @@ export function Points() {
         {user.paid ? (
           <>
             <h3>{user.freeModelsLeft} of {cfg.paidFreeModels} free model downloads left this month</h3>
-            <p className="small muted">Unused downloads don’t roll over. After {cfg.paidFreeModels}, models cost {cfg.priceLabel} or {cfg.modelPointsCost} points each. You can also request to host contests.</p>
+            <p className="small muted">You’re collecting real points, which become your share of the year-end surplus. Unused downloads don’t roll over. After {cfg.paidFreeModels}, models cost {cfg.priceLabel} or {cfg.modelPointsCost} points each. You can also request to host contests.</p>
             <div className="row"><Button to="/contest/request">Request to host a contest</Button><Button to="/browse">Find a measured model</Button></div>
           </>
         ) : (
           <>
-            <p className="prose">Billed monthly, cancel anytime. {cfg.paidFreeModels} free measured-model downloads a month (no rollover) and the ability to request to host contests. Pay with money or points.</p>
-            <div><Button variant="primary" onClick={() => setUp(true)}>Upgrade</Button></div>
+            <p className="prose"><strong>Only paid members collect points.</strong> The points you collect while paid add up to your share of the year-end surplus, paid out after the financial year closes. Points start counting from the day you upgrade; ghost points from before don’t convert.</p>
+            <p className="small muted">Billed monthly, cancel anytime. Also includes {cfg.paidFreeModels} free measured-model downloads a month (no rollover) and the ability to request to host contests.</p>
+            <div><Button variant="primary" onClick={() => setUp(true)}>Upgrade and start collecting</Button></div>
           </>
         )}
       </section>
@@ -74,7 +88,7 @@ export function Points() {
           <p className="small muted">Off site also covers a declined location prompt and photos without a geotag.</p>
         </div>
         <div className="stack">
-          <h2>Your history</h2>
+          <h2>{user.paid ? 'Your history' : 'Your history (ghost points)'}</h2>
           <ul className="list small">
             {ledger.map((l) => <li key={l.id} className="row between"><span>{l.text}</span><span className="bold">{l.pts > 0 ? '+' : ''}{fmtPoints(l.pts)}</span></li>)}
             {ledger.length === 0 && <li className="muted">No activity yet.</li>}
@@ -84,11 +98,9 @@ export function Points() {
 
       {up && (
         <Modal title="Upgrade to the paid tier" onClose={() => setUp(false)}>
-          <p>Monthly. Cancel any time.</p>
+          <p>Monthly. Cancel any time. You start collecting real points today.</p>
           <Choice name="up" checked={method === 'card'} onChange={() => setMethod('card')} title={`${cfg.priceLabel} a month by card`}>Simulated. No payment is taken.</Choice>
-          <Choice name="up" checked={method === 'points'} onChange={() => setMethod('points')} disabled={!canPoints} title={`${cfg.paidTierPointsCost} points a month (placeholder rate)`}>
-            {canPoints ? `You have ${fmtPoints(user.points)} points.` : `Not enough points: you have ${fmtPoints(user.points)}.`}
-          </Choice>
+          <p className="small muted">Ghost points can’t pay for the upgrade. Once you’re a paid member, you can renew with the points you collect.</p>
           <div className="row">
             <Button
               variant="primary"

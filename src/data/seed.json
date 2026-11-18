@@ -262,6 +262,31 @@
           "id": "s2-ph9",
           "credit": "u-c3",
           "onSite": true
+        },
+        {
+          "id": "s2-ph10",
+          "credit": "u-a2",
+          "onSite": true
+        },
+        {
+          "id": "s2-ph11",
+          "credit": "u-a4",
+          "onSite": true
+        },
+        {
+          "id": "s2-ph12",
+          "credit": "u-c1",
+          "onSite": false
+        },
+        {
+          "id": "s2-ph13",
+          "credit": "u-c2",
+          "onSite": true
+        },
+        {
+          "id": "s2-ph14",
+          "credit": "u-c3",
+          "onSite": true
         }
       ],
       "questionnaire": {
@@ -278,6 +303,19 @@
       },
       "diagrams": [
         {
+          "id": "dg-s2-ai",
+          "source": "ai",
+          "credits": [
+            "u-a4",
+            "u-c1",
+            "u-c2",
+            "u-c3",
+            "u-a2"
+          ],
+          "date": "2026-08-14",
+          "label": "AI diagram from community photos"
+        },
+        {
           "id": "dg-s2",
           "source": "architect",
           "by": "u-a2",
@@ -293,7 +331,47 @@
           "label": "Long section through the courtyard and lane"
         }
       ],
-      "archive": [],
+      "archive": [
+        {
+          "date": "2026-07-30",
+          "reason": "The shed against the north wall was taken down and the floor was repaved.",
+          "votes": 12,
+          "photos": [
+            {
+              "id": "s2old-ph1",
+              "onSite": true
+            },
+            {
+              "id": "s2old-ph2",
+              "onSite": true
+            },
+            {
+              "id": "s2old-ph3",
+              "onSite": true
+            },
+            {
+              "id": "s2old-ph4",
+              "onSite": false
+            },
+            {
+              "id": "s2old-ph5",
+              "onSite": true
+            },
+            {
+              "id": "s2old-ph6",
+              "onSite": true
+            }
+          ],
+          "diagrams": [
+            {
+              "id": "dg-s2-old",
+              "source": "ai",
+              "credits": [],
+              "date": "2026-06-20"
+            }
+          ]
+        }
+      ],
       "areaM": 18,
       "city": "Jaipur",
       "country": "India",
@@ -301,7 +379,29 @@
       "removed": false,
       "removal": null,
       "private": false,
-      "parentId": null
+      "parentId": null,
+      "designerExternal": {
+        "name": "Original builders, haveli family (placeholder)",
+        "link": ""
+      },
+      "modelUploads": [
+        {
+          "id": "mu-s2-1",
+          "by": "u-a2",
+          "files": [
+            "courtyard-scan.e57"
+          ],
+          "date": "2026-10-02"
+        },
+        {
+          "id": "mu-s2-2",
+          "by": "u-a4",
+          "files": [
+            "massing.3dm"
+          ],
+          "date": "2026-10-28"
+        }
+      ]
     },
     {
       "id": "s3",
@@ -1217,6 +1317,65 @@
       "removal": null,
       "private": false,
       "parentId": null
+    },
+    {
+      "id": "s15",
+      "name": "Water tap niche, Chandpole haveli courtyard",
+      "type": "threshold",
+      "lat": 26.92684,
+      "lng": 75.80944,
+      "status": "approved",
+      "uploadedBy": "u-c2",
+      "votes": 3,
+      "photos": [
+        {
+          "id": "s15-ph1",
+          "credit": "u-a2",
+          "onSite": true
+        },
+        {
+          "id": "s15-ph2",
+          "credit": "u-a4",
+          "onSite": true
+        },
+        {
+          "id": "s15-ph3",
+          "credit": "u-c1",
+          "onSite": true
+        },
+        {
+          "id": "s15-ph4",
+          "credit": "u-c2",
+          "onSite": false
+        },
+        {
+          "id": "s15-ph5",
+          "credit": "u-c3",
+          "onSite": true
+        }
+      ],
+      "questionnaire": {
+        "feelings": "Busy and social",
+        "transition": "Steps lift you above the bazaar",
+        "materiality": "Pink-washed masonry, stone treads",
+        "sensory": "Horns, vendors, warm stone"
+      },
+      "properties": {
+        "activity": "Selling and sitting",
+        "materials": "Stone paving",
+        "climate": "Breezy in the evening",
+        "authorship": "Unknown / vernacular"
+      },
+      "diagrams": [],
+      "archive": [],
+      "areaM": 6,
+      "city": "Jaipur",
+      "country": "India",
+      "addedAt": "2026-07-09",
+      "removed": false,
+      "removal": null,
+      "private": false,
+      "parentId": "s2"
     }
   ],
   "redesigns": [
@@ -1692,6 +1851,19 @@
       "userId": "u-c1",
       "text": "Children play here after school. Please keep it open to the lane.",
       "onSite": true,
+      "answers": {
+        "need": 6,
+        "why": [
+          "Underutilized"
+        ],
+        "fix": "Seating",
+        "feel": [
+          "Social"
+        ],
+        "senses": [
+          "Children playing"
+        ]
+      },
       "photoIds": [
         "s2-ph2",
         "s2-ph7"
@@ -1704,11 +1876,79 @@
       "userId": "u-c2",
       "text": "A water tap would change everything.",
       "onSite": true,
+      "answers": {
+        "need": 8,
+        "why": [
+          "Underutilized"
+        ],
+        "fix": "Water",
+        "feel": [
+          "Hot"
+        ],
+        "senses": [
+          "Quiet"
+        ]
+      },
       "photoIds": [
         "s2-ph3",
         "s2-ph8"
       ],
       "date": "2026-06-05"
+    },
+    {
+      "id": "cm11",
+      "spaceId": "s2",
+      "userId": "u-a3",
+      "text": "The proportions are good. It needs shade and a tap, not a new plan.",
+      "onSite": true,
+      "answers": {
+        "need": 4,
+        "why": [],
+        "fix": "Shade",
+        "feel": [
+          "Calm"
+        ],
+        "senses": [
+          "Echo"
+        ]
+      },
+      "photoIds": [],
+      "date": "2026-04-25"
+    },
+    {
+      "id": "cm12",
+      "spaceId": "s2",
+      "userId": "u-c3",
+      "text": "Too hot to sit in after eleven. We use the lane instead.",
+      "onSite": false,
+      "answers": {
+        "need": 7,
+        "why": [
+          "Unused"
+        ],
+        "fix": "Shade",
+        "feel": [
+          "Exposed"
+        ],
+        "senses": [
+          "Heat"
+        ]
+      },
+      "photoIds": [
+        "s2-ph4",
+        "s2-ph9"
+      ],
+      "date": "2026-03-15"
+    },
+    {
+      "id": "cm13",
+      "spaceId": "s2",
+      "userId": "u-c2",
+      "text": "Before the repaving there was a shed here and nobody came in.",
+      "onSite": true,
+      "archived": "2026-07-30",
+      "photoIds": [],
+      "date": "2026-02-02"
     },
     {
       "id": "cm6",
@@ -1720,7 +1960,7 @@
         "s3-ph3",
         "s3-ph8"
       ],
-      "date": "2026-04-25"
+      "date": "2025-12-23"
     },
     {
       "id": "cm7",
@@ -1733,7 +1973,7 @@
         "s3-ph6",
         "s3-ph11"
       ],
-      "date": "2026-03-15"
+      "date": "2025-11-12"
     },
     {
       "id": "cm8",
@@ -1745,7 +1985,7 @@
         "s4-ph1",
         "s4-ph6"
       ],
-      "date": "2026-02-02"
+      "date": "2026-11-06"
     },
     {
       "id": "cm9",
@@ -1757,7 +1997,7 @@
         "s8-ph1",
         "s8-ph6"
       ],
-      "date": "2025-12-23"
+      "date": "2026-09-26"
     },
     {
       "id": "cm10",
@@ -1769,7 +2009,7 @@
         "s10-ph4",
         "s10-ph9"
       ],
-      "date": "2025-11-12"
+      "date": "2026-08-16"
     },
     {
       "id": "cm-s1-u-a4",
@@ -1782,7 +2022,7 @@
         "s1-ph7",
         "s1-ph12"
       ],
-      "date": "2026-11-06"
+      "date": "2026-07-06"
     },
     {
       "id": "cm-s1-u-c1",
@@ -1794,7 +2034,7 @@
         "s1-ph3",
         "s1-ph8"
       ],
-      "date": "2026-09-26"
+      "date": "2026-05-26"
     },
     {
       "id": "cm-s2-u-a4",
@@ -1806,19 +2046,7 @@
         "s2-ph1",
         "s2-ph6"
       ],
-      "date": "2026-08-16"
-    },
-    {
-      "id": "cm-s2-u-c3",
-      "spaceId": "s2",
-      "userId": "u-c3",
-      "text": "The shade moves fast here. Photos from midday.",
-      "onSite": true,
-      "photoIds": [
-        "s2-ph4",
-        "s2-ph9"
-      ],
-      "date": "2026-07-06"
+      "date": "2026-04-15"
     },
     {
       "id": "cm-s2-u-a2",
@@ -1829,7 +2057,7 @@
       "photoIds": [
         "s2-ph5"
       ],
-      "date": "2026-05-26"
+      "date": "2026-03-05"
     },
     {
       "id": "cm-s3-u-c2",
@@ -1841,7 +2069,7 @@
         "s3-ph2",
         "s3-ph7"
       ],
-      "date": "2026-04-15"
+      "date": "2026-01-23"
     },
     {
       "id": "cm-s3-u-a2",
@@ -1853,7 +2081,7 @@
         "s3-ph4",
         "s3-ph9"
       ],
-      "date": "2026-03-05"
+      "date": "2025-12-13"
     },
     {
       "id": "cm-s3-u-a4",
@@ -1865,7 +2093,7 @@
         "s3-ph5",
         "s3-ph10"
       ],
-      "date": "2026-01-23"
+      "date": "2025-11-02"
     },
     {
       "id": "cm-s4-u-c3",
@@ -1877,7 +2105,7 @@
         "s4-ph2",
         "s4-ph7"
       ],
-      "date": "2025-12-13"
+      "date": "2026-10-27"
     },
     {
       "id": "cm-s4-u-a2",
@@ -1889,7 +2117,7 @@
         "s4-ph3",
         "s4-ph8"
       ],
-      "date": "2025-11-02"
+      "date": "2026-09-16"
     },
     {
       "id": "cm-s4-u-a4",
@@ -1900,7 +2128,7 @@
       "photoIds": [
         "s4-ph4"
       ],
-      "date": "2026-10-27"
+      "date": "2026-08-06"
     },
     {
       "id": "cm-s4-u-c1",
@@ -1911,7 +2139,7 @@
       "photoIds": [
         "s4-ph5"
       ],
-      "date": "2026-09-16"
+      "date": "2026-06-26"
     },
     {
       "id": "cm-s5-u-c3",
@@ -1923,7 +2151,7 @@
         "s5-ph1",
         "s5-ph6"
       ],
-      "date": "2026-08-06"
+      "date": "2026-05-16"
     },
     {
       "id": "cm-s5-u-a2",
@@ -1935,7 +2163,7 @@
         "s5-ph2",
         "s5-ph7"
       ],
-      "date": "2026-06-26"
+      "date": "2026-04-05"
     },
     {
       "id": "cm-s5-u-a4",
@@ -1947,7 +2175,7 @@
         "s5-ph3",
         "s5-ph8"
       ],
-      "date": "2026-05-16"
+      "date": "2026-02-23"
     },
     {
       "id": "cm-s5-u-c1",
@@ -1959,7 +2187,7 @@
         "s5-ph4",
         "s5-ph9"
       ],
-      "date": "2026-04-05"
+      "date": "2026-01-13"
     },
     {
       "id": "cm-s5-u-c2",
@@ -1971,7 +2199,7 @@
         "s5-ph5",
         "s5-ph10"
       ],
-      "date": "2026-02-23"
+      "date": "2025-12-03"
     },
     {
       "id": "cm-s6-u-a2",
@@ -1983,7 +2211,7 @@
         "s6-ph1",
         "s6-ph6"
       ],
-      "date": "2026-01-13"
+      "date": "2025-10-23"
     },
     {
       "id": "cm-s6-u-a4",
@@ -1995,7 +2223,7 @@
         "s6-ph2",
         "s6-ph7"
       ],
-      "date": "2025-12-03"
+      "date": "2026-10-17"
     },
     {
       "id": "cm-s6-u-c1",
@@ -2006,7 +2234,7 @@
       "photoIds": [
         "s6-ph3"
       ],
-      "date": "2025-10-23"
+      "date": "2026-09-06"
     },
     {
       "id": "cm-s6-u-c2",
@@ -2017,7 +2245,7 @@
       "photoIds": [
         "s6-ph4"
       ],
-      "date": "2026-10-17"
+      "date": "2026-07-27"
     },
     {
       "id": "cm-s6-u-c3",
@@ -2028,7 +2256,7 @@
       "photoIds": [
         "s6-ph5"
       ],
-      "date": "2026-09-06"
+      "date": "2026-06-16"
     },
     {
       "id": "cm-s7-u-a4",
@@ -2040,7 +2268,7 @@
         "s7-ph1",
         "s7-ph6"
       ],
-      "date": "2026-07-27"
+      "date": "2026-05-06"
     },
     {
       "id": "cm-s7-u-c1",
@@ -2051,7 +2279,7 @@
       "photoIds": [
         "s7-ph2"
       ],
-      "date": "2026-06-16"
+      "date": "2026-03-26"
     },
     {
       "id": "cm-s7-u-c2",
@@ -2062,7 +2290,7 @@
       "photoIds": [
         "s7-ph3"
       ],
-      "date": "2026-05-06"
+      "date": "2026-02-13"
     },
     {
       "id": "cm-s7-u-c3",
@@ -2073,7 +2301,7 @@
       "photoIds": [
         "s7-ph4"
       ],
-      "date": "2026-03-26"
+      "date": "2026-01-03"
     },
     {
       "id": "cm-s7-u-a2",
@@ -2084,7 +2312,7 @@
       "photoIds": [
         "s7-ph5"
       ],
-      "date": "2026-02-13"
+      "date": "2025-11-23"
     },
     {
       "id": "cm-s8-u-c2",
@@ -2095,7 +2323,7 @@
       "photoIds": [
         "s8-ph2"
       ],
-      "date": "2026-01-03"
+      "date": "2025-10-13"
     },
     {
       "id": "cm-s8-u-c3",
@@ -2106,7 +2334,7 @@
       "photoIds": [
         "s8-ph3"
       ],
-      "date": "2025-11-23"
+      "date": "2026-10-07"
     },
     {
       "id": "cm-s8-u-a2",
@@ -2117,7 +2345,7 @@
       "photoIds": [
         "s8-ph4"
       ],
-      "date": "2025-10-13"
+      "date": "2026-08-27"
     },
     {
       "id": "cm-s8-u-a4",
@@ -2128,7 +2356,7 @@
       "photoIds": [
         "s8-ph5"
       ],
-      "date": "2026-10-07"
+      "date": "2026-07-17"
     },
     {
       "id": "cm-s9-u-c2",
@@ -2139,7 +2367,7 @@
       "photoIds": [
         "s9-ph1"
       ],
-      "date": "2026-08-27"
+      "date": "2026-06-06"
     },
     {
       "id": "cm-s9-u-c3",
@@ -2150,7 +2378,7 @@
       "photoIds": [
         "s9-ph2"
       ],
-      "date": "2026-07-17"
+      "date": "2026-04-26"
     },
     {
       "id": "cm-s9-u-a2",
@@ -2161,7 +2389,7 @@
       "photoIds": [
         "s9-ph3"
       ],
-      "date": "2026-06-06"
+      "date": "2026-03-16"
     },
     {
       "id": "cm-s10-u-a2",
@@ -2174,7 +2402,7 @@
         "s10-ph6",
         "s10-ph11"
       ],
-      "date": "2026-04-26"
+      "date": "2026-02-03"
     },
     {
       "id": "cm-s10-u-a4",
@@ -2186,7 +2414,7 @@
         "s10-ph2",
         "s10-ph7"
       ],
-      "date": "2026-03-16"
+      "date": "2025-12-24"
     },
     {
       "id": "cm-s10-u-c1",
@@ -2198,7 +2426,7 @@
         "s10-ph3",
         "s10-ph8"
       ],
-      "date": "2026-02-03"
+      "date": "2025-11-13"
     },
     {
       "id": "cm-s10-u-c3",
@@ -2210,7 +2438,7 @@
         "s10-ph5",
         "s10-ph10"
       ],
-      "date": "2025-12-24"
+      "date": "2026-11-07"
     },
     {
       "id": "cm-s11-u-a4",
@@ -2221,7 +2449,7 @@
       "photoIds": [
         "s11-ph1"
       ],
-      "date": "2025-11-13"
+      "date": "2026-09-27"
     },
     {
       "id": "cm-s11-u-c1",
@@ -2232,7 +2460,7 @@
       "photoIds": [
         "s11-ph2"
       ],
-      "date": "2026-11-07"
+      "date": "2026-08-17"
     },
     {
       "id": "cm-s11-u-c2",
@@ -2243,7 +2471,7 @@
       "photoIds": [
         "s11-ph3"
       ],
-      "date": "2026-09-27"
+      "date": "2026-07-07"
     },
     {
       "id": "cm-s11-u-c3",
@@ -2254,7 +2482,7 @@
       "photoIds": [
         "s11-ph4"
       ],
-      "date": "2026-08-17"
+      "date": "2026-05-27"
     },
     {
       "id": "cm-s12-u-c1",
@@ -2266,7 +2494,7 @@
         "s12-ph1",
         "s12-ph6"
       ],
-      "date": "2026-07-07"
+      "date": "2026-04-16"
     },
     {
       "id": "cm-s12-u-c2",
@@ -2278,7 +2506,7 @@
         "s12-ph2",
         "s12-ph7"
       ],
-      "date": "2026-05-27"
+      "date": "2026-03-06"
     },
     {
       "id": "cm-s12-u-c3",
@@ -2290,7 +2518,7 @@
         "s12-ph3",
         "s12-ph8"
       ],
-      "date": "2026-04-16"
+      "date": "2026-01-24"
     },
     {
       "id": "cm-s12-u-a2",
@@ -2302,7 +2530,7 @@
         "s12-ph4",
         "s12-ph9"
       ],
-      "date": "2026-03-06"
+      "date": "2025-12-14"
     },
     {
       "id": "cm-s12-u-a4",
@@ -2314,7 +2542,7 @@
         "s12-ph5",
         "s12-ph10"
       ],
-      "date": "2026-01-24"
+      "date": "2025-11-03"
     },
     {
       "id": "cm-s13-u-c2",
@@ -2326,7 +2554,7 @@
         "s13-ph1",
         "s13-ph6"
       ],
-      "date": "2025-12-14"
+      "date": "2026-10-28"
     },
     {
       "id": "cm-s13-u-c3",
@@ -2338,7 +2566,7 @@
         "s13-ph2",
         "s13-ph7"
       ],
-      "date": "2025-11-03"
+      "date": "2026-09-17"
     },
     {
       "id": "cm-s13-u-a2",
@@ -2349,7 +2577,7 @@
       "photoIds": [
         "s13-ph3"
       ],
-      "date": "2026-10-28"
+      "date": "2026-08-07"
     },
     {
       "id": "cm-s13-u-a4",
@@ -2360,7 +2588,7 @@
       "photoIds": [
         "s13-ph4"
       ],
-      "date": "2026-09-17"
+      "date": "2026-06-27"
     },
     {
       "id": "cm-s13-u-c1",
@@ -2371,7 +2599,7 @@
       "photoIds": [
         "s13-ph5"
       ],
-      "date": "2026-08-07"
+      "date": "2026-05-17"
     },
     {
       "id": "cm-s14-u-c3",
@@ -2382,7 +2610,7 @@
       "photoIds": [
         "s14-ph1"
       ],
-      "date": "2026-06-27"
+      "date": "2026-04-06"
     },
     {
       "id": "cm-s14-u-a2",
@@ -2393,7 +2621,7 @@
       "photoIds": [
         "s14-ph2"
       ],
-      "date": "2026-05-17"
+      "date": "2026-02-24"
     },
     {
       "id": "cm-s14-u-a4",
@@ -2404,7 +2632,7 @@
       "photoIds": [
         "s14-ph3"
       ],
-      "date": "2026-04-06"
+      "date": "2026-01-14"
     },
     {
       "id": "cm-s14-u-c1",
@@ -2415,7 +2643,62 @@
       "photoIds": [
         "s14-ph4"
       ],
-      "date": "2026-02-24"
+      "date": "2025-12-04"
+    },
+    {
+      "id": "cm-s15-u-a2",
+      "spaceId": "s15",
+      "userId": "u-a2",
+      "text": "The shade moves fast here. Photos from midday.",
+      "onSite": true,
+      "photoIds": [
+        "s15-ph1"
+      ],
+      "date": "2025-10-24"
+    },
+    {
+      "id": "cm-s15-u-a4",
+      "spaceId": "s15",
+      "userId": "u-a4",
+      "text": "Took these on my way through in the morning.",
+      "onSite": true,
+      "photoIds": [
+        "s15-ph2"
+      ],
+      "date": "2026-10-18"
+    },
+    {
+      "id": "cm-s15-u-c1",
+      "spaceId": "s15",
+      "userId": "u-c1",
+      "text": "Busiest in the late afternoon; these show it then.",
+      "onSite": true,
+      "photoIds": [
+        "s15-ph3"
+      ],
+      "date": "2026-09-07"
+    },
+    {
+      "id": "cm-s15-u-c2",
+      "spaceId": "s15",
+      "userId": "u-c2",
+      "text": "Shared these so the AI has enough to draw a diagram.",
+      "onSite": true,
+      "photoIds": [
+        "s15-ph4"
+      ],
+      "date": "2026-07-28"
+    },
+    {
+      "id": "cm-s15-u-c3",
+      "spaceId": "s15",
+      "userId": "u-c3",
+      "text": "There is always someone sitting here. Photos from today.",
+      "onSite": true,
+      "photoIds": [
+        "s15-ph5"
+      ],
+      "date": "2026-06-17"
     }
   ],
   "coopDecisions": [

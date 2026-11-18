@@ -33,8 +33,75 @@ const DEFAULT_SHAPE = { mode: 'rect', pts: [{ x: -12, y: 9 }, { x: 12, y: 9 }, {
 const TYPES = ['stepwell', 'courtyard', 'chowk steps', 'gateway threshold', 'threshold', 'other'];
 // Optional questionnaire details; each one filled in earns POINTS.field.
 const DETAIL_FIELDS = ['transition', 'materiality', 'sensory', 'activity', 'materials'];
-const detailsDone = (f) => DETAIL_FIELDS.filter((k) => f[k].trim()).length;
+const filled = (v) => (Array.isArray(v) ? v.length > 0 : Boolean(v.trim()));
+const detailsDone = (f) => DETAIL_FIELDS.filter((k) => filled(f[k])).length;
+// Building materials for the Materiality picker, grouped loosely by family.
+export const MATERIALS = [
+  'Sandstone', 'Marble', 'Granite', 'Limestone', 'Slate', 'Laterite', 'Quartzite', 'Rubble stone', 'Stone paving', 'Cobblestone',
+  'Fired brick', 'Mud brick (adobe)', 'Rammed earth', 'Cob', 'Wattle and daub', 'Packed earth', 'Terracotta', 'Ceramic tile', 'Encaustic tile', 'Terrazzo',
+  'Lime plaster', 'Cement plaster', 'Stucco', 'Whitewash or limewash', 'Paint',
+  'Concrete', 'Reinforced concrete', 'Precast concrete', 'Concrete block', 'Interlocking pavers', 'Asphalt', 'Gravel',
+  'Timber', 'Bamboo', 'Cane or rattan', 'Thatch', 'Plywood',
+  'Steel', 'Corrugated metal sheet', 'Cast iron', 'Wrought iron', 'Aluminium', 'Copper or brass',
+  'Glass', 'Glass block', 'Polycarbonate', 'Fibre cement sheet', 'Plastic sheeting or tarpaulin', 'Fabric or canvas',
+  'Plants or living wall', 'Water',
+];
+
+// ── Materiality: a filterable multi-select of building materials ──
+function MaterialPicker({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState('');
+  const wrap = useRef(null);
+  const term = q.trim().toLowerCase();
+  const list = term ? MATERIALS.filter((m) => m.toLowerCase().includes(term)) : MATERIALS;
+  const custom = term && !MATERIALS.some((m) => m.toLowerCase() === term) && !value.some((m) => m.toLowerCase() === term);
+  const toggle = (m) => onChange(value.includes(m) ? value.filter((x) => x !== m) : [...value, m]);
+  useEffect(() => {
+    if (!open) return undefined;
+    const away = (e) => { if (wrap.current && !wrap.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('pointerdown', away);
+    return () => document.removeEventListener('pointerdown', away);
+  }, [open]);
+  return (
+    <div className="field" ref={wrap} onKeyDown={(e) => { if (e.key === 'Escape' && open) { e.stopPropagation(); setOpen(false); } }}>
+      <span className="label" id="mat-label">Materiality: what is it made of?</span>
+      <span className="xs muted">Choose every material you can see. Type to filter the list.</span>
+      {value.length > 0 && (
+        <ul className="collab-list" aria-label="Materials you chose">
+          {value.map((m) => (
+            <li key={m} className="collab"><span>{m}</span><button type="button" className="link-btn xs" onClick={() => toggle(m)} aria-label={`Remove ${m}`}>Remove</button></li>
+          ))}
+        </ul>
+      )}
+      <div className="multi">
+        <button type="button" className="input multi-trigger" aria-expanded={open} aria-controls="mat-panel" aria-labelledby="mat-label mat-count" onClick={() => setOpen(!open)}>
+          <span id="mat-count">{value.length ? `${value.length} chosen` : 'Choose materials'}</span><span className="caret" aria-hidden="true" />
+        </button>
+        {open && (
+          <div className="multi-panel" id="mat-panel">
+            <input className="input" type="search" placeholder="Filter materials, e.g. stone" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Filter materials" autoFocus />
+            <div className="multi-options" role="group" aria-label="Materials">
+              {list.map((m) => (
+                <label key={m} className="multi-option"><input type="checkbox" checked={value.includes(m)} onChange={() => toggle(m)} /><span>{m}</span></label>
+              ))}
+              {list.length === 0 && !custom && <p className="small muted">No materials match.</p>}
+            </div>
+            {custom && <button type="button" className="link-btn small" onClick={() => { onChange([...value, q.trim()]); setQ(''); }}>Add “{q.trim()}”</button>}
+            <div className="row between"><span className="xs muted">{value.length} chosen</span><Button onClick={() => setOpen(false)}>Done</Button></div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 const RELATIONS = [['same', 'Same space'], ['child', 'It is inside my new space'], ['parent', 'My new space is inside it'], ['none', 'Not related']];
+// Version D lists only spaces whose area overlaps the drawn one, so "Not related"
+// isn't offered: two areas that share ground are related somehow.
+const RELATIONS_OVERLAP = [['same', 'Same space'], ['child', 'It is inside my new space'], ['parent', 'My new space is inside it'], ['overlap', 'They share part of the area']];
+const relLabel = (v) => [...RELATIONS, ...RELATIONS_OVERLAP].find(([k]) => k === v)?.[1];
+// Numbered, colour-coded markers so a pin on the map matches its row in the list.
+const MARKS = 6;
+const markStyle = (n) => ({ '--mark': `var(--mark-${((n - 1) % MARKS) + 1})` });
 
 // ── Geometry, in metres east (x) and north (y) of the photo point ──
 const M_PER_LAT = 110540;
@@ -56,14 +123,15 @@ function segDist(p, a, b) {
 // Where another space (centre p, area radius rOther) sits relative to the drawn
 // shape: 'inside' (its centre is inside), 'edge' (the areas overlap or come
 // within EDGE_M), or null.
-function placeIn(p, shape, rOther = 0) {
+// margin: how close counts. Version D uses 0, so only true overlaps are listed.
+function placeIn(p, shape, rOther = 0, margin = EDGE_M) {
   if (shape.mode === 'circle') {
     const d = Math.hypot(p.x, p.y);
-    return d <= shape.r ? 'inside' : d <= shape.r + rOther + EDGE_M ? 'edge' : null;
+    return d <= shape.r ? 'inside' : d < shape.r + rOther + margin ? 'edge' : null;
   }
   if (insidePoly(p, shape.pts)) return 'inside';
   const d = Math.min(...shape.pts.map((a, i) => segDist(p, a, shape.pts[(i + 1) % shape.pts.length])));
-  return d <= rOther + EDGE_M ? 'edge' : null;
+  return d < rOther + margin ? 'edge' : null;
 }
 
 // Grow the drawn shape so it covers a box (used to cover another space's area,
@@ -100,7 +168,7 @@ function PhotoPicker({ photos, setPhotos, geotag, point, error, compact }) {
   const add = () => setPhotos([...photos, `ph-${Date.now()}-${photos.length}`]);
   return (
     <div className="stack">
-      {!compact && <p className="note small">Tip: include a person in the frame. It gives the AI a sense of scale for the spatial diagram.</p>}
+      {!compact && <p className="note small">Tip: include a person in the frame. It gives the AI a sense of scale for the spatial diagram. 3D scans: in the mobile app you’ll be able to scan the space with your phone and add it here.</p>}
       <div className={`photo-grid ${compact ? 'photo-grid-compact' : ''}`}>
         {photos.map((id, i) => (
           <div key={id} className="photo-tile">
@@ -141,10 +209,13 @@ function AreaEditor({ center, shape, setShape, candidates, popover, relations = 
   const spanY = spanX * ASPECT;
   const pct = (p) => ({ left: 50 + (p.x / spanX) * 100, top: 50 - (p.y / spanY) * 100 });
   // Other spaces whose area shows in the current view.
+  const ids = new Set(candidates.map((c) => c.s.id));
+  const markOf = Object.fromEntries(candidates.map((c, i) => [c.s.id, i + 1]));
+  // Version D shows only the spaces that overlap the drawn area.
   const others = visibleSpaces
+    .filter((s) => !popover || ids.has(s.id))
     .map((s) => ({ s, p: toXY(center, s), r: radiusOf(shapeOf(s)) }))
     .filter(({ p, r }) => Math.abs(p.x) - r < spanX / 2 && Math.abs(p.y) - r < spanY / 2);
-  const ids = new Set(candidates.map((c) => c.s.id));
 
   const move = (e) => {
     if (!drag.current) return;
@@ -203,11 +274,11 @@ function AreaEditor({ center, shape, setShape, candidates, popover, relations = 
         </div>
       </div>
       <div ref={box} className="map area-map" style={{ '--map-zoom': ZOOMS[2] / spanX }}>
-        <span className="map-label">Map placeholder: Jaipur. Dashed pins are pending.</span>
+        <span className="map-label">{popover ? 'Map placeholder: Jaipur. Only spaces that overlap your area are shown.' : 'Map placeholder: Jaipur. Dashed pins are pending.'}</span>
         <svg className="area-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
           {others.map(({ s, p, r }) => {
             const at = pct(p);
-            return <ellipse key={s.id} className={`area-other ${ids.has(s.id) ? 'area-other-hit' : ''}`} cx={at.left} cy={at.top} rx={(r / spanX) * 100} ry={(r / spanY) * 100} vectorEffect="non-scaling-stroke" />;
+            return <ellipse key={s.id} className={`area-other ${ids.has(s.id) ? 'area-other-hit' : ''} ${popover ? 'area-other-marked' : ''}`} style={popover ? markStyle(markOf[s.id]) : undefined} cx={at.left} cy={at.top} rx={(r / spanX) * 100} ry={(r / spanY) * 100} vectorEffect="non-scaling-stroke" />;
           })}
           {shape.mode === 'rect'
             ? <polygon className="area-new" points={outline} vectorEffect="non-scaling-stroke" />
@@ -218,22 +289,24 @@ function AreaEditor({ center, shape, setShape, candidates, popover, relations = 
           const cls = `pin ${s.status === 'approved' ? 'pin-approved' : 'pin-pending'} ${ids.has(s.id) ? 'pin-active' : ''}`;
           if (!popover) return <span key={s.id} className={`${cls} pin-static`} style={{ left: `${at.left}%`, top: `${at.top}%` }} title={s.name} aria-hidden="true" />;
           const rel = relations[s.id];
+          const n = markOf[s.id];
           return (
             <span key={s.id} className="pin-anchor" style={{ left: `${at.left}%`, top: `${at.top}%` }}>
               <button
                 type="button"
-                className={`${cls} ${rel ? 'pin-answered' : ''}`}
-                aria-label={`${s.name}${ids.has(s.id) ? ', overlaps your area' : ''}${rel ? `, marked: ${RELATIONS.find(([v]) => v === rel)[1]}` : ''}`}
+                className={`pin pin-num ${s.status === 'pending' ? 'pin-num-pending' : ''} ${rel ? 'pin-answered' : ''}`}
+                style={markStyle(n)}
+                aria-label={`${n}. ${s.name}, overlaps your area${rel ? `, marked: ${relLabel(rel)}` : ', not answered yet'}`}
                 aria-expanded={openId === s.id}
                 onClick={() => setOpenId(openId === s.id ? null : s.id)}
-              />
+              >{n}</button>
               {openId === s.id && (
                 <span className="map-popover" role="dialog" aria-label={s.name}>
-                  <a className="bold small" href={`#/space/${s.id}`} target="_blank" rel="noopener noreferrer">{s.name}<span className="visually-hidden"> (opens in a new tab)</span></a>
+                  <span className="row"><span className="mark-num" style={markStyle(n)} aria-hidden="true">{n}</span><a className="bold small" href={`#/space/${s.id}`} target="_blank" rel="noopener noreferrer">{s.name}<span className="visually-hidden"> (opens in a new tab)</span></a></span>
                   <label className="small" htmlFor={`rel-pop-${s.id}`}>How does it relate to your space?</label>
                   <select id={`rel-pop-${s.id}`} className="input" value={rel || ''} onChange={(e) => { onRelate(s, e.target.value); setOpenId(null); }}>
                     <option value="" disabled>Choose…</option>
-                    {RELATIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                    {RELATIONS_OVERLAP.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                   </select>
                   <button type="button" className="link-btn xs" onClick={() => setOpenId(null)}>Close</button>
                 </span>
@@ -248,18 +321,18 @@ function AreaEditor({ center, shape, setShape, candidates, popover, relations = 
         About {Math.round(areaM2(shape))} m². {candidates.length
           ? `${candidates.length} documented ${candidates.length === 1 ? 'space overlaps' : 'spaces overlap'} this area (highlighted).`
           : 'No documented spaces overlap this area.'}
-        {popover && candidates.length > 0 && ' Select each highlighted dot to say how it relates to your space.'}
+        {popover && candidates.length > 0 && ' Select each numbered pin, or use the list below, to say how it relates to your space.'}
       </p>
       {popover && candidates.length > 0 && (
         <ul className="list small overlap-list" aria-label="Overlapping spaces">
           {candidates.map(({ s }) => (
             <li key={s.id} className="row between">
-              <span className="bold">{s.name}</span>
+              <span className="row"><span className="mark-num" style={markStyle(markOf[s.id])} aria-hidden="true">{markOf[s.id]}</span><span className="bold">{s.name}</span>{s.status === 'pending' && <Badge kind="dashed">Pending</Badge>}</span>
               <label className="row">
                 <span className="visually-hidden">How does {s.name} relate to your space?</span>
                 <select className="input input-sm" value={relations[s.id] || ''} onChange={(e) => onRelate(s, e.target.value)}>
                   <option value="" disabled>Choose…</option>
-                  {RELATIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                  {RELATIONS_OVERLAP.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                 </select>
               </label>
             </li>
@@ -322,12 +395,10 @@ function Questionnaire({ f, set }) {
       {f.type === 'other' && <Input label={<>Name the new type<Req /></>} value={f.customType} onChange={set('customType')} placeholder="e.g. Rooftop edge, bus shelter, temple plinth" hint="Moderators may merge it with an existing type later." />}
       <Input label={<>How did it feel to be there?<Req /></>} textarea value={f.feelings} onChange={set('feelings')} />
       <Input label="What was it like arriving and leaving?" textarea value={f.transition} onChange={set('transition')} />
-      <Input label="Materiality: what is it made of?" value={f.materiality} onChange={set('materiality')} />
+      <MaterialPicker value={f.materiality} onChange={(v) => set('materiality')({ target: { value: v } })} />
       <Input label="Senses: sound, smell, light, temperature" value={f.sensory} onChange={set('sensory')} />
-      <h3 className="h-xs">More details</h3>
       <Input label="Activity and who uses it" value={f.activity} onChange={set('activity')} />
-      <Input label="Materials, climate, who built or funded it" value={f.materials} onChange={set('materials')} />
-      <p className="note small">3D scans: in the mobile app you’ll be able to scan the space with your phone and add it here.</p>
+      <Input label="Climate, and who built or funded it" value={f.materials} onChange={set('materials')} />
     </div>
   );
 }
@@ -337,7 +408,7 @@ export default function SpaceNew() {
   const { createFlow } = useChoices();
   const nav = useNavigate();
   const searchName = new URLSearchParams(useLocation().search).get('name') || '';
-  const flow = ['overlay', 'confirm', 'popover'].includes(createFlow) ? createFlow : 'inline';
+  const flow = ['inline', 'overlay', 'confirm', 'popover'].includes(createFlow) ? createFlow : 'popover';
   const [sameAsk, setSameAsk] = useState(null); // version D: "Same space" confirmation
   const point = state.createNearby ? PHOTO_POINT.nearby : PHOTO_POINT.alone;
   const [photos, setPhotos] = useState([]);
@@ -347,7 +418,7 @@ export default function SpaceNew() {
   const [step, setStep] = useState(0);
   const [shape, setShape] = useState(DEFAULT_SHAPE);
   const [relations, setRelations] = useState({});
-  const [f, setF] = useState({ name: searchName, type: 'gateway threshold', feelings: '', transition: '', materiality: '', sensory: '', activity: '', materials: '', scans: 0, context: 0, mergeText: '', customType: '' });
+  const [f, setF] = useState({ name: searchName, type: 'gateway threshold', feelings: '', transition: '', materiality: [], sensory: '', activity: '', materials: '', scans: 0, context: 0, mergeText: '', customType: '' });
   const [err, setErr] = useState('');
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
 
@@ -357,7 +428,7 @@ export default function SpaceNew() {
   if (!user) return <Page><RoleGate title="Sign in to document a space">Any account holder can create a space.</RoleGate><div><Button to="/signup">Sign up</Button></div></Page>;
 
   const candidates = visibleSpaces
-    .map((s) => ({ s, where: placeIn(toXY(point, s), shape, radiusOf(shapeOf(s))) }))
+    .map((s) => ({ s, where: placeIn(toXY(point, s), shape, radiusOf(shapeOf(s)), flow === 'popover' ? 0 : EDGE_M) }))
     .filter((c) => c.where)
     .sort((a, b) => (a.where === b.where ? 0 : a.where === 'inside' ? -1 : 1));
   // Forget answers for spaces no longer in the area.
@@ -392,8 +463,8 @@ export default function SpaceNew() {
     dispatch({
       type: 'CREATE_SPACE', id, userId: user.id, name: f.name.trim(), spaceType: f.type === 'other' ? f.customType.trim().toLowerCase() : f.type, photos: photos.length, scans: 0, fields: detailsDone(f), full: true,
       lat: point.lat, lng: point.lng, area: shape, areaM: Math.round(Math.sqrt(areaM2(shape) / Math.PI)), relations: liveRelations,
-      questionnaire: { feelings: f.feelings, transition: f.transition || 'Not given', materiality: f.materiality || 'Not given', sensory: f.sensory || 'Not given' },
-      properties: { activity: f.activity || 'Not given', materials: f.materials || 'Not given', climate: 'Not given', authorship: 'Not given' },
+      questionnaire: { feelings: f.feelings, transition: f.transition || 'Not given', materiality: f.materiality.length ? f.materiality.join(', ') : 'Not given', sensory: f.sensory || 'Not given' },
+      properties: { activity: f.activity || 'Not given', materials: f.materiality.length ? f.materiality.join(', ') : 'Not given', setting: f.materials || 'Not given', climate: 'Not given', authorship: 'Not given' },
     });
     return nav(`/space/${id}`, { state: { banner: { title: 'Space submitted', text: 'It shows as Pending until moderators confirm it qualifies. Your points arrive then.' } } });
   };
@@ -407,7 +478,8 @@ export default function SpaceNew() {
     if (rel === 'child') setShape(coverAll(shape, p, r));
     if (rel === 'parent') setShape(reachInto(shape, p, r));
     const next = { ...relations, [sp.id]: rel };
-    if (rel === 'parent') Object.keys(next).forEach((k) => { if (k !== sp.id && next[k] === 'parent') next[k] = 'none'; });
+    // Only one parent: an earlier "inside it" answer has to be given again.
+    if (rel === 'parent') Object.keys(next).forEach((k) => { if (k !== sp.id && next[k] === 'parent') delete next[k]; });
     setRelations(next);
     setErr('');
   };
@@ -465,7 +537,7 @@ export default function SpaceNew() {
     const fromArea = () => {
       if (flow === 'popover') {
         const open = candidates.filter((c) => !relations[c.s.id]);
-        if (open.length) return setErr(`Say how your space relates to ${open.map((c) => c.s.name).join(' and ')}: select ${open.length === 1 ? 'its dot' : 'their dots'} on the map.`);
+        if (open.length) return setErr(`Say how your space relates to ${open.map((c) => `${candidates.indexOf(c) + 1}. ${c.s.name}`).join(' and ')}: select ${open.length === 1 ? 'its numbered pin' : 'their numbered pins'} on the map.`);
         return go(2)();
       }
       if (flow === 'confirm' && candidates.length) return setConfirmOpen(true);

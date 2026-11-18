@@ -120,6 +120,14 @@
   --status-approved: #1a7f37;
   --status-declined: #c62828;
   --status-pending: var(--gray-500);
+  /* Mark colours: the only hues in the wireframe, used to match a numbered map pin to its list row.
+     Each passes 4.5:1 with white text. */
+  --mark-1: #1d4ed8;
+  --mark-2: #b45309;
+  --mark-3: #15803d;
+  --mark-4: #7e22ce;
+  --mark-5: #be123c;
+  --mark-6: #0e7490;
   --review-discuss: #0f766e;
   --review-discuss-strong: #115e59;
   --review-discuss-soft: #99d5cf;

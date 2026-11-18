@@ -27,7 +27,7 @@ function SectionHead({ id, title, note, children }) {
 
 // ── Spatial diagrams: a space can have several ──────────────
 function Diagrams({ space }) {
-  const { dispatch, cfg, get, isArchitect } = useDemo();
+  const { dispatch, cfg, get, isArchitect, need } = useDemo();
   const aiPending = space.diagrams.length === 0 && space.photos.length >= cfg.aiDiagramMinPhotos;
 
   // Simulated AI: a space with 10+ photos shows "Processing…" and then a placeholder diagram.
@@ -73,7 +73,10 @@ function Diagrams({ space }) {
                 <figcaption>{d.source === 'ai' ? 'Section through the main space' : 'Uploaded by an architect'}</figcaption>
               </figure>
             </div>
-            <p className="small muted">Download {cfg.priceLabel} or {cfg.modelPointsCost} points.</p>
+            <div className="row">
+              <Button to={`/item/${d.id}`} onClick={(e) => !need('buy') && e.preventDefault()}>Buy this diagram</Button>
+              <span className="small muted">{cfg.priceLabel}, or {cfg.modelPointsCost} points for paid members. Plan and section as .pdf and .dwg.</span>
+            </div>
           </article>
         );
       })}
@@ -126,7 +129,7 @@ function Model3D({ space }) {
           <aside className="card stack-sm">
             <h3>Buy the 3D model</h3>
             <p className="small muted">The generated model with plan and section, in .obj, .3dm and .skp.</p>
-            <p><span className="display-sm">{cfg.priceLabel}</span> <span className="small">or {cfg.modelPointsCost} points</span></p>
+            <p><span className="display-sm">{cfg.priceLabel}</span> <span className="small">or {cfg.modelPointsCost} points for paid members</span></p>
             <Button variant="primary" to={`/item/${model.id}`} onClick={(e) => !need('buy') && e.preventDefault()}>Buy 3D model</Button>
           </aside>
         </div>
@@ -455,15 +458,17 @@ function useRelated(space) {
   const { state, get } = useDemo();
   const parent = space.parentId ? get.space(space.parentId) : null;
   const children = state.spaces.filter((x) => x.parentId === space.id && !x.removed);
-  return { parent: parent && !parent.removed ? parent : null, children };
+  // "They share part of the area", recorded from either side.
+  const shares = state.spaces.filter((x) => !x.removed && x.id !== space.id && ((space.overlaps || []).includes(x.id) || (x.overlaps || []).includes(space.id)));
+  return { parent: parent && !parent.removed ? parent : null, children, shares };
 }
 
 function RelatedSpaces({ space }) {
-  const { parent, children } = useRelated(space);
+  const { parent, children, shares } = useRelated(space);
   return (
     <section className="stack" data-screen-label="Connected spaces" aria-labelledby="related-heading">
-      <SectionHead id="related-heading" title={`Connected spaces (${(parent ? 1 : 0) + children.length})`} note="Interstitial spaces can sit inside other interstitial spaces: a bench ledge inside a gateway, a doorstep inside a courtyard." />
-      {!parent && children.length === 0 && <Empty title="No related spaces"><p>This space isn’t part of another one, and no documented space sits inside it.</p></Empty>}
+      <SectionHead id="related-heading" title={`Connected spaces (${(parent ? 1 : 0) + children.length + shares.length})`} note="Interstitial spaces can sit inside other interstitial spaces: a bench ledge inside a gateway, a doorstep inside a courtyard." />
+      {!parent && children.length === 0 && shares.length === 0 && <Empty title="No related spaces"><p>This space isn’t part of another one, and no documented space sits inside it.</p></Empty>}
       {parent && (
         <div className="stack-sm">
           <h3 className="h-xs">Part of</h3>
@@ -474,6 +479,12 @@ function RelatedSpaces({ space }) {
         <div className="stack-sm">
           <h3 className="h-xs">Spaces within this one ({children.length})</h3>
           <div className="related-list">{children.map((c) => <SpaceCard key={c.id} space={c} variant="row" headingLevel={4} />)}</div>
+        </div>
+      )}
+      {shares.length > 0 && (
+        <div className="stack-sm">
+          <h3 className="h-xs">Shares part of its area with ({shares.length})</h3>
+          <div className="related-list">{shares.map((c) => <SpaceCard key={c.id} space={c} variant="row" headingLevel={4} />)}</div>
         </div>
       )}
     </section>
@@ -690,7 +701,7 @@ export default function Space() {
     diagram: space.diagrams.length,
     model: state.models.some((m) => m.spaceId === space.id && !m.takenDown && !m.archived) ? 1 : 0,
     redesigns: state.redesigns.filter((r) => r.spaceId === space.id && r.published && !r.takenDown && !r.archived).length,
-    related: (related.parent ? 1 : 0) + related.children.length,
+    related: (related.parent ? 1 : 0) + related.children.length + state.spaces.filter((x) => x.id !== space.id && !x.removed && ((space.overlaps || []).includes(x.id) || (x.overlaps || []).includes(space.id))).length,
     contests: contests.length,
     archived: (space.archive || []).length,
   };

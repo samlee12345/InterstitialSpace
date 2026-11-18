@@ -470,26 +470,81 @@ export function Signup() {
   );
 }
 
+// Terms of Use, rewritten in round 13 for the current model: free and paid tiers,
+// ghost points, paid-only payouts, experiences as votes, the Base Library,
+// archived rounds, collaborators and contests.
+const TERMS = [
+  ['accounts', 'Accounts and membership', [
+    ['Who can join', 'Anyone 16 or older can make a free account. Architects and architecture students can also ask to be verified, using their register number or school.'],
+    ['Free tier', 'Document spaces, add your experience, vote in the co-op and browse everything. Your contributions are tallied as ghost points so you can see what you would have earned.'],
+    ['Paid tier', 'Billed monthly, cancel any time. Paid members collect real points, get 10 free 3D-model downloads a month (no rollover) and can request to host contests.'],
+    ['The co-op', 'Every account, free or paid, is a member of the co-operative with one vote on its decisions.'],
+  ]],
+  ['points', 'Points, payouts and the surplus', [
+    ['Earning points', 'Contributions earn points: photos and scans once a space qualifies, experiences, diagrams, redesigns and moderator reviews. Contributions made on site earn more than those made remotely. The current rates are on the Points page.'],
+    ['Who collects points', 'Only paid members. On the free tier, points are ghost points. They have no cash value, can’t be spent and don’t convert when you upgrade. Points count from the day you start the paid tier.'],
+    ['Year-end surplus', 'After costs, any surplus for the financial year is shared among paid members in proportion to the points they collected that year. Spending points doesn’t reduce your share.'],
+    ['Who is paid out', 'Only paid members are paid out, both for their surplus share and for their redesign sales. Payouts open when the financial year closes (31 March, placeholder).'],
+    ['Leaving', 'If you move to the free tier, you can still request a payout of what you earned while paid. If you delete your account, you lose your points, so request anything you are owed first.'],
+  ]],
+  ['documenting', 'Documenting spaces', [
+    ['What you can document', 'Spaces you can see from public ground. Your photos need location data so the space can be placed on the map.'],
+    ['Licence', 'Photos, scans, questionnaire answers and experiences are shared under a Creative Commons licence and stay open. You keep ownership of what you upload.'],
+    ['Approval', 'A new space shows as Pending until architects confirm it qualifies against the published criteria. Points for it arrive then.'],
+    ['Experiences and votes', 'Each person has one experience per space and can update it. Rating a space’s need for redesign 6 or more out of 10 counts as one vote to redesign it.'],
+    ['When a space changes', 'If a space is rebuilt or changes on the ground, a moderator confirms the update. Everything contributed before it moves to the space’s Archived tab, where it stays visible and credited, and votes start again.'],
+    ['Private owners', 'An owner can request removal of a space on their property with proof of ownership. The team reviews each request.'],
+  ]],
+  ['library', 'Spatial diagrams and 3D models (the Base Library)', [
+    ['What it is', 'Each space can have several spatial diagrams, drawn by AI from photos or measured by architects, and one 3D model that AI builds from all of them plus any uploaded models and scans.'],
+    ['Your uploads', 'You keep copyright of the files you upload and license them to the Base Library. You are credited on the space and on every download.'],
+    ['Sales', 'Diagrams and 3D models are sold as downloads. The platform keeps the download fee; it funds the platform and any surplus returns to members.'],
+  ]],
+  ['redesigns', 'Redesigns', [
+    ['Copyright and share', 'Architects keep copyright of their redesigns and receive 80% of each sale; the platform keeps 20%.'],
+    ['Limits', 'One redesign per space per architect each week. You can publish new versions; buyers are offered the update.'],
+    ['Collaborators', 'You can credit collaborators, by name or by email invitation. They are notified and credited. Sharing earnings with them is between you and them; the platform pays the uploader.'],
+    ['Licences for buyers', 'Standard licence: use and adapt the files for your own project, no redistribution. Full design rights (for agencies): the right to build and adapt the design for construction at a set price. The architect is always credited.'],
+    ['Taken down or unpublished', 'People who bought a listing keep their copy.'],
+  ]],
+  ['contests', 'Contests', [
+    ['Hosting', 'Paid members and partners can request to host. The co-host funds the prize, sets the brief and criteria, and judges.'],
+    ['Entering', 'Eligibility is set per contest: licensed architects, accredited students, or both.'],
+    ['Winning', 'The winning architect receives the full prize and sells the design to the co-host.'],
+  ]],
+  ['conduct', 'Conduct and moderation', [
+    ['Reports', 'Anyone can report a listing, a contribution or a change to a space. Moderators review reports and can take content down.'],
+    ['Accuracy', 'Don’t upload work that isn’t yours, and don’t misrepresent where a photo was taken.'],
+  ]],
+  ['ending', 'Ending your account, or the platform', [
+    ['Deleting your account', 'Removes your profile and your points. Documentation you shared stays under its Creative Commons licence, credited as “Former member”.'],
+    ['If the platform shuts down', 'Contributors keep their work, and the Base Library is released openly.'],
+  ]],
+];
+
 export function Terms() {
-  const rows = [
-    ['Documentation of spaces', 'Photos, scans and questionnaire answers are shared under a Creative Commons licence and stay open. You keep ownership of what you upload.'],
-    ['Redesigns and measured models', 'Sold under the platform purchase licence. Buyers can use and adapt the files. They cannot redistribute them.'],
-    ['Architects', 'Keep copyright in their redesigns and receive 80% of each sale; the platform keeps 20%. They can publish one redesign per space each week. An agency can buy full design rights: the price and terms are agreed between the agency and the architect, and the architect must be credited.'],
-    ['Spatial diagrams', 'The platform keeps the download fee for Base Library diagrams and models. Community photographers are credited.'],
-    ['Contests', 'The co-host funds the prize, sets the criteria and judges. The winning architect receives the full prize and sells the design to the co-host.'],
-    ['Private owners', 'Anyone can document a space visible from public ground. An owner can request removal with proof of ownership; the team reviews each request.'],
-    ['The co-op', 'Every account holder is a member with one vote. Any year-end surplus is returned to members by points.'],
-    ['If the platform shuts down', 'Contributors keep their work.'],
-  ];
   return (
     <Page narrow tag="simulated">
-      <h1>Terms of Use</h1>
-      <p className="muted">A plain summary for the class demo, not legal text.</p>
-      <dl className="stack">
-        {rows.map(([t, d]) => (
-          <div key={t} className="card"><dt className="bold">{t}</dt><dd>{d}</dd></div>
+      <article className="stack-lg terms">
+        <header className="stack-sm">
+          <h1>Terms of Use</h1>
+          <p className="muted">A plain-language summary for the class demo, not legal text. Last updated 18 November 2026.</p>
+        </header>
+        <nav aria-label="On this page" className="card stack-sm">
+          <h2 className="h-xs">On this page</h2>
+          <ol className="small toc">
+            {TERMS.map(([id, title]) => <li key={id}><a href={`#terms-${id}`} onClick={(e) => { e.preventDefault(); document.getElementById(`terms-${id}`)?.scrollIntoView(); }}>{title}</a></li>)}
+          </ol>
+        </nav>
+        {TERMS.map(([id, title, rows]) => (
+          <section key={id} className="stack-sm" aria-labelledby={`terms-${id}`}>
+            <h2 id={`terms-${id}`} className="h-sm">{title}</h2>
+            <dl className="dl dl-wide">
+              {rows.map(([t, d]) => <div key={t} className="dl-row"><dt>{t}</dt><dd>{d}</dd></div>)}
+            </dl>
+          </section>
         ))}
-      </dl>
+      </article>
     </Page>
   );
 }

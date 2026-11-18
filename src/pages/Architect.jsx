@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
-import { Badge, Button, Empty, FileDrop, ImageBox, Input, Modal, Page, PointsBadge, RoleGate, Select } from '../components/ui.jsx';
+import { Badge, Button, Empty, FileDrop, ImageBox, Input, Modal, Page, RoleGate, Select } from '../components/ui.jsx';
 import { RedesignCard, typeLabel } from '../components/domain.jsx';
 import { POINTS, fmtPoints } from '../lib/points.js';
 
@@ -114,7 +114,7 @@ export function Portfolio() {
       <div className="row between">
         <div className="stack-sm">
           <h1>Your portfolio</h1>
-          <p className="muted small">Rank {rankOf(user.id)} of {state.users.filter((u) => u.role === 'architect').length} architects, {fmtPoints(user.points)} points.</p>
+          <p className="muted small">Rank {rankOf(user.id)} of {state.users.filter((u) => u.role === 'architect').length} architects, {fmtPoints(user.points)} {user.paid ? 'points' : 'ghost points'}.</p>
         </div>
       </div>
       <p className="note">To add a redesign, open a space and choose “Upload redesign”. <Link to="/browse">Browse spaces</Link></p>
@@ -175,7 +175,7 @@ export function ArchitectPage() {
   return (
     <Page tag="clickable">
       <header className="stack-sm">
-        <div className="row"><Badge>Rank {rankOf(id)}</Badge><PointsBadge userId={id} /></div>
+        <div className="row"><Badge>Rank {rankOf(id)}</Badge>{a.verified && <Badge kind="solid">Verified</Badge>}</div>
         <h1>{a.name}</h1>
         <p className="muted small">{a.licence}{a.city ? `, ${a.city}, ${a.country}` : ''}. {list.length} published redesign{list.length === 1 ? '' : 's'}.</p>
         {a.links && Object.values(a.links).some(Boolean) && (
@@ -322,9 +322,15 @@ export function Earnings() {
         <h2 id="payout-h" className="h-sm">Payout</h2>
         <div className="row">
           <Button variant="primary" disabled aria-describedby="payout-when">Request payout</Button>
-          <span id="payout-when" className="small muted">Payouts open when the financial year ends, on 31 March (placeholder date).</span>
+          <span id="payout-when" className="small muted">
+            {user.paid
+              ? 'Payouts open when the financial year ends, on 31 March (placeholder date).'
+              : 'Only paid members are paid out. Upgrade to request a payout when the financial year ends, on 31 March (placeholder date).'}
+          </span>
+          {!user.paid && <Button to="/points">See the paid tier</Button>}
         </div>
         <dl className="dl dl-wide small">
+          <dt>Who is paid out</dt><dd>Paid members only. That covers your 80% of sales and your year-end surplus share.</dd>
           <dt>Leaving the paid tier</dt><dd>You can still request a payout of what you’ve earned when you downgrade to the free tier.</dd>
           <dt>Deactivating or deleting</dt><dd>You lose your points. Ask for anything you’re owed before you close your account.</dd>
         </dl>

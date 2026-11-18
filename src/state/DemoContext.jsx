@@ -43,7 +43,9 @@ const award = (s, userId, pts, text) => ({
   users: mapById(s.users, userId, (u) => ({ ...u, points: u.points + pts, lifetime: u.lifetime + Math.max(pts, 0) })),
   ledger: [{ id: `l-${s.seq}`, userId, text, pts }, ...s.ledger],
 });
-const awardToast = (s, userId, pts, text) => toast(award(s, userId, pts, text), `+${fmtPoints(pts)} points — ${text}`);
+// Free members only see ghost points: what they would have collected as paid members.
+const ptsWord = (s, userId) => (s.users.find((u) => u.id === userId)?.paid ? 'points' : 'ghost points');
+const awardToast = (s, userId, pts, text) => toast(award(s, userId, pts, text), `+${fmtPoints(pts)} ${ptsWord(s, userId)} — ${text}`);
 
 // People added as collaborators on an upload are credited and told about it.
 const notifyCollaborators = (s, list, fromId, what, link) => {
@@ -127,7 +129,7 @@ function reducer(s, a) {
     case 'PURCHASE': {
       let n = { ...s, purchases: [a.purchase, ...s.purchases] };
       const { purchase: p } = a;
-      if (p.method === 'points') n = award(n, p.userId, -s.config.modelPointsCost, 'Measured model download');
+      if (p.method === 'points') n = award(n, p.userId, -s.config.modelPointsCost, p.kind === 'diagram' ? 'Spatial diagram download' : '3D model download');
       if (p.method === 'free') n = { ...n, users: mapById(n.users, p.userId, (u) => ({ ...u, freeModelsLeft: u.freeModelsLeft - 1 })) };
       if (p.kind === 'redesign') {
         const r = s.redesigns.find((x) => x.id === p.itemId);
@@ -228,6 +230,7 @@ function reducer(s, a) {
         lat: a.lat ?? 26.9255 + (s.seq % 5) * 0.002, lng: a.lng ?? 75.8205 + (s.seq % 7) * 0.002, city: 'Jaipur', country: 'India', addedAt: today(), areaM: a.areaM || null, area: a.area || null,
         // "The new space is inside this one" → parent. Only one parent.
         parentId: Object.entries(a.relations || {}).find(([, r]) => r === 'parent')?.[0] || null,
+        overlaps: Object.entries(a.relations || {}).filter(([, r]) => r === 'overlap').map(([id]) => id),
         status: 'pending', uploadedBy: a.userId, votes: 0,
         photos: Array.from({ length: a.photos }, (_, i) => ({ id: `${a.id}-ph${i + 1}`, credit: a.userId, onSite: a.full })),
         questionnaire: a.questionnaire, properties: a.properties, diagrams: [], archive: [], removed: false, removal: null, private: false,
@@ -238,7 +241,8 @@ function reducer(s, a) {
       // "This space is inside the new one" → the existing space gets the new one as parent.
       const children = Object.entries(a.relations || {}).filter(([, r]) => r === 'child').map(([id]) => id);
       const others = s.spaces.map((x) => (children.includes(x.id) ? { ...x, parentId: a.id } : x));
-      const n = { ...s, seq: s.seq + 1, spaces: [sp, ...others], comments: [...s.comments, first], moderation: [...s.moderation, { spaceId: a.id, yes: 0, no: 0, voted: [], votes: {}, notes: [], duplicates: [], mergeVotes: 0 }] };
+      // pointsFx: the header points badge plays a short "+N pending" animation.
+      const n = { ...s, seq: s.seq + 1, pointsFx: { id: s.seq, amount: sp.pendingPoints }, spaces: [sp, ...others], comments: [...s.comments, first], moderation: [...s.moderation, { spaceId: a.id, yes: 0, no: 0, voted: [], votes: {}, notes: [], duplicates: [], mergeVotes: 0 }] };
       return toast(n, 'Submitted — pending qualification');
     }
     case 'MERGE_PHOTOS': {
@@ -339,9 +343,11 @@ function reducer(s, a) {
 
     // ── Paid tier, co-op, removal ──────────────────────────
     case 'UPGRADE': {
-      let n = { ...s, users: mapById(s.users, a.userId, (u) => ({ ...u, paid: true, freeModelsLeft: s.config.paidFreeModels })) };
-      if (a.method === 'points') n = award(n, a.userId, -s.config.paidTierPointsCost, 'Paid tier, one month');
-      return toast(n, 'Paid tier is on for this month');
+      // Ghost points stay as history; real points start counting from today.
+      const u0 = s.users.find((u) => u.id === a.userId);
+      let n = { ...s, users: mapById(s.users, a.userId, (u) => ({ ...u, paid: true, freeModelsLeft: s.config.paidFreeModels, ghostLifetime: u.lifetime, points: 0, lifetime: 0 })) };
+      n = { ...n, seq: n.seq + 1, ledger: [{ id: `l-${n.seq}`, userId: a.userId, text: `Started collecting points. ${fmtPoints(u0.points)} ghost points stay as history.`, pts: 0 }, ...n.ledger] };
+      return toast(n, 'Paid tier is on. You’re collecting points from today.');
     }
     case 'COOP_VOTE':
       return toast({ ...s, coopDecisions: mapById(s.coopDecisions, a.id, (d) => ({ ...d, votes: { ...d.votes, [a.userId]: a.vote } })) }, 'Vote recorded');
@@ -430,6 +436,14 @@ export function DemoProvider({ children }) {
       space: (id) => state.spaces.find((x) => x.id === id),
       redesign: (id) => state.redesigns.find((x) => x.id === id),
       model: (id) => state.models.find((x) => x.id === id),
+      // Spatial diagrams live on their space; each one is also a Base Library listing.
+      diagram: (id) => {
+        for (const sp of state.spaces) {
+          const d = (sp.diagrams || []).find((x) => x.id === id);
+          if (d) return { d, space: sp };
+        }
+        return null;
+      },
       contest: (id) => state.contests.find((x) => x.id === id),
     };
     const architects = state.users.filter((u) => u.role === 'architect').sort((a, b) => b.points - a.points);

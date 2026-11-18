@@ -208,6 +208,8 @@ function refreshToolbar() {
     rest.appendChild(button('Copy everything', 'nt-btn nt-secondary', (e) => copyAll(e.currentTarget)));
     rest.appendChild(button('Clear everything', 'nt-btn nt-danger', clearEverything));
   }
+  // Demo helper: fill every empty field on the page (or the open dialog) so you can click Next.
+  rest.appendChild(button('Fill fields', 'nt-btn nt-secondary', (e) => fillFields(e.currentTarget)));
   rest.appendChild(button('Hide', 'nt-btn nt-secondary', toggleHide));
   rest.appendChild(button('Turn off', 'nt-btn nt-secondary', deactivate));
   tb.appendChild(rest);
@@ -216,6 +218,69 @@ function refreshToolbar() {
     hint.textContent = `Click any text to attach a ${KINDS[addKind].label.toLowerCase()}. Esc to cancel.`;
     tb.appendChild(hint);
   }
+}
+
+// ── Fill fields: put sample answers in every empty field so the demo moves fast ──
+const SAMPLE = [
+  [/e-?mail/i, 'you@example.com'], [/linkedin/i, 'linkedin.com/in/sample'], [/instagram/i, '@sample'], [/website|link|url/i, 'example.com'],
+  [/city/i, 'Jaipur'], [/country/i, 'India'], [/postal|zip/i, '302001'], [/phone/i, '+91 98765 43210'],
+  [/licen[cs]e|register|number/i, 'AR-12345 (placeholder)'], [/price|amount|prize/i, '100'],
+  [/name|title/i, 'Sample name (filled for the demo)'],
+];
+function labelOf(f) {
+  const own = f.id && document.querySelector(`label[for="${CSS.escape(f.id)}"]`);
+  return [f.getAttribute('aria-label'), own?.textContent, f.closest('label')?.textContent, f.closest('.field')?.querySelector('label, .label')?.textContent, f.placeholder, f.name].filter(Boolean).join(' ');
+}
+function setNative(f, value) {
+  const proto = f instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : f instanceof HTMLSelectElement ? HTMLSelectElement.prototype : HTMLInputElement.prototype;
+  Object.getOwnPropertyDescriptor(proto, 'value').set.call(f, value);
+  f.dispatchEvent(new Event('input', { bubbles: true }));
+  f.dispatchEvent(new Event('change', { bubbles: true }));
+}
+const visible = (x) => x.offsetParent !== null && !x.disabled && !x.readOnly && !x.closest('[id^="nt-"], .nt-popover, .demo-drawer, .demo-panel');
+function fillFields(btn) {
+  const dialogs = [...document.querySelectorAll('[role="dialog"], dialog[open]')].filter((d) => d.offsetParent !== null && !d.closest('[id^="nt-"]'));
+  const root = dialogs[dialogs.length - 1] || document.querySelector('main') || document.body;
+  let n = 0;
+  // Buttons the app already offers for sample input.
+  root.querySelectorAll('button').forEach((b) => {
+    if (visible(b) && /^(fill test card|use sample files)$/i.test(b.textContent.trim())) { b.click(); n += 1; }
+  });
+  if (!root.querySelector('.photo-tile')) { const add = [...root.querySelectorAll('.photo-add')].find(visible); if (add) { add.click(); n += 1; } }
+  root.querySelectorAll('input, textarea, select').forEach((f) => {
+    if (!visible(f)) return;
+    const type = (f.type || '').toLowerCase();
+    if (f instanceof HTMLSelectElement) {
+      const cur = f.options[f.selectedIndex];
+      if (cur && cur.value && !cur.disabled) return;
+      const opt = [...f.options].find((o) => o.value && !o.disabled);
+      if (opt) { setNative(f, opt.value); n += 1; }
+      return;
+    }
+    if (type === 'radio') {
+      const group = f.name ? root.querySelectorAll(`input[type="radio"][name="${CSS.escape(f.name)}"]`) : [f];
+      if (![...group].some((r) => r.checked) && f === [...group].find(visible)) { f.click(); n += 1; }
+      return;
+    }
+    if (type === 'checkbox') {
+      if (!f.checked && (f.required || /agree|i have read|i made|i confirm|i own/i.test(labelOf(f)))) { f.click(); n += 1; }
+      return;
+    }
+    if (['file', 'hidden', 'search', 'submit', 'button', 'range', 'color'].includes(type) || f.value) return;
+    const label = labelOf(f);
+    let v = (SAMPLE.find(([re]) => re.test(label)) || [])[1];
+    if (type === 'email') v = 'you@example.com';
+    else if (type === 'url') v = 'https://example.com';
+    else if (type === 'number') v = f.min || '1';
+    else if (type === 'date') v = new Date().toISOString().slice(0, 10);
+    else if (type === 'password') v = 'demo-password-1';
+    else if (!v) v = f instanceof HTMLTextAreaElement ? 'Sample answer filled in for the demo. It describes the space and how it is used.' : 'Sample answer';
+    setNative(f, v);
+    n += 1;
+  });
+  const old = btn.textContent;
+  btn.textContent = n ? `Filled ${n}` : 'Nothing to fill';
+  setTimeout(() => { btn.textContent = old; }, 1500);
 }
 
 // A button that opens a short list of choices above it. items: [label, enabled, onPick(button)].

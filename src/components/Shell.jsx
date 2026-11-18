@@ -71,6 +71,30 @@ function NotificationsMenu() {
   );
 }
 
+// After "Submit space": the points badge counts up the points waiting on approval.
+function PointsFx() {
+  const { state } = useDemo();
+  const fx = state.pointsFx;
+  const [shown, setShown] = useState(null); // { id, value }
+  useEffect(() => {
+    if (!fx) return undefined;
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const start = performance.now();
+    const dur = reduce ? 0 : 900;
+    let raf;
+    const tick = (t) => {
+      const k = dur ? Math.min(1, (t - start) / dur) : 1;
+      setShown({ id: fx.id, value: fx.amount * (1 - (1 - k) ** 3) });
+      if (k < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    const done = setTimeout(() => setShown(null), 3600);
+    return () => { cancelAnimationFrame(raf); clearTimeout(done); };
+  }, [fx?.id]);
+  if (!shown) return null;
+  return <span key={shown.id} className="points-fx" aria-hidden="true">+{fmtPoints(Math.round(shown.value * 8) / 8)} pending</span>;
+}
+
 function AccountMenu() {
   const d = useDemo();
   const { user } = d;
@@ -79,7 +103,7 @@ function AccountMenu() {
       label={
         <>
           {user.name}
-          <Badge>{fmtPoints(user.points)} pts</Badge>
+          <span className="points-wrap"><PointsFx />{user.paid ? <Badge>{fmtPoints(user.points)} pts</Badge> : <Badge kind="dashed" title="Ghost points: what you’d collect as a paid member">{fmtPoints(user.points)} pts<span className="visually-hidden"> (ghost points)</span></Badge>}</span>
           <span className="caret" aria-hidden="true" />
         </>
       }
@@ -89,6 +113,7 @@ function AccountMenu() {
         {user.paid && <Badge>Paid</Badge>}
         <span className="xs muted">{user.role === 'architect' ? 'Architect account' : user.paid ? 'Paid account' : 'Community account'}</span>
       </div>
+      {!user.paid && <p className="xs muted menu-note">Free tier: your {fmtPoints(user.points)} points are ghost points, shown with a dashed outline. Only paid members collect points. <Link to="/points">How it works</Link></p>}
       <nav className="menu-links" aria-label="Your account">
         {roleLinks(d).map(([to, label]) => (
           <NavLink key={to} to={to} className={link}>{label}</NavLink>

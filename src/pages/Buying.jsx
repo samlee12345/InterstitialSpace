@@ -5,9 +5,24 @@ import { Badge, Button, Choice, Empty, ImageBox, Input, Mine, Modal, Page, Point
 import { Crumbs } from '../components/domain.jsx';
 import { fmtPoints } from '../lib/points.js';
 
-// A listing is either a redesign or a measured model.
+// A listing is a redesign, the space's 3D model, or one of its spatial diagrams.
+export const KIND_LABEL = { redesign: 'Redesign', model: '3D model', diagram: 'Spatial diagram' };
 function useItem(id) {
   const { get } = useDemo();
+  const dg = get.diagram(id);
+  if (dg) {
+    const { d, space } = dg;
+    const item = {
+      ...d,
+      title: d.label || (d.source === 'ai' ? `AI spatial diagram of ${space.name}` : `Measured plan and section of ${space.name}`),
+      version: 1,
+      files: ['plan.pdf', 'section.pdf', 'plan-and-section.dwg'],
+      description: d.source === 'ai'
+        ? 'Plan and section drawn by AI from community photos. Proportions are approximate until an architect measures the space.'
+        : 'Measured plan and section, drawn to scale by an architect on site.',
+    };
+    return { kind: 'diagram', item, space, seller: d.source === 'architect' ? get.user(d.by) : null };
+  }
   const r = get.redesign(id);
   if (r) return { kind: 'redesign', item: r, space: get.space(r.spaceId), seller: get.user(r.architectId) };
   const m = get.model(id);
@@ -60,12 +75,12 @@ export function Item() {
 
   return (
     <Page tag="clickable">
-      <Crumbs items={[['/browse', 'Browse spaces'], [`/space/${space.id}`, space.name], [null, kind === 'redesign' ? 'Redesign' : 'Measured model']]} />
+      <Crumbs items={[['/browse', 'Browse spaces'], [`/space/${space.id}`, space.name], [null, KIND_LABEL[kind]]]} />
       <div className="split">
         <div className="stack">
           <ImageBox label="Preview (watermarked placeholder)" shape="wide" />
           <div className="thumbs"><ImageBox label="Sheet 1" shape="square" /><ImageBox label="Sheet 2" shape="square" /><ImageBox label="Sheet 3" shape="square" /></div>
-          <div className="row"><Badge>{kind === 'redesign' ? 'Redesign' : 'Measured model'}</Badge>{kind === 'redesign' && <Badge>Version {item.version}</Badge>}{seller && <Mine userId={seller.id} />}</div>
+          <div className="row"><Badge>{KIND_LABEL[kind]}</Badge>{kind === 'redesign' && <Badge>Version {item.version}</Badge>}{seller && <Mine userId={seller.id} />}</div>
           <h1>{item.title}</h1>
           {seller && (
             <p className="row">
@@ -80,7 +95,7 @@ export function Item() {
             <ul className="small">
               <li>You can use and adapt these files.</li>
               <li>You cannot redistribute them.</li>
-              <li>{kind === 'redesign' ? 'The architect keeps copyright.' : 'The platform keeps the fee for Base Library models; community photographers stay credited.'}</li>
+              <li>{kind === 'redesign' ? 'The architect keeps copyright.' : kind === 'diagram' ? 'The platform keeps the fee for Base Library diagrams; the people who drew it and took the photos stay credited.' : 'The platform keeps the fee for Base Library models; community photographers stay credited.'}</li>
             </ul>
             <Link className="small" to="/terms">Terms of Use</Link>
           </div>
@@ -112,7 +127,7 @@ export function Item() {
           ) : mine ? (
             <>
               <h2 className="h-sm">This is your listing</h2>
-              <p className="small muted">Buyers pay {cfg.priceLabel}. You receive 80%.</p>
+              <p className="small muted">{kind === 'redesign' ? `Buyers pay ${cfg.priceLabel}. You receive 80%.` : `Buyers pay ${cfg.priceLabel}. The platform keeps the fee; you stay credited on every download.`}</p>
               <Button variant="primary" to="/portfolio">Edit or unpublish in portfolio</Button>
             </>
           ) : owned ? (
@@ -125,7 +140,7 @@ export function Item() {
             <>
               <span className="small muted">Price</span>
               <span className="display">{rights === 'full' ? cfg.fullRightsLabel : cfg.priceLabel}</span>
-              {kind === 'model' && <p className="small">or {cfg.modelPointsCost} points. You have {fmtPoints(user.points)}.</p>}
+              {(kind === 'model' || kind === 'diagram') && <p className="small">or {cfg.modelPointsCost} points for paid members. {user.paid ? `You have ${fmtPoints(user.points)}.` : 'Your ghost points can’t be spent.'}</p>}
               {kind === 'redesign' ? (
                 <fieldset className="stack-sm plain">
                   <legend className="small bold">Choose rights</legend>
@@ -176,7 +191,7 @@ export function Checkout() {
   const rights = kind === 'redesign' && params.get('rights') === 'full' ? 'full' : 'licence';
   const connect = kind === 'redesign' && params.get('connect') === '1';
   const price = rights === 'full' ? cfg.fullRightsLabel : cfg.priceLabel;
-  const enough = user.points >= cfg.modelPointsCost;
+  const enough = user.paid && user.points >= cfg.modelPointsCost;
   const free = kind === 'model' && user.paid && user.freeModelsLeft > 0;
   const amount = method === 'points' ? `${cfg.modelPointsCost} points` : method === 'free' ? 'Free (paid tier)' : price;
 
@@ -239,9 +254,9 @@ export function Checkout() {
             <fieldset className="stack-sm plain" disabled={phase === 'paying'}>
               <legend className="small bold">How do you want to pay?</legend>
               <Choice name="method" value="card" checked={method === 'card'} onChange={() => setMethod('card')} title="Credit or debit card" />
-              {kind === 'model' && (
+              {(kind === 'model' || kind === 'diagram') && (
                 <Choice name="method" value="points" checked={method === 'points'} onChange={() => setMethod('points')} disabled={!enough} title={`${cfg.modelPointsCost} points`}>
-                  {enough ? `You have ${fmtPoints(user.points)} points. ${fmtPoints(user.points - cfg.modelPointsCost)} left after this.` : `Not enough points: you have ${fmtPoints(user.points)}. Pay with money instead.`}
+                  {!user.paid ? 'Only paid members collect points to spend. Your ghost points can’t be used.' : enough ? `You have ${fmtPoints(user.points)} points. ${fmtPoints(user.points - cfg.modelPointsCost)} left after this.` : `Not enough points: you have ${fmtPoints(user.points)}. Pay with money instead.`}
                 </Choice>
               )}
               {free && (
@@ -293,7 +308,7 @@ export function Checkout() {
             <div className="summary-thumb"><ImageBox label="Preview" shape="square" /></div>
             <div className="stack-sm grow">
               <span className="bold">{item.title}</span>
-              <span className="small muted">{kind === 'redesign' ? `Redesign by ${seller.name}` : 'Measured model, Base Library'}</span>
+              <span className="small muted">{kind === 'redesign' ? `Redesign by ${seller.name}` : `${KIND_LABEL[kind]}, Base Library`}</span>
               <span className="small muted">{rightsTitle(rights)}</span>
             </div>
           </div>
@@ -367,13 +382,13 @@ export function Purchases() {
       )}
       <ul className="list">
         {list.map((p) => {
-          const live = p.kind === 'redesign' ? get.redesign(p.itemId) : get.model(p.itemId);
+          const live = p.kind === 'redesign' ? get.redesign(p.itemId) : p.kind === 'diagram' ? get.diagram(p.itemId)?.d : get.model(p.itemId);
           const gone = !live || live.takenDown || (p.kind === 'redesign' && !live.published);
           const newer = live && p.kind === 'redesign' && live.version > p.version;
           return (
             <li key={p.id} className="row row-top between">
               <div className="stack-sm grow">
-                <div className="row"><Badge>{p.kind === 'redesign' ? 'Redesign' : 'Measured model'}</Badge><Badge>Version {p.version}</Badge>{gone && <Badge kind="dashed">No longer for sale</Badge>}</div>
+                <div className="row"><Badge>{KIND_LABEL[p.kind] || 'Measured model'}</Badge><Badge>Version {p.version}</Badge>{gone && <Badge kind="dashed">No longer for sale</Badge>}</div>
                 <Link className="bold" to={`/purchase/${p.id}`}>{p.title}</Link>
                 <span className="small muted">{LICENCE.title}, {p.amount}, bought {p.date}, receipt {p.receipt}</span>
                 {gone && <span className="small">The listing was removed from sale. You keep your copy.</span>}

@@ -43,8 +43,8 @@ export function ImageBox({ label = 'Image', shape = '', className = '' }) {
   );
 }
 
-export function Badge({ kind = '', children }) {
-  return <span className={`badge ${kind ? `badge-${kind}` : ''}`}>{children}</span>;
+export function Badge({ kind = '', title, children }) {
+  return <span className={`badge ${kind ? `badge-${kind}` : ''}`} title={title}>{children}</span>;
 }
 
 // Points are shown to signed-in members only, never to visitors.
@@ -54,6 +54,7 @@ export function PointsBadge({ userId }) {
   if (!isMember || !u) return null;
   return (
     <>
+      {/* Other people's tier is private, so their badge doesn't say whether the points are ghost points. */}
       <Badge>{fmtPoints(u.points)} pts</Badge>
       {u.verified && <Badge kind="solid">Verified</Badge>}
     </>

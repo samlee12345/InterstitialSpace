@@ -61,6 +61,11 @@ so testers can paste them into a message. Notes never leave the
 tester's browser. Each view keeps its own notes (for example the photo strip
 header of a space page), and the Demo bar shows the count per page and per view.
 
+**Fill fields** in the notes toolbar puts sample answers into every empty
+field on the page (or in the open dialog): text, selects, radio groups,
+"I agree" boxes, the test card and sample files, plus one photo if none has
+been added. Use it to click through long forms quickly in the demo.
+
 ## How it is put together
 
 - `src/styles/tokens.css` holds every visual value (grays, type, spacing,
@@ -115,7 +120,7 @@ header of a space page), and the Demo bar shows the count per page and per view.
   trying to do and who it is for. Linked from the visitor header and the
   footer.
 - **Create new space, four versions** (Demo bar, under Create new space).
-  A: Photos, Area, Questionnaire (opens with "Is it one of these nearby
+  D is first and the default (round 13). A: Photos, Area, Questionnaire (opens with "Is it one of these nearby
   spaces?"), Review. B: an overlay asks for photos first, then Area, Nearby
   spaces (only if any), Questionnaire, Review, with your photo thumbnails
   (delete, add more) in a side panel. C: like A, but Continue on the Area
@@ -127,6 +132,13 @@ header of a space page), and the Demo bar shows the count per page and per view.
   to add your experience there instead, then opens that space's experience
   flow with your photos. Continue is blocked until every overlapping space
   has an answer, and the questionnaire skips the nearby-spaces question.
+  In D the map shows only the spaces whose area overlaps yours; each gets a
+  numbered, colour-coded pin that matches its row in the list. "Not related"
+  isn't offered for an overlap: the fourth choice is "They share part of the
+  area", shown on both spaces under Connected spaces. Materiality is a
+  filterable multi-select of building materials (type to add one that's
+  missing). The 3D-scans note is on the Photos step. After "Submit space"
+  the header points badge pops and a "+N pending" chip counts up.
   Photos must carry location data. On the Area step the photo point stays
   fixed; zoom in and out, and draw the space with four draggable corners or
   a circle (handles also move with the arrow keys, Shift for 5 m steps).
@@ -165,6 +177,22 @@ header of a space page), and the Demo bar shows the count per page and per view.
   timeline), on the contest page and on the space page.
 - **Map pins** are plain: solid for approved spaces, dashed and hollow for
   pending ones. Space cards show votes, redesigns and photos.
+- **Ghost points (round 13).** Only paid members collect points, and only
+  they are paid out (surplus share and redesign sales). Free members see
+  ghost points: a dashed badge in the header and dashed cards on Points,
+  with an "Unrealized year-end surplus share". Ghost points can't be spent
+  and don't convert on upgrade; the paid tier starts the count at zero.
+  Other people's badges show plain points, since tier is private. The
+  public architect page no longer shows points.
+- **Buy spatial diagrams.** Each diagram on a space has "Buy this diagram",
+  a Base Library listing (item page, checkout, receipt, My purchases).
+- **Fully populated space.** Haveli courtyard, Chandpole lane (/space/s2,
+  Demo bar variant "Fully populated") has something in every tab:
+  experiences with ratings, three diagrams (one by AI), the 3D model with
+  uploaded scans, redesigns, a connected space, a contest and an archived
+  round. "No connected spaces" now points at /space/s1.
+- **Terms of Use** were rewritten for the current model, in sections with a
+  contents list.
 - **Collaborators.** Uploading a redesign, a contest entry or a spatial
   diagram has "Add collaborator": find people by name, or invite someone by
   email. They're credited ("by Architect A with …") and notified.
