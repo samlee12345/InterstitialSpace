@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
 import { Button, Choice, Empty, FileDrop, FormActions, ImageBox, Input, Page, RoleGate, Select, Steps } from '../components/ui.jsx';
-import { Crumbs } from '../components/domain.jsx';
+import { Crumbs, ELIGIBILITY } from '../components/domain.jsx';
+import { useChoices } from '../design/choices.js';
 import { POINTS } from '../lib/points.js';
 
 function Guard({ children }) {
@@ -31,8 +32,8 @@ function SpaceSummary({ space }) {
   );
 }
 
-export const SCOPES = ['Tactical / low-cost', 'Surface and seating', 'Canopy and shade', 'Lighting', 'Water and drainage', 'Full spatial reconfiguration'];
-export const COSTS = ['Not sure', 'Under $1,000', '$1,000 to $5,000', '$5,000 to $25,000', 'Over $25,000'];
+// Redesigns are CAD and 3D model files only.
+export const REDESIGN_FILES = ['.dwg', '.dxf', '.skp', '.3dm'];
 
 const Req = () => (<><span className="req" aria-hidden="true"> *</span><span className="visually-hidden"> (required)</span></>);
 
@@ -44,12 +45,12 @@ function RedesignForm({ space, contestId: fromRoute }) {
   const contest = contestId ? get.contest(contestId) : null;
   const isEntry = !!contest && contest.status === 'live';
   const [step, setStep] = useState(0);
-  const [f, setF] = useState({ title: '', description: '', files: [], units: '', scaled: false, scope: [], cost: 'Not sure', agency: true, attest: false });
+  const [f, setF] = useState({ title: '', description: '', files: [], units: '', agency: true, attest: false });
   const [err, setErr] = useState({});
   const [from, setFrom] = useState('new'); // contest entries: 'new' or the id of one of your redesigns
   const limit = uploadLimit(user.id, space.id);
-  const mine = state.redesigns.filter((r) => r.spaceId === space.id && r.architectId === user.id && r.published && !r.takenDown);
-  const steps = isEntry ? ['Files and description', 'Details and rights', 'Prize and rights'] : ['Files and description', 'Details and licence', 'Price and payout'];
+  const mine = state.redesigns.filter((r) => r.spaceId === space.id && r.architectId === user.id && r.published && !r.takenDown && !r.archived);
+  const steps = isEntry ? ['Files and description', 'Details and terms', 'Prize'] : ['Files and description', 'Details and terms', 'Price and payout'];
   const crumbs = isEntry
     ? [['/contests', 'Contests'], [`/contest/${contest.id}`, contest.title], [null, 'Submit an entry']]
     : [['/browse', 'Browse spaces'], [`/space/${space.id}`, space.name], [null, 'Upload redesign']];
@@ -57,9 +58,9 @@ function RedesignForm({ space, contestId: fromRoute }) {
   const pick = (id) => {
     setFrom(id);
     setErr({});
-    if (id === 'new') { setF({ ...f, title: '', description: '', files: [], units: '', scaled: false, scope: [], cost: 'Not sure' }); return; }
+    if (id === 'new') { setF({ ...f, title: '', description: '', files: [], units: '' }); return; }
     const r = mine.find((x) => x.id === id);
-    setF({ ...f, title: r.title, description: r.description, files: r.files, units: r.details?.units || '', scaled: !!r.details, scope: r.details?.scope || [], cost: r.details?.cost || 'Not sure' });
+    setF({ ...f, title: r.title, description: r.description, files: r.files.filter((x) => REDESIGN_FILES.some((e) => x.endsWith(e))), units: r.details?.units || '' });
   };
 
   if (contest && !isEntry) {
@@ -91,9 +92,7 @@ function RedesignForm({ space, contestId: fromRoute }) {
   const check1 = () => {
     const e = {};
     if (!f.units) e.units = 'Choose the measurement units.';
-    if (!f.scaled) e.scaled = 'Confirm the drawings match the Base Library dimensions.';
-    if (!f.scope.length) e.scope = 'Choose at least one intervention scope.';
-    if (!f.attest) e.attest = 'Confirm both statements to continue.';
+    if (!f.attest) e.attest = 'Read the terms and confirm them to continue.';
     return e;
   };
   const next = (n, check) => () => {
@@ -103,8 +102,7 @@ function RedesignForm({ space, contestId: fromRoute }) {
   };
   // Fixing a field clears its error.
   const upd = (patch) => { setF({ ...f, ...patch }); setErr(Object.fromEntries(Object.entries(err).filter(([k]) => !(k in patch)))); };
-  const toggleScope = (v) => upd({ scope: f.scope.includes(v) ? f.scope.filter((x) => x !== v) : [...f.scope, v] });
-  const details = { units: f.units, scope: f.scope, cost: f.cost, agency: isEntry ? false : f.agency };
+  const details = { units: f.units, agency: isEntry ? false : f.agency };
 
   const finish = () => {
     const title = f.title.trim();
@@ -158,7 +156,7 @@ function RedesignForm({ space, contestId: fromRoute }) {
           <p className="xs muted">Fields marked * are required.</p>
           <Input label={<>Title<Req /></>} value={f.title} onChange={(e) => upd({ title: e.target.value })} error={err.title} placeholder="e.g. Shaded seating along the lower steps" />
           <Input label={<>Description<Req /></>} textarea value={f.description} onChange={(e) => upd({ description: e.target.value })} error={err.description} hint={isEntry ? 'How your design meets the co-host’s criteria.' : 'What changes, and which resident requests it answers.'} />
-          <FileDrop label={<>Design files (drawings, model)<Req /></>} files={f.files} onChange={(files) => upd({ files })} error={err.files} />
+          <FileDrop label={<>Design files: CAD drawings and 3D model<Req /></>} files={f.files} onChange={(files) => upd({ files })} error={err.files} accept={REDESIGN_FILES} samples={['drawings.dwg', 'model.skp']} />
           <FormActions>
             <Button to={isEntry ? `/contest/${contest.id}` : `/space/${space.id}`}>Cancel</Button>
             <Button variant="primary" onClick={next(1, check0)}>Continue</Button>
@@ -178,33 +176,36 @@ function RedesignForm({ space, contestId: fromRoute }) {
             </div>
             {err.units && <span className="error" role="alert">{err.units}</span>}
           </fieldset>
-          <Choice type="checkbox" checked={f.scaled} onChange={(e) => upd({ scaled: e.target.checked })} title={<>Drawings are scaled to match the space’s Base Library dimensions<Req /></>} />
-          {err.scaled && <span className="error" role="alert">{err.scaled}</span>}
-          <fieldset className="chips-field">
-            <legend>Intervention scope<Req /></legend>
-            <span className="xs muted">Pick all that apply.</span>
-            <div className="chips">
-              {SCOPES.map((v) => (
-                <label key={v} className="chip"><input type="checkbox" checked={f.scope.includes(v)} onChange={() => toggleScope(v)} /><span>{v}</span></label>
-              ))}
-            </div>
-            {err.scope && <span className="error" role="alert">{err.scope}</span>}
-          </fieldset>
-          <Select label="Estimated implementation cost" hint="A rough bracket so local authorities and civic partners can judge feasibility. Optional." value={f.cost} onChange={(e) => setF({ ...f, cost: e.target.value })} options={COSTS} />
           {!isEntry && (
             <Choice type="checkbox" checked={f.agency} onChange={(e) => setF({ ...f, agency: e.target.checked })} title="Let agencies and civic bodies contact me about buying expanded or exclusive implementation rights">
               Price and terms are agreed between you and them, and you must be credited. Optional.
             </Choice>
           )}
+          <section className="card stack terms-box" aria-labelledby="terms-h">
+            <h2 id="terms-h" className="h-sm">{isEntry ? 'Contest terms' : 'Terms and conditions'}</h2>
+            {isEntry ? (
+              <dl className="dl dl-wide">
+                <dt>Original work</dt><dd>Your entry is your own work, doesn’t infringe anyone else’s rights, and is a schematic design, not stamped construction documents.</dd>
+                <dt>If you win</dt><dd>You receive the full {contest.prize} prize and sell the design rights to {contest.coHost} at the sale price it set.</dd>
+                <dt>If you don’t win</dt><dd>You keep full copyright to your entry.</dd>
+                <dt>Judging</dt><dd>By the co-host, against its criteria, after {contest.deadline}. Entries stay private until the winner is announced.</dd>
+                <dt>Liability</dt><dd>Code compliance and engineering sign-off are the co-host’s responsibility when it builds.</dd>
+              </dl>
+            ) : (
+              <dl className="dl dl-wide">
+                <dt>Original work</dt><dd>Your redesign is your own work, doesn’t infringe anyone else’s rights, and is a schematic design, not stamped construction documents.</dd>
+                <dt>Copyright</dt><dd>You keep full copyright. If the platform ever shuts down, your work remains yours.</dd>
+                <dt>What buyers get</dt><dd>A non-exclusive Platform Purchase Licence to download, use and adapt the files. They can’t redistribute or resell them.</dd>
+                <dt>Revenue split</dt><dd>You earn 80% of every download; the platform keeps 20%. Prices are set by the platform.</dd>
+                <dt>Credit</dt><dd>Any agency that buys further rights to build your design must credit you as the architect.</dd>
+                <dt>Editing</dt><dd>Edit your files and description, or unpublish, anytime from your portfolio. Existing buyers keep their download links, which never expire.</dd>
+                <dt>Liability</dt><dd>Uploads are schematic proposals. Local code compliance and engineering sign-off are the implementing buyer’s responsibility.</dd>
+              </dl>
+            )}
+            <Link className="small" to="/terms">Full Terms of Use</Link>
+          </section>
           <div className={`attest ${err.attest ? 'attest-error' : ''}`}>
-            <Choice type="checkbox" checked={f.attest} onChange={(e) => upd({ attest: e.target.checked })} title={<>I confirm both of these<Req /></>}>
-              <span className="attest-list">
-                <span>This is my original work, does not infringe anyone else’s rights, and is submitted as a schematic design, not stamped construction documents.</span>
-                {isEntry
-                  ? <span>If my entry wins, I agree to sell the design rights to the contest co-host ({contest.coHost}) at the stated prize and sale price.</span>
-                  : <span>I agree to the Platform Purchase Licence and the revenue split shown on the next page.</span>}
-              </span>
-            </Choice>
+            <Choice type="checkbox" checked={f.attest} onChange={(e) => upd({ attest: e.target.checked })} title={<>I have read and agree to these terms<Req /></>} />
             {err.attest && <span className="error" role="alert">{err.attest}</span>}
           </div>
           <FormActions>
@@ -218,7 +219,7 @@ function RedesignForm({ space, contestId: fromRoute }) {
         <div className="stack">
           {isEntry ? (
             <section className="card stack" aria-labelledby="prize-h">
-              <h2 id="prize-h" className="h-sm">Prize and rights</h2>
+              <h2 id="prize-h" className="h-sm">Prize</h2>
               <dl className="dl">
                 <dt>Prize</dt><dd>{contest.prize}. The winner receives the full prize.</dd>
                 <dt>If you win</dt><dd>You sell the design rights to {contest.coHost}, at the sale price the co-host sets.</dd>
@@ -236,23 +237,12 @@ function RedesignForm({ space, contestId: fromRoute }) {
                   <dt>Contribution reward</dt><dd>+{POINTS.redesign} points to your profile and architect ranking when you publish</dd>
                 </dl>
               </section>
-              <section className="card stack" aria-labelledby="licence-h">
-                <h2 id="licence-h" className="h-sm">Copyright and buyer licence</h2>
-                <dl className="dl dl-wide">
-                  <dt>Copyright</dt><dd>You keep full copyright. If the platform ever shuts down, your work remains yours.</dd>
-                  <dt>What buyers get</dt><dd>A non-exclusive Platform Purchase Licence to download, use and adapt the files. They can’t redistribute or resell them.</dd>
-                  <dt>Credit</dt><dd>Any agency that buys further rights to build your design must credit you as the architect.{f.agency ? ' You’ve allowed agencies to contact you about this.' : ''}</dd>
-                  <dt>Editing</dt><dd>Edit your files and description, or unpublish, anytime from your portfolio. Existing buyers keep their download links, which never expire.</dd>
-                  <dt>Liability</dt><dd>Uploads are schematic proposals. Local code compliance and engineering sign-off are the implementing buyer’s responsibility.</dd>
-                </dl>
-                <Link className="small" to="/terms">Terms of Use</Link>
-              </section>
             </>
           )}
           <div className="card sunken">
             <span className="bold">{f.title}</span>
             <span className="small">{f.description}</span>
-            <span className="small muted">{[f.units, f.scope.join(', '), f.cost !== 'Not sure' && `Estimated cost ${f.cost}`].filter(Boolean).join('. ')}. Files: {f.files.join(', ')}</span>
+            <span className="small muted">{f.units}. Files: {f.files.join(', ')}</span>
           </div>
           <FormActions>
             <Button onClick={() => setStep(1)}>Back</Button>
@@ -294,25 +284,12 @@ function DiagramForm({ space }) {
   const submit = () => {
     if (!agree) { setErr({ agree: 'Agree to the Base Library licence to add your diagram.' }); return; }
     dispatch({ type: 'UPLOAD_DIAGRAM', spaceId: space.id, userId: user.id, files, notes, modelId: `m-${Date.now()}` });
-    const ready = space.status === 'pending' && space.photos.length >= cfg.manualDiagramMinPhotos;
-    const extra = ready
-      ? ` This space has ${space.photos.length} photos and a diagram, so it is now marked “Ready for approval”.`
-      : space.status === 'pending' ? ` This space has ${space.photos.length} photos. It needs ${cfg.manualDiagramMinPhotos} before moderators can vote.` : '';
     nav(`/space/${space.id}?tab=diagram`, {
       replace: true,
-      state: { banner: { title: 'Spatial diagram added to the Base Library', text: `Your diagram is on this space, marked “Yours”. You earned ${POINTS.diagram} points. The platform keeps the download fee for spatial diagrams.${extra}`, links: [['/portfolio', 'Open your portfolio']] } },
+      state: { banner: { title: 'Spatial diagram added to the Base Library', text: `Your diagram is on this space, marked “Yours”. You earned ${POINTS.diagram} points. The platform keeps the download fee for spatial diagrams. The space’s 3D model will be regenerated with it.`, links: [['/portfolio', 'Open your portfolio']] } },
     });
   };
 
-  if (space.diagram) {
-    return (
-      <Page narrow tag="clickable">
-        <Empty title="This space already has a spatial diagram">
-          <div><Button to={`/space/${space.id}`}>Back to the space</Button></div>
-        </Empty>
-      </Page>
-    );
-  }
   return (
     <Page narrow tag="clickable">
       <Crumbs items={[['/browse', 'Browse spaces'], [`/space/${space.id}`, space.name], [null, 'Upload spatial diagram']]} />
@@ -370,14 +347,16 @@ export const UploadRedesign = () => <Guard>{(space) => <RedesignForm space={spac
 // Contest entry page: /contest/:id/enter
 export function ContestEntry() {
   const { id } = useParams();
-  const { get, isArchitect } = useDemo();
+  const { state, get, isArchitect } = useDemo();
+  const { contestEligibility } = useChoices();
   const contest = get.contest(id);
   const space = contest && get.space(contest.spaceId);
   if (!contest || !space) return <Page narrow><Empty title="Contest not found"><div><Button to="/contests">All contests</Button></div></Empty></Page>;
-  if (!isArchitect) {
+  const rule = ELIGIBILITY[contestEligibility] || ELIGIBILITY.both;
+  if (!isArchitect || !rule.can(state.architectKind)) {
     return (
       <Page narrow tag="clickable">
-        <RoleGate title="Architects only">Only licensed architects and accredited students can enter contests.</RoleGate>
+        <RoleGate title={isArchitect ? 'You can’t enter this contest' : 'Architects only'}>{isArchitect ? `${rule.no} You’re signed in as ${state.architectKind === 'student' ? 'a student' : 'a licensed architect'}.` : `Who can enter: ${rule.text}`}</RoleGate>
         <div><Button to={`/contest/${contest.id}`}>Back to the contest</Button></div>
       </Page>
     );

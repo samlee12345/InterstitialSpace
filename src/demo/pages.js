@@ -11,9 +11,9 @@ export const PAGE_GROUPS = [
   {
     group: 'Visitor and community',
     pages: [
-      { id: 'landing', label: 'Landing', to: '/', kind: 'simulated', match: exact('/'), views: [{ id: '', label: 'Classic', choice: ['landingLayout', 'classic'] }, { id: 'map', label: 'Map first', choice: ['landingLayout', 'map'], control: 'locate' }] },
+      { id: 'landing', label: 'Landing', to: '/', kind: 'simulated', match: exact('/'), views: [{ id: 'map', label: 'Map first', choice: ['landingLayout', 'map'], control: 'locate' }] },
       { id: 'browse', label: 'Browse spaces', to: '/browse', kind: 'simulated', match: exact('/browse') },
-      { id: 'space', label: 'Space page', to: '/space/s2', kind: 'clickable', match: re(/^\/space\/(?!new$)[^/]+$/), views: [{ id: '', label: 'One page', layout: 'single' }, { id: 'tabs', label: 'Tabs', layout: 'tabs' }], variants: [
+      { id: 'space', label: 'Space page', to: '/space/s2', kind: 'clickable', match: re(/^\/space\/(?!new$)[^/]+$/), views: [{ id: 'tabs', label: 'Header: portrait photo beside the title', choice: ['spaceHeader', 'portrait'] }, { id: 'strip', label: 'Header: photo strip under the title', choice: ['spaceHeader', 'strip'] }, { id: 'compact', label: 'Header: compact, thumbnail in the title row', choice: ['spaceHeader', 'compact'] }], variants: [
         ['Approved', '/space/s2'], ['Pending', '/space/s7'], ['No contest', '/space/s7'], ['Ongoing contest', '/space/s2'],
         ['Judging contest', '/space/s5'], ['Closed contest', '/space/s4'], ['Has related spaces', '/space/s4'], ['No related spaces', '/space/s2'],
       ] },
@@ -45,7 +45,7 @@ export const PAGE_GROUPS = [
       { id: 'ranking', label: 'Architect ranking', to: '/ranking', kind: 'clickable', match: exact('/ranking') },
       { id: 'space-ranking', label: 'Space ranking', to: '/spaces/ranking', kind: 'clickable', match: exact('/spaces/ranking') },
       { id: 'contests', label: 'Contests', to: '/contests', kind: 'clickable', match: exact('/contests') },
-      { id: 'contest', label: 'Contest details', to: '/contest/c1', kind: 'clickable', match: re(/^\/contest\/(?!request$)[^/]+$/) },
+      { id: 'contest', label: 'Contest details', to: '/contest/c3', kind: 'clickable', match: re(/^\/contest\/(?!request$)[^/]+$/), controls: 'architect-kind', views: [{ id: '', label: 'Open to licensed architects and students', choice: ['contestEligibility', 'both'] }, { id: 'licensed', label: 'Licensed architects only', choice: ['contestEligibility', 'licensed'] }, { id: 'students', label: 'Students only, paired with a licensed architect', choice: ['contestEligibility', 'students'] }] },
       { id: 'contest-enter', label: 'Submit a contest entry', to: '/contest/c1/enter', kind: 'clickable', role: 'architect', match: re(/^\/contest\/[^/]+\/enter$/) },
       { id: 'earnings', label: 'Earnings and payout', to: '/earnings', kind: 'clickable', role: 'architect', match: exact('/earnings') },
       { id: 'notifications', label: 'Notifications', to: '/notifications', kind: 'clickable', match: exact('/notifications') },
@@ -54,7 +54,7 @@ export const PAGE_GROUPS = [
   {
     group: 'Moderator, co-host, owner',
     pages: [
-      { id: 'moderation', label: 'Moderation list', to: '/moderation', kind: 'simulated', role: 'moderator', match: exact('/moderation') },
+      { id: 'moderation', label: 'Spaces to approve', to: '/moderation', kind: 'simulated', role: 'moderator', match: exact('/moderation') },
       { id: 'moderation-review', label: 'Review a space', to: '/moderation/s7', kind: 'simulated', role: 'moderator', match: re(/^\/moderation\//) },
       { id: 'flags', label: 'Flag queue', to: '/flags', kind: 'simulated', role: 'moderator', match: exact('/flags') },
       { id: 'contest-request', label: 'Host a contest', to: '/contest/request', kind: 'simulated', role: 'paid', match: exact('/contest/request') },

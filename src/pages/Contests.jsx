@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
 import { Badge, Button, Choice, Empty, FileDrop, FormActions, ImageBox, Input, Mine, Page, RoleGate, Select, Steps } from '../components/ui.jsx';
-import { ContestCard, ContestPlans, Crumbs, contestWinner } from '../components/domain.jsx';
+import { ContestCard, ContestPlans, Crumbs, ELIGIBILITY, contestWinner } from '../components/domain.jsx';
+import { useChoices } from '../design/choices.js';
 
 // "2026-11-12" → "Nov 12, 2026"
 const fmtDate = (d) => (d ? new Date(`${d}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'date not recorded');
@@ -40,7 +41,9 @@ export function Contests() {
 
 export function Contest() {
   const { id } = useParams();
-  const { get, dispatch, user, isArchitect, isMember, cfg } = useDemo();
+  const { state, get, dispatch, user, isArchitect, isMember, cfg } = useDemo();
+  const { contestEligibility } = useChoices();
+  const rule = ELIGIBILITY[contestEligibility] || ELIGIBILITY.both;
   const nav = useNavigate();
   const [params] = useSearchParams();
   const c = get.contest(id);
@@ -88,22 +91,9 @@ export function Contest() {
             <ul>{c.criteria.map((x) => <li key={x}>{x}</li>)}</ul>
           </section>
           <section className="stack-sm">
-            <h2>Entries ({c.entries.length})</h2>
-            {isMember ? (
-              <ul className="entries small">
-                {c.entries.map((e) => (
-                  <li key={e.id}>
-                    <span className="row">
-                      <span className="bold">{e.title}</span>
-                      <Mine userId={e.architectId} />
-                      {c.winner === e.id && <Badge kind="solid">Winner</Badge>}
-                    </span>
-                    <span className="muted">by {get.user(e.architectId)?.name}. Submitted {fmtDate(e.submittedAt)}</span>
-                  </li>
-                ))}
-                {c.entries.length === 0 && <li className="muted">No entries yet.</li>}
-              </ul>
-            ) : <p className="small muted">Sign up to see the entries.</p>}
+            <h2>Entries</h2>
+            <p className="small"><span className="bold">{c.entries.length} {c.entries.length === 1 ? 'entry' : 'entries'}</span> submitted. Entries stay private to the co-host until a winner is announced.</p>
+            {mine && <p className="small">You entered “{mine.title}”.</p>}
           </section>
 
         </div>
@@ -115,13 +105,15 @@ export function Contest() {
           <dl className="dl">
             <dt>Deadline</dt><dd>{c.deadline}</dd>
             <dt>Co-host</dt><dd>{c.coHost}</dd>
-            <dt>Eligibility</dt><dd>{c.eligibility}</dd>
+            <dt>Who can enter</dt><dd>{rule.text}</dd>
             <dt>Entries</dt><dd>{c.entries.length}</dd>
           </dl>
           {c.status !== 'live' ? (
             <p className="small muted">{c.status === 'judging' ? 'Entries are closed. The co-host is judging.' : 'This contest is closed.'}</p>
           ) : mine ? (
             <p className="small bold">You entered “{mine.title}”.</p>
+          ) : isArchitect && !rule.can(state.architectKind) ? (
+            <p className="small muted">{rule.no} You’re signed in as {state.architectKind === 'student' ? 'a student' : 'a licensed architect'}.</p>
           ) : isArchitect ? (
             <Button variant="primary" to={`/contest/${c.id}/enter`}>Submit an entry</Button>
           ) : (

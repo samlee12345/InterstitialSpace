@@ -18,7 +18,9 @@ const fresh = (role = 'architect') => ({
   signupPrompt: null,
   signupDismissed: false,
   failNextPayment: false,
-  layout: 'single', // space page: 'single' (everything on one page) or 'tabs'
+  layout: 'tabs', // space page sections are tabs (decided in round 10)
+  introSeen: false, // visitors see "What is an interstitial space?" once per visit
+  architectKind: 'licensed', // demo control: the signed-in architect is 'licensed' or a 'student'
   weekSkip: 0, // demo control: pretend this many weeks have passed
   locateFinds: 'new', // demo control: "Use my location" lands on a 'new' place or an 'existing' space
   createGeotag: true, // demo control: photos uploaded in Create new space carry location data
@@ -95,23 +97,23 @@ function reducer(s, a) {
 
     // ── Architect: spatial diagram ─────────────────────────
     case 'UPLOAD_DIAGRAM': {
+      // Spaces can have several diagrams; the one 3D model is regenerated from all of them.
       const sp = s.spaces.find((x) => x.id === a.spaceId);
-      const ready = sp.status === 'pending' && sp.photos.length >= s.config.manualDiagramMinPhotos;
+      const hasModel = s.models.some((m) => m.spaceId === a.spaceId && !m.takenDown && !m.archived);
       let n = {
         ...s,
-        spaces: mapById(s.spaces, a.spaceId, (x) => ({ ...x, diagram: { source: 'architect', by: a.userId, credits: [] }, readyForApproval: ready })),
-        models: [...s.models, { id: a.modelId, spaceId: a.spaceId, title: `Measured model — ${sp.name}`, files: a.files, takenDown: false }],
+        spaces: mapById(s.spaces, a.spaceId, (x) => ({ ...x, diagrams: [...x.diagrams, { id: `dg-${a.modelId}`, source: 'architect', by: a.userId, credits: [], date: today(), label: a.label || null }] })),
+        models: hasModel ? s.models : [...s.models, { id: a.modelId, spaceId: a.spaceId, title: `3D model — ${sp.name}`, files: ['model.obj'], takenDown: false }],
         diagramUploads: [{ id: a.modelId, spaceId: a.spaceId, userId: a.userId, date: today(), files: a.files, notes: a.notes }, ...s.diagramUploads],
       };
       n = awardToast(n, a.userId, POINTS.diagram, 'spatial diagram added to the Base Library');
-      if (ready) n = notify(n, sp.uploadedBy, 'points', `“${sp.name}” now has a spatial diagram and is ready for approval.`, `/space/${a.spaceId}`);
       return n;
     }
     case 'AI_DIAGRAM':
       return {
         ...s,
         spaces: mapById(s.spaces, a.spaceId, (x) =>
-          x.diagram ? x : { ...x, diagram: { source: 'ai', credits: [...new Set(x.photos.map((p) => p.credit))] }, readyForApproval: x.status === 'pending' }),
+          (x.diagrams.length ? x : { ...x, diagrams: [{ id: `dg-ai-${x.id}`, source: 'ai', credits: [...new Set(x.photos.map((p) => p.credit))], date: today() }] })),
       };
 
     // ── Purchases ──────────────────────────────────────────
@@ -174,8 +176,19 @@ function reducer(s, a) {
     // ── Community ──────────────────────────────────────────
     case 'ADD_EXPERIENCE': {
       // An experience is a comment plus optional photos; the photos also join the space's gallery.
+      // One experience per person per space: posting again updates it (until the space is rebuilt).
       const sp = s.spaces.find((x) => x.id === a.spaceId);
       const ids = Array.from({ length: a.photos }, (_, i) => `${sp.id}-x${s.seq}-${i}`);
+      const prev = s.comments.find((c) => c.spaceId === a.spaceId && c.userId === a.userId && !c.archived);
+      if (prev) {
+        const n = {
+          ...s,
+          seq: s.seq + 1,
+          comments: s.comments.map((c) => (c === prev ? { ...c, text: a.text, onSite: a.onSite, photoIds: [...(c.photoIds || []), ...ids], answers: a.answers || c.answers, updatedAt: today() } : c)),
+          spaces: mapById(s.spaces, a.spaceId, (x) => ({ ...x, photos: [...x.photos, ...ids.map((id) => ({ id, credit: a.userId, onSite: a.onSite }))] })),
+        };
+        return toast(n, 'Experience updated');
+      }
       let n = {
         ...s,
         comments: [...s.comments, { id: `cm-${s.seq}`, spaceId: a.spaceId, userId: a.userId, text: a.text, onSite: a.onSite, photoIds: ids, answers: a.answers || null }],
@@ -196,10 +209,10 @@ function reducer(s, a) {
         lat: a.lat ?? 26.9255 + (s.seq % 5) * 0.002, lng: a.lng ?? 75.8205 + (s.seq % 7) * 0.002, city: 'Jaipur', country: 'India', addedAt: today(), areaM: a.areaM || null, area: a.area || null,
         // "The new space is inside this one" → parent. Only one parent.
         parentId: Object.entries(a.relations || {}).find(([, r]) => r === 'parent')?.[0] || null,
-        status: 'pending', readyForApproval: false, uploadedBy: a.userId, votes: 0,
+        status: 'pending', uploadedBy: a.userId, votes: 0,
         photos: Array.from({ length: a.photos }, (_, i) => ({ id: `${a.id}-ph${i + 1}`, credit: a.userId, onSite: a.full })),
-        questionnaire: a.questionnaire, properties: a.properties, diagram: null, removed: false, removal: null, private: false,
-        pendingPoints: uploadPoints({ photos: a.photos, scans: a.scans, full: a.full }),
+        questionnaire: a.questionnaire, properties: a.properties, diagrams: [], archive: [], removed: false, removal: null, private: false,
+        pendingPoints: uploadPoints({ photos: a.photos, scans: a.scans, fields: a.fields || 0, full: a.full }),
       };
       // The uploader's first experience: how it felt, with their photos.
       const first = { id: `cm-${s.seq}`, spaceId: a.id, userId: a.userId, text: a.questionnaire.feelings, onSite: a.full, photoIds: sp.photos.map((p) => p.id) };
@@ -212,10 +225,14 @@ function reducer(s, a) {
     case 'MERGE_PHOTOS': {
       // Merging into an existing entry adds an experience: the comment plus the photos.
       const ids = Array.from({ length: a.photos }, (_, i) => `${a.spaceId}-m${s.seq}-${i}`);
+      // One experience per person: merging into a space you've posted on updates yours.
+      const prev = s.comments.find((c) => c.spaceId === a.spaceId && c.userId === a.userId && !c.archived);
       const n = {
         ...s,
         seq: s.seq + 1,
-        comments: [...s.comments, { id: `cm-${s.seq}`, spaceId: a.spaceId, userId: a.userId, text: a.text, onSite: a.full, photoIds: ids }],
+        comments: prev
+          ? s.comments.map((c) => (c === prev ? { ...c, text: a.text, photoIds: [...(c.photoIds || []), ...ids], updatedAt: today() } : c))
+          : [...s.comments, { id: `cm-${s.seq}`, spaceId: a.spaceId, userId: a.userId, text: a.text, onSite: a.full, photoIds: ids }],
         spaces: mapById(s.spaces, a.spaceId, (x) => ({ ...x, photos: [...x.photos, ...ids.map((id) => ({ id, credit: a.userId, onSite: a.full }))] })),
       };
       return toast(n, 'Experience and photos added to the existing entry');
@@ -223,6 +240,7 @@ function reducer(s, a) {
 
     // ── Moderation ─────────────────────────────────────────
     case 'MOD_VOTE': {
+      if (!s.moderation.some((m) => m.spaceId === a.spaceId)) s = { ...s, moderation: [...s.moderation, { spaceId: a.spaceId, yes: 0, no: 0, voted: [], duplicates: [], mergeVotes: 0 }] };
       const row = s.moderation.find((m) => m.spaceId === a.spaceId);
       const yes = row.yes + (a.yes ? 1 : 0);
       const no = row.no + (a.yes ? 0 : 1);
@@ -234,7 +252,6 @@ function reducer(s, a) {
         spaces: mapById(s.spaces, a.spaceId, (x) => ({
           ...x,
           status: yes >= 3 ? 'approved' : no >= 3 ? 'rejected' : x.status,
-          readyForApproval: yes >= 3 || no >= 3 ? false : x.readyForApproval,
           rejections: a.yes ? x.rejections || [] : [...(x.rejections || []), { by: a.userId, reason: a.reason }],
         })),
       };
@@ -273,6 +290,37 @@ function reducer(s, a) {
     }
     case 'COOP_VOTE':
       return toast({ ...s, coopDecisions: mapById(s.coopDecisions, a.id, (d) => ({ ...d, votes: { ...d.votes, [a.userId]: a.vote } })) }, 'Vote recorded');
+    // ── Reported updates: the space changed on the ground ───
+    case 'REPORT_UPDATE': {
+      const n = { ...s, seq: s.seq + 1, updateReports: [{ id: `up-${s.seq}`, spaceId: a.spaceId, by: a.userId, date: today(), text: a.text, photos: a.photos, status: 'pending' }, ...s.updateReports] };
+      return toast(n, 'Update reported — a moderator will check it');
+    }
+    case 'RESOLVE_UPDATE': {
+      const r = s.updateReports.find((x) => x.id === a.id);
+      const sp = s.spaces.find((x) => x.id === r.spaceId);
+      let n = { ...s, updateReports: s.updateReports.map((x) => (x.id === a.id ? { ...x, status: a.ok ? 'confirmed' : 'rejected' } : x)) };
+      if (a.ok) {
+        // Everything contributed so far moves to Archived; the space starts a new round.
+        const round = { date: today(), reason: r.text, votes: sp.votes, photos: sp.photos, diagrams: sp.diagrams };
+        n = {
+          ...n,
+          spaces: mapById(n.spaces, sp.id, (x) => ({ ...x, votes: 0, photos: [], diagrams: [], archive: [round, ...(x.archive || [])], updatedAt: today() })),
+          comments: n.comments.map((c) => (c.spaceId === sp.id && !c.archived ? { ...c, archived: round.date } : c)),
+          redesigns: n.redesigns.map((x) => (x.spaceId === sp.id && !x.archived ? { ...x, archived: round.date } : x)),
+          models: n.models.map((m) => (m.spaceId === sp.id && !m.archived ? { ...m, archived: round.date } : m)),
+        };
+      }
+      n = notify(n, r.by, 'points', a.ok ? `Your update to “${sp.name}” was confirmed. Past contributions are now archived.` : `Your update to “${sp.name}” wasn’t confirmed.`, `/space/${sp.id}`);
+      return toast(n, a.ok ? 'Update confirmed — past contributions archived' : 'Update not confirmed');
+    }
+
+    case 'SAVE_PROFILE':
+      return toast({ ...s, users: mapById(s.users, a.userId, (u) => ({ ...u, city: a.city, country: a.country, links: a.links })) }, 'Profile saved');
+    case 'INTRO_SEEN':
+      return { ...s, introSeen: true };
+    case 'SET_ARCHITECT_KIND':
+      return { ...s, architectKind: a.kind };
+
     case 'REMOVAL_REQUEST':
       return toast({ ...s, spaces: mapById(s.spaces, a.spaceId, (x) => ({ ...x, removal: 'review' })) }, 'Removal request sent');
     case 'REMOVAL_RESOLVE': {

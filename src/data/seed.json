@@ -25,8 +25,15 @@
       "points": 38,
       "verified": false,
       "licence": "Licensed architect (placeholder no.)",
-      "reviewsThisYear": 0,
-      "paidOut": 64
+      "reviewsThisYear": 3,
+      "paidOut": 64,
+      "city": "Jaipur",
+      "country": "India",
+      "links": {
+        "linkedin": "linkedin.com/in/architect-a",
+        "instagram": "@architect.a",
+        "website": "architect-a.example"
+      }
     },
     {
       "lifetime": 62,
@@ -58,7 +65,7 @@
       "points": 12,
       "verified": false,
       "licence": "Accredited student (placeholder)",
-      "reviewsThisYear": 0,
+      "reviewsThisYear": 2,
       "paidOut": 0
     },
     {
@@ -100,7 +107,6 @@
       "lat": 26.9512,
       "lng": 75.8478,
       "status": "approved",
-      "readyForApproval": false,
       "uploadedBy": "u-c2",
       "votes": 41,
       "photos": [
@@ -177,16 +183,21 @@
         "climate": "Shaded most of the day",
         "authorship": "Unknown / vernacular"
       },
-      "diagram": {
-        "source": "ai",
-        "credits": [
-          "u-a2",
-          "u-a4",
-          "u-c1",
-          "u-c2",
-          "u-c3"
-        ]
-      },
+      "diagrams": [
+        {
+          "id": "dg-s1",
+          "source": "ai",
+          "credits": [
+            "u-a2",
+            "u-a4",
+            "u-c1",
+            "u-c2",
+            "u-c3"
+          ],
+          "date": "2026-09-01"
+        }
+      ],
+      "archive": [],
       "city": "Jaipur",
       "country": "India",
       "addedAt": "2026-06-01",
@@ -202,7 +213,6 @@
       "lat": 26.9268,
       "lng": 75.8094,
       "status": "approved",
-      "readyForApproval": false,
       "uploadedBy": "u-c1",
       "votes": 33,
       "photos": [
@@ -264,11 +274,24 @@
         "climate": "Hot at midday",
         "authorship": "Unknown / vernacular"
       },
-      "diagram": {
-        "source": "architect",
-        "by": "u-a2",
-        "credits": []
-      },
+      "diagrams": [
+        {
+          "id": "dg-s2",
+          "source": "architect",
+          "by": "u-a2",
+          "credits": [],
+          "date": "2026-09-01"
+        },
+        {
+          "id": "dg-s2-b",
+          "source": "architect",
+          "by": "u-a2",
+          "credits": [],
+          "date": "2026-10-20",
+          "label": "Long section through the courtyard and lane"
+        }
+      ],
+      "archive": [],
       "city": "Jaipur",
       "country": "India",
       "addedAt": "2026-07-08",
@@ -284,7 +307,6 @@
       "lat": 26.9239,
       "lng": 75.8267,
       "status": "approved",
-      "readyForApproval": false,
       "uploadedBy": "u-c3",
       "votes": 57,
       "photos": [
@@ -356,16 +378,21 @@
         "climate": "Breezy in the evening",
         "authorship": "Unknown / vernacular"
       },
-      "diagram": {
-        "source": "ai",
-        "credits": [
-          "u-c1",
-          "u-c2",
-          "u-c3",
-          "u-a2",
-          "u-a4"
-        ]
-      },
+      "diagrams": [
+        {
+          "id": "dg-s3",
+          "source": "ai",
+          "credits": [
+            "u-c1",
+            "u-c2",
+            "u-c3",
+            "u-a2",
+            "u-a4"
+          ],
+          "date": "2026-09-01"
+        }
+      ],
+      "archive": [],
       "city": "Jaipur",
       "country": "India",
       "addedAt": "2026-08-14",
@@ -381,7 +408,6 @@
       "lat": 26.9196,
       "lng": 75.8312,
       "status": "approved",
-      "readyForApproval": false,
       "uploadedBy": "u-c2",
       "votes": 28,
       "photos": [
@@ -438,11 +464,16 @@
         "climate": "Floods in monsoon",
         "authorship": "Unknown / vernacular"
       },
-      "diagram": {
-        "source": "architect",
-        "by": "u-a3",
-        "credits": []
-      },
+      "diagrams": [
+        {
+          "id": "dg-s4",
+          "source": "architect",
+          "by": "u-a3",
+          "credits": [],
+          "date": "2026-09-01"
+        }
+      ],
+      "archive": [],
       "city": "Jaipur",
       "country": "India",
       "addedAt": "2026-09-20",
@@ -458,7 +489,6 @@
       "lat": 26.9361,
       "lng": 75.8153,
       "status": "approved",
-      "readyForApproval": false,
       "uploadedBy": "u-c1",
       "votes": 22,
       "photos": [
@@ -525,16 +555,21 @@
         "climate": "Shaded most of the day",
         "authorship": "Unknown / vernacular"
       },
-      "diagram": {
-        "source": "ai",
-        "credits": [
-          "u-c3",
-          "u-a2",
-          "u-a4",
-          "u-c1",
-          "u-c2"
-        ]
-      },
+      "diagrams": [
+        {
+          "id": "dg-s5",
+          "source": "ai",
+          "credits": [
+            "u-c3",
+            "u-a2",
+            "u-a4",
+            "u-c1",
+            "u-c2"
+          ],
+          "date": "2026-09-01"
+        }
+      ],
+      "archive": [],
       "city": "Jaipur",
       "country": "India",
       "addedAt": "2026-10-27",
@@ -550,7 +585,6 @@
       "lat": 26.9214,
       "lng": 75.8243,
       "status": "approved",
-      "readyForApproval": false,
       "uploadedBy": "u-c3",
       "votes": 19,
       "photos": [
@@ -602,11 +636,16 @@
         "climate": "Hot at midday",
         "authorship": "Unknown / vernacular"
       },
-      "diagram": {
-        "source": "architect",
-        "by": "u-a2",
-        "credits": []
-      },
+      "diagrams": [
+        {
+          "id": "dg-s6",
+          "source": "architect",
+          "by": "u-a2",
+          "credits": [],
+          "date": "2026-09-01"
+        }
+      ],
+      "archive": [],
       "city": "Jaipur",
       "country": "India",
       "addedAt": "2026-06-26",
@@ -622,7 +661,6 @@
       "lat": 26.9207,
       "lng": 75.8139,
       "status": "pending",
-      "readyForApproval": true,
       "uploadedBy": "u-c2",
       "votes": 9,
       "photos": [
@@ -669,11 +707,16 @@
         "climate": "Breezy in the evening",
         "authorship": "Unknown / vernacular"
       },
-      "diagram": {
-        "source": "architect",
-        "by": "u-a3",
-        "credits": []
-      },
+      "diagrams": [
+        {
+          "id": "dg-s7",
+          "source": "architect",
+          "by": "u-a3",
+          "credits": [],
+          "date": "2026-09-01"
+        }
+      ],
+      "archive": [],
       "city": "Jaipur",
       "country": "India",
       "addedAt": "2026-08-02",
@@ -689,7 +732,6 @@
       "lat": 26.9194,
       "lng": 75.8301,
       "status": "pending",
-      "readyForApproval": false,
       "uploadedBy": "u-c1",
       "votes": 12,
       "photos": [
@@ -736,7 +778,8 @@
         "climate": "Floods in monsoon",
         "authorship": "Unknown / vernacular"
       },
-      "diagram": null,
+      "diagrams": [],
+      "archive": [],
       "city": "Jaipur",
       "country": "India",
       "addedAt": "2026-09-08",
@@ -752,7 +795,6 @@
       "lat": 26.9247,
       "lng": 75.8221,
       "status": "pending",
-      "readyForApproval": false,
       "uploadedBy": "u-c3",
       "votes": 4,
       "photos": [
@@ -784,7 +826,8 @@
         "climate": "Shaded most of the day",
         "authorship": "Unknown / vernacular"
       },
-      "diagram": null,
+      "diagrams": [],
+      "archive": [],
       "city": "Jaipur",
       "country": "India",
       "addedAt": "2026-10-15",
@@ -800,7 +843,6 @@
       "lat": 26.9243,
       "lng": 75.8176,
       "status": "pending",
-      "readyForApproval": false,
       "uploadedBy": "u-c2",
       "votes": 15,
       "photos": [
@@ -872,7 +914,8 @@
         "climate": "Hot at midday",
         "authorship": "Unknown / vernacular"
       },
-      "diagram": null,
+      "diagrams": [],
+      "archive": [],
       "city": "Jaipur",
       "country": "India",
       "addedAt": "2026-06-14",
@@ -888,7 +931,6 @@
       "lat": 26.9291,
       "lng": 75.8201,
       "status": "pending",
-      "readyForApproval": false,
       "uploadedBy": "u-a2",
       "votes": 2,
       "photos": [
@@ -925,7 +967,8 @@
         "climate": "Breezy in the evening",
         "authorship": "Unknown / vernacular"
       },
-      "diagram": null,
+      "diagrams": [],
+      "archive": [],
       "city": "Jaipur",
       "country": "India",
       "addedAt": "2026-07-21",
@@ -941,7 +984,6 @@
       "lat": 26.9363,
       "lng": 75.8155,
       "status": "pending",
-      "readyForApproval": true,
       "uploadedBy": "u-c3",
       "votes": 6,
       "photos": [
@@ -1008,16 +1050,21 @@
         "climate": "Floods in monsoon",
         "authorship": "Unknown / vernacular"
       },
-      "diagram": {
-        "source": "ai",
-        "credits": [
-          "u-c1",
-          "u-c2",
-          "u-c3",
-          "u-a2",
-          "u-a4"
-        ]
-      },
+      "diagrams": [
+        {
+          "id": "dg-s12",
+          "source": "ai",
+          "credits": [
+            "u-c1",
+            "u-c2",
+            "u-c3",
+            "u-a2",
+            "u-a4"
+          ],
+          "date": "2026-09-01"
+        }
+      ],
+      "archive": [],
       "city": "Jaipur",
       "country": "India",
       "addedAt": "2026-08-27",
@@ -1033,7 +1080,6 @@
       "lat": 26.91965,
       "lng": 75.83105,
       "status": "approved",
-      "readyForApproval": false,
       "uploadedBy": "u-c2",
       "votes": 14,
       "photos": [
@@ -1085,11 +1131,16 @@
         "climate": "Shaded most of the day",
         "authorship": "Unknown / vernacular"
       },
-      "diagram": {
-        "source": "architect",
-        "by": "u-a1",
-        "credits": []
-      },
+      "diagrams": [
+        {
+          "id": "dg-s13",
+          "source": "architect",
+          "by": "u-a1",
+          "credits": [],
+          "date": "2026-09-01"
+        }
+      ],
+      "archive": [],
       "city": "Jaipur",
       "country": "India",
       "addedAt": "2026-10-03",
@@ -1105,7 +1156,6 @@
       "lat": 26.91952,
       "lng": 75.83085,
       "status": "pending",
-      "readyForApproval": false,
       "uploadedBy": "u-c1",
       "votes": 5,
       "photos": [
@@ -1142,7 +1192,8 @@
         "climate": "Hot at midday",
         "authorship": "Unknown / vernacular"
       },
-      "diagram": null,
+      "diagrams": [],
+      "archive": [],
       "city": "Jaipur",
       "country": "India",
       "addedAt": "2026-06-02",
@@ -1160,8 +1211,8 @@
       "title": "Shaded rest ledges for the stepwell landing",
       "description": "Stone ledges and a light canopy so people can sit out of the sun without blocking the steps.",
       "files": [
-        "plans.pdf",
-        "sections.pdf",
+        "plans.dwg",
+        "sections.dwg",
         "model.3dm"
       ],
       "version": 1,
@@ -1186,7 +1237,7 @@
       "title": "Chowk steps as evening seating",
       "description": "Widened treads, a handrail and low lighting for the hours when the chowk is busiest.",
       "files": [
-        "drawings.pdf",
+        "drawings.dwg",
         "model.skp"
       ],
       "version": 1,
@@ -1211,7 +1262,7 @@
       "title": "Courtyard water channel and jaali screen",
       "description": "Brings back a shallow water channel and adds a screen for shade and privacy.",
       "files": [
-        "set-v2.pdf",
+        "set-v2.dxf",
         "model.3dm"
       ],
       "version": 2,
@@ -1236,7 +1287,7 @@
       "title": "Threshold benches and drinking water point",
       "description": "Two benches inside the gate and a public water point for people waiting.",
       "files": [
-        "drawings.pdf"
+        "drawings.dwg"
       ],
       "version": 1,
       "published": true,
@@ -1260,7 +1311,7 @@
       "title": "Stepwell handrail and night lighting",
       "description": "A continuous handrail and shielded lights along the main descent.",
       "files": [
-        "student-set.pdf"
+        "student-set.dwg"
       ],
       "version": 1,
       "published": true,
@@ -1283,8 +1334,8 @@
       "title": "Shade sails over the haveli courtyard",
       "description": "Two tensioned sails anchored to the existing parapets, with a ground-level bench along the north wall.",
       "files": [
-        "sails-plan.pdf",
-        "section.pdf"
+        "sails-plan.dwg",
+        "section.dwg"
       ],
       "version": 1,
       "published": true,
@@ -1497,8 +1548,8 @@
           "submittedAt": "2026-08-28",
           "statement": "A perforated stone canopy over the waiting ledge, with a drinking-water point set into the arch wall.",
           "files": [
-            "entry-boards.pdf",
-            "canopy-section.pdf"
+            "entry-boards.dwg",
+            "canopy-model.skp"
           ],
           "units": "Metric (m / mm)",
           "scope": [
@@ -2479,6 +2530,14 @@
       "voted": [],
       "duplicates": [],
       "mergeVotes": 0
+    },
+    {
+      "spaceId": "s14",
+      "yes": 0,
+      "no": 0,
+      "voted": [],
+      "duplicates": [],
+      "mergeVotes": 0
     }
   ],
   "flags": [
@@ -2548,6 +2607,17 @@
       "userId": "u-a1",
       "amount": 64,
       "date": "2026-10-31"
+    }
+  ],
+  "updateReports": [
+    {
+      "id": "up1",
+      "spaceId": "s6",
+      "by": "u-c2",
+      "date": "2026-11-10",
+      "text": "The municipality paved the courtyard and added two benches last month. The old drain is gone.",
+      "photos": 3,
+      "status": "pending"
     }
   ],
   "diagramUploads": [

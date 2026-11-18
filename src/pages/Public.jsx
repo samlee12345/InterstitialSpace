@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
-import { Button, Choice, FormActions, Icon, ImageBox, Input, Page, Select } from '../components/ui.jsx';
-import { MapBox, SpaceCard, distanceM, matchesSearch, parseLatLng } from '../components/domain.jsx';
+import { Button, Choice, FormActions, Icon, ImageBox, Input, Modal, Page, Select } from '../components/ui.jsx';
+import { MapBox, SpaceCard, distanceM, matchesSearch, parseLatLng, typeLabel } from '../components/domain.jsx';
 import { useChoices } from '../design/choices.js';
 
 const VISITOR_LIMIT = 10;
@@ -131,7 +131,7 @@ export const LOCATE = {
 const NEARBY_M = 50;
 
 function redesignCount(state, id) {
-  return state.redesigns.filter((r) => r.spaceId === id && r.published && !r.takenDown).length;
+  return state.redesigns.filter((r) => r.spaceId === id && r.published && !r.takenDown && !r.archived).length;
 }
 
 // The selected space in the side panel, plus the other spaces within 50 m.
@@ -292,9 +292,38 @@ function MapLanding() {
   );
 }
 
+// First visit without an account: what is an interstitial space?
+function IntroOverlay() {
+  const { state, dispatch, isMember } = useDemo();
+  if (isMember || state.introSeen) return null;
+  const close = () => dispatch({ type: 'INTRO_SEEN' });
+  return (
+    <Modal title="What is an interstitial space?" onClose={close} wide>
+      <div className="intro">
+        <p className="lead">The places between places: a stoop, the steps of a stepwell, the edge of a courtyard, the shade inside a city gate. Nobody designed them for what people do there, but people wait, sell, play and rest in them every day.</p>
+        <ul className="intro-points">
+          <li><span className="bold">Residents</span> document how these spaces feel and vote for the ones that should be redesigned.</li>
+          <li><span className="bold">Architects</span> measure them and propose redesigns.</li>
+          <li><span className="bold">Civic bodies and sponsors</span> fund the ones people vote for, through contests.</li>
+        </ul>
+        <p className="small muted">This map shows every space documented so far in Jaipur.</p>
+      </div>
+      <FormActions>
+        <Button to="/about" onClick={close}>Learn more about us</Button>
+        <Button variant="primary" onClick={close}>Explore the map</Button>
+      </FormActions>
+    </Modal>
+  );
+}
+
+// The landing page is map first (round 10). ClassicLanding stays for the sandbox.
 export function Landing() {
-  const { landingLayout } = useChoices();
-  return landingLayout === 'map' ? <MapLanding /> : <ClassicLanding />;
+  return (
+    <>
+      <MapLanding />
+      <IntroOverlay />
+    </>
+  );
 }
 
 const SORTS = {
@@ -316,17 +345,25 @@ export function Browse() {
   const [q, setQ] = useState('');
   const [status, setStatus] = useState('all');
   const [type, setType] = useState('all');
+  const [country, setCountry] = useState('all');
+  const [city, setCity] = useState('all');
   const [sort, setSort] = useState('votes');
   const [hover, setHover] = useState(null);
   const limited = !isMember && state.signupDismissed;
   // A "lat, lon" search finds spaces near that point, nearest first; anything else matches text.
   const point = parseLatLng(q);
   const near = (s) => distanceM(point, s) <= NEAR_POINT_M;
-  const list = visibleSpaces
-    .filter((s) => STATUSES[status].test(s) && (type === 'all' || s.type === type) && (point ? near(s) : matchesSearch(s, q)))
+  // Location narrows everything else: the city list follows the country, and the
+  // type list only offers types that exist in the chosen place.
+  const inPlace = visibleSpaces.filter((s) => (country === 'all' || s.country === country) && (city === 'all' || s.city === city));
+  const countries = [...new Set(visibleSpaces.map((s) => s.country).filter(Boolean))].sort();
+  const cities = [...new Set(visibleSpaces.filter((s) => country === 'all' || s.country === country).map((s) => s.city).filter(Boolean))].sort();
+  const types = ['all', ...[...new Set(inPlace.map((s) => s.type))].sort()];
+  const typeNow = types.includes(type) ? type : 'all';
+  const list = inPlace
+    .filter((s) => STATUSES[status].test(s) && (typeNow === 'all' || s.type === typeNow) && (point ? near(s) : matchesSearch(s, q)))
     .sort(point ? (a, b) => distanceM(point, a) - distanceM(point, b) : SORTS[sort].fn);
   const hidden = limited ? list.slice(VISITOR_LIMIT).map((s) => s.id) : [];
-  const types = ['all', ...new Set(visibleSpaces.map((s) => s.type))];
   return (
     <Page tag="simulated" wide>
       <div className="browse">
@@ -340,6 +377,11 @@ export function Browse() {
             <input id="browse-q" className="input" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Enter address or lat, lon" autoComplete="off" aria-describedby="browse-q-hint" />
             <span id="browse-q-hint" className="xs muted">For example Johari Bazaar, or 26.9239, 75.8267</span>
           </div>
+          <div className="row row-end filters">
+            <Select label="Country" value={country} onChange={(e) => { setCountry(e.target.value); setCity('all'); }} options={[{ value: 'all', label: 'All countries' }, ...countries.map((c) => ({ value: c, label: c }))]} />
+            <Select label="City" value={city} onChange={(e) => setCity(e.target.value)} options={[{ value: 'all', label: 'All cities' }, ...cities.map((c) => ({ value: c, label: c }))]} />
+            <Select label="Type" value={typeNow} onChange={(e) => setType(e.target.value)} options={types.map((t) => ({ value: t, label: t === 'all' ? `All types in ${city !== 'all' ? city : country !== 'all' ? country : 'all places'}` : typeLabel(t) }))} />
+          </div>
           <div className="row row-end">
             <fieldset className="segmented">
               <legend>Status</legend>
@@ -347,12 +389,11 @@ export function Browse() {
                 {Object.entries(STATUSES).map(([id, o]) => (
                   <label key={id} className="segment">
                     <input type="radio" name="status" value={id} checked={status === id} onChange={() => setStatus(id)} />
-                    <span>{o.label} <span className="muted">{visibleSpaces.filter(o.test).length}</span></span>
+                    <span>{o.label} <span className="muted">{inPlace.filter(o.test).length}</span></span>
                   </label>
                 ))}
               </div>
             </fieldset>
-            <Select label="Type" value={type} onChange={(e) => setType(e.target.value)} options={types.map((t) => ({ value: t, label: t === 'all' ? 'All types' : t }))} />
             <Select label="Sort by" value={sort} onChange={(e) => setSort(e.target.value)} options={Object.entries(SORTS).map(([value, o]) => ({ value, label: o.label }))} />
           </div>
           {limited && (
@@ -366,7 +407,7 @@ export function Browse() {
             <div className="note stack-sm">
               <span>No spaces match{q.trim() ? ` “${q.trim()}”` : ''}.</span>
               <div className="row">
-                <button type="button" className="link-btn" onClick={() => { setQ(''); setStatus('all'); setType('all'); }}>Clear search and filters</button>
+                <button type="button" className="link-btn" onClick={() => { setQ(''); setStatus('all'); setType('all'); setCountry('all'); setCity('all'); }}>Clear search and filters</button>
                 {q.trim() && <Link to={`/space/new?name=${encodeURIComponent(q.trim())}`} onClick={(e) => !need('upload') && e.preventDefault()}>Add “{q.trim()}” as a new space</Link>}
               </div>
             </div>
@@ -444,10 +485,37 @@ export function Terms() {
 export function About() {
   return (
     <Page narrow tag="simulated">
-      <h1>About us</h1>
-      <p className="prose">Interstitial Spaces documents the in-between places of a city: steps, thresholds, courtyards and edges that people use but nobody designed for. Residents record how they feel; architects propose redesigns; civic bodies and co-hosts fund the ones people vote for.</p>
-      <p className="prose">The platform is a co-operative. Every account holder is a member with one vote, and any year-end surplus is returned to members by points.</p>
-      <p className="small muted">A class project for New Economies and Societies at Parsons. All content is placeholder.</p>
+      <article className="stack-lg about">
+        <header className="stack-sm">
+          <h1>About us</h1>
+          <p className="lead">We document the in-between places of a city and help the people who use them get them redesigned.</p>
+        </header>
+        <section className="stack-sm" aria-labelledby="about-what">
+          <h2 id="about-what" className="h-sm">What is an interstitial space?</h2>
+          <p className="prose">An interstitial space sits between other places: the steps of a stepwell, a shopfront plinth, a niche in a city gate, the edge of a courtyard where a lane comes in. Nobody planned them for what happens there, yet they are where people wait, sell, rest and children play. They rarely appear on any plan, so they are rarely looked after.</p>
+        </section>
+        <section className="stack-sm" aria-labelledby="about-why">
+          <h2 id="about-why" className="h-sm">What we’re trying to do</h2>
+          <ul className="list-plain">
+            <li>Put these spaces on the map, with how they feel to the people who use them.</li>
+            <li>Let the community decide which ones most need a redesign, by voting.</li>
+            <li>Give architects measured diagrams to design from, and pay them when their redesigns are downloaded.</li>
+            <li>Help civic bodies and sponsors fund the redesigns people asked for, through contests.</li>
+            <li>Run it as a co-operative: members vote on decisions and share any surplus.</li>
+          </ul>
+        </section>
+        <section className="stack-sm" aria-labelledby="about-who">
+          <h2 id="about-who" className="h-sm">Who it’s for</h2>
+          <dl className="dl dl-wide">
+            <dt>Residents and visitors</dt><dd>Document a space, share your experience, vote for what should change. Free.</dd>
+            <dt>Architects and students</dt><dd>Measure spaces, approve new ones, publish redesigns and enter contests. Verified by register or school.</dd>
+            <dt>Civic bodies and sponsors</dt><dd>Find the spaces people care about, buy designs, and co-host contests.</dd>
+            <dt>Property owners</dt><dd>Ask for a space on your property to be removed, no account needed.</dd>
+          </dl>
+        </section>
+        <div className="row"><Button variant="primary" to="/browse">Browse spaces</Button><Button to="/architects">For architects</Button></div>
+        <p className="small muted">A class project for New Economies and Societies at Parsons. All content is placeholder.</p>
+      </article>
     </Page>
   );
 }

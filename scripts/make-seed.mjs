@@ -6,10 +6,10 @@ import { fileURLToPath } from 'node:url';
 const out = fileURLToPath(new URL('../src/data/seed.json', import.meta.url));
 
 const users = [
-  { id: 'u-a1', name: 'Architect A (you)', role: 'architect', points: 38, verified: false, licence: 'Licensed architect (placeholder no.)', reviewsThisYear: 0, paidOut: 64 },
+  { id: 'u-a1', name: 'Architect A (you)', role: 'architect', points: 38, verified: false, licence: 'Licensed architect (placeholder no.)', reviewsThisYear: 3, paidOut: 64, city: 'Jaipur', country: 'India', links: { linkedin: 'linkedin.com/in/architect-a', instagram: '@architect.a', website: 'architect-a.example' } },
   { id: 'u-a2', name: 'Architect B', role: 'architect', points: 62, verified: true, licence: 'Licensed architect (placeholder no.)', reviewsThisYear: 6, paidOut: 0 },
   { id: 'u-a3', name: 'Architect C', role: 'architect', points: 51, verified: true, licence: 'Licensed architect (placeholder no.)', reviewsThisYear: 11, paidOut: 0 },
-  { id: 'u-a4', name: 'Architect D (student)', role: 'architect', points: 12, verified: false, licence: 'Accredited student (placeholder)', reviewsThisYear: 0, paidOut: 0 },
+  { id: 'u-a4', name: 'Architect D (student)', role: 'architect', points: 12, verified: false, licence: 'Accredited student (placeholder)', reviewsThisYear: 2, paidOut: 0 },
   { id: 'u-c1', name: 'Community member 1 (you)', role: 'community', points: 6.5 },
   { id: 'u-c2', name: 'Community member 2', role: 'community', points: 14.25 },
   { id: 'u-c3', name: 'Community member 3', role: 'community', points: 3.125 },
@@ -57,8 +57,7 @@ const spaces = spaceRows.map(([id, name, type, lat, lng, status, n, diagram, upl
   const ph = photos(id, n);
   return {
     id, name, type, lat, lng, status,
-    readyForApproval: status === 'pending' && !!diagram,
-    uploadedBy, votes,
+        uploadedBy, votes,
     photos: ph,
     questionnaire: qa[i % qa.length],
     properties: props(
@@ -67,9 +66,11 @@ const spaces = spaceRows.map(([id, name, type, lat, lng, status, n, diagram, upl
       ['Shaded most of the day', 'Hot at midday', 'Breezy in the evening', 'Floods in monsoon'][i % 4],
       'Unknown / vernacular',
     ),
-    diagram: diagram
-      ? { ...diagram, credits: diagram.source === 'ai' ? [...new Set(ph.map((p) => p.credit))] : [] }
-      : null,
+    // A space can have several spatial diagrams; the 3D model is generated from all of them.
+    diagrams: diagram
+      ? [{ id: `dg-${id}`, ...diagram, credits: diagram.source === 'ai' ? [...new Set(ph.map((p) => p.credit))] : [], date: '2026-09-01' }]
+      : [],
+    archive: [], // past rounds, moved here when a reported update is confirmed
     city: 'Jaipur',
     country: 'India',
     // Spread over the summer and autumn so "Latest added" has something to sort.
@@ -94,12 +95,12 @@ const seed = {
   users,
   spaces,
   redesigns: [
-    { id: 'r1', spaceId: 's1', architectId: 'u-a1', title: 'Shaded rest ledges for the stepwell landing', description: 'Stone ledges and a light canopy so people can sit out of the sun without blocking the steps.', files: ['plans.pdf', 'sections.pdf', 'model.3dm'], version: 1, published: true, takenDown: false, sales: 3 },
-    { id: 'r2', spaceId: 's3', architectId: 'u-a1', title: 'Chowk steps as evening seating', description: 'Widened treads, a handrail and low lighting for the hours when the chowk is busiest.', files: ['drawings.pdf', 'model.skp'], version: 1, published: true, takenDown: false, sales: 1 },
-    { id: 'r3', spaceId: 's2', architectId: 'u-a2', title: 'Courtyard water channel and jaali screen', description: 'Brings back a shallow water channel and adds a screen for shade and privacy.', files: ['set-v2.pdf', 'model.3dm'], version: 2, published: true, takenDown: false, sales: 5 },
-    { id: 'r4', spaceId: 's4', architectId: 'u-a3', title: 'Threshold benches and drinking water point', description: 'Two benches inside the gate and a public water point for people waiting.', files: ['drawings.pdf'], version: 1, published: true, takenDown: false, sales: 2 },
-    { id: 'r5', spaceId: 's1', architectId: 'u-a4', title: 'Stepwell handrail and night lighting', description: 'A continuous handrail and shielded lights along the main descent.', files: ['student-set.pdf'], version: 1, published: true, takenDown: false, sales: 0 },
-    { id: 'r6', spaceId: 's2', architectId: 'u-a1', title: 'Shade sails over the haveli courtyard', description: 'Two tensioned sails anchored to the existing parapets, with a ground-level bench along the north wall.', files: ['sails-plan.pdf', 'section.pdf'], version: 1, published: true, takenDown: false, sales: 0 },
+    { id: 'r1', spaceId: 's1', architectId: 'u-a1', title: 'Shaded rest ledges for the stepwell landing', description: 'Stone ledges and a light canopy so people can sit out of the sun without blocking the steps.', files: ['plans.dwg', 'sections.dwg', 'model.3dm'], version: 1, published: true, takenDown: false, sales: 3 },
+    { id: 'r2', spaceId: 's3', architectId: 'u-a1', title: 'Chowk steps as evening seating', description: 'Widened treads, a handrail and low lighting for the hours when the chowk is busiest.', files: ['drawings.dwg', 'model.skp'], version: 1, published: true, takenDown: false, sales: 1 },
+    { id: 'r3', spaceId: 's2', architectId: 'u-a2', title: 'Courtyard water channel and jaali screen', description: 'Brings back a shallow water channel and adds a screen for shade and privacy.', files: ['set-v2.dxf', 'model.3dm'], version: 2, published: true, takenDown: false, sales: 5 },
+    { id: 'r4', spaceId: 's4', architectId: 'u-a3', title: 'Threshold benches and drinking water point', description: 'Two benches inside the gate and a public water point for people waiting.', files: ['drawings.dwg'], version: 1, published: true, takenDown: false, sales: 2 },
+    { id: 'r5', spaceId: 's1', architectId: 'u-a4', title: 'Stepwell handrail and night lighting', description: 'A continuous handrail and shielded lights along the main descent.', files: ['student-set.dwg'], version: 1, published: true, takenDown: false, sales: 0 },
+    { id: 'r6', spaceId: 's2', architectId: 'u-a1', title: 'Shade sails over the haveli courtyard', description: 'Two tensioned sails anchored to the existing parapets, with a ground-level bench along the north wall.', files: ['sails-plan.dwg', 'section.dwg'], version: 1, published: true, takenDown: false, sales: 0 },
   ],
   models: [
     { id: 'm1', spaceId: 's1', title: 'Measured model — Stepwell landing, Amer Road side', files: ['plan.dwg', 'section.dwg', 'model.obj'], takenDown: false },
@@ -161,7 +162,7 @@ const seed = {
       entries: [
         { id: 'e9', architectId: 'u-a2', title: 'Benches in the arch', submittedAt: '2026-08-12' },
         { id: 'e10', architectId: 'u-a3', title: 'Waiting wall', submittedAt: '2026-08-20' },
-        { id: 'e11', architectId: 'u-a1', title: 'Threshold shade', submittedAt: '2026-08-28', statement: 'A perforated stone canopy over the waiting ledge, with a drinking-water point set into the arch wall.', files: ['entry-boards.pdf', 'canopy-section.pdf'], units: 'Metric (m / mm)', scope: ['Canopy and shade', 'Water and drainage'], cost: '$5,000 to $25,000' },
+        { id: 'e11', architectId: 'u-a1', title: 'Threshold shade', submittedAt: '2026-08-28', statement: 'A perforated stone canopy over the waiting ledge, with a drinking-water point set into the arch wall.', files: ['entry-boards.dwg', 'canopy-model.skp'], units: 'Metric (m / mm)', scope: ['Canopy and shade', 'Water and drainage'], cost: '$5,000 to $25,000' },
       ],
       plans: [
         { when: 'Sep 2026', text: 'Winner announced; the co-host bought the design.', done: true },
@@ -243,6 +244,9 @@ const seed = {
     { id: 'l5', userId: 'u-p1', text: 'Paid tier, one month', pts: -50 },
   ],
   payouts: [{ id: 'po1', userId: 'u-a1', amount: 64, date: '2026-10-31' }],
+  updateReports: [
+    { id: 'up1', spaceId: 's6', by: 'u-c2', date: '2026-11-10', text: 'The municipality paved the courtyard and added two benches last month. The old drain is gone.', photos: 3, status: 'pending' },
+  ],
   diagramUploads: [{ id: 'm-s13', spaceId: 's13', userId: 'u-a1', date: '2026-10-12', files: ['plan.dwg', 'section.dwg', 'model.obj'], notes: 'Measured with a tape and laser distance meter, cross-checked against a phone scan.' }],
 };
 
@@ -285,5 +289,10 @@ seed.redesigns.forEach((r, i) => { r.details = { ...DETAILS[i], agency: true }; 
 const links = { n1: '/earnings', n2: '/contest/c2', n3: '/points', n4: '/ranking', n5: '/co-op', n6: '/profile', n7: '/purchases', n8: '/space/s2', n9: '/co-op', n10: '/moderation', n11: '/earnings', n12: '/contest/c1', n13: '/co-op' };
 seed.notifications.forEach((n) => { n.link = links[n.id]; });
 
+// A second spatial diagram on the Chandpole courtyard, so spaces show more than one.
+seed.spaces.find((x) => x.id === 's2').diagrams.push({ id: 'dg-s2-b', source: 'architect', by: 'u-a2', credits: [], date: '2026-10-20', label: 'Long section through the courtyard and lane' });
+// Every pending space is on the approvals list, diagram or not.
+seed.spaces.filter((x) => x.status === 'pending' && !seed.moderation.some((m) => m.spaceId === x.id))
+  .forEach((x) => seed.moderation.push({ spaceId: x.id, yes: 0, no: 0, voted: [], duplicates: [], mergeVotes: 0 }));
 writeFileSync(out, JSON.stringify(seed, null, 2));
 console.log(`Wrote ${out}: ${spaces.length} spaces, ${seed.redesigns.length} redesigns, ${seed.models.length} models`);

@@ -41,8 +41,6 @@ function PortfolioItem({ label, badges, title, description, meta, details, files
         {details && (
           <dl className="dl dl-compact small">
             {details.units && <><dt>Units</dt><dd>{details.units}</dd></>}
-            {details.scope?.length > 0 && <><dt>Scope</dt><dd>{details.scope.join(', ')}</dd></>}
-            {details.cost && <><dt>Estimated cost</dt><dd>{details.cost}</dd></>}
           </dl>
         )}
         {files?.length > 0 && <span className="small muted">Files: {files.join(', ')}</span>}
@@ -105,7 +103,7 @@ export function Portfolio() {
         title={<Link className="bold" to={`/contest/${c.id}`}>{e.title}</Link>}
         description={e.statement}
         meta={<>Entry in <Link to={`/contest/${c.id}`}>{c.title}</Link>, for {get.space(c.spaceId)?.name}. Submitted {e.submittedAt}. Prize {c.prize}.</>}
-        details={e.units || e.scope ? { units: e.units, scope: e.scope, cost: e.cost } : null}
+        details={e.units ? { units: e.units } : null}
         files={e.files}
       />
     );
@@ -173,13 +171,20 @@ export function ArchitectPage() {
   const { state, get, isMember, rankOf, dispatch } = useDemo();
   const a = get.user(id);
   if (!a || a.role !== 'architect') return <Page narrow><Empty title="Architect not found"><div><Button to="/ranking">See the ranking</Button></div></Empty></Page>;
-  const list = state.redesigns.filter((r) => r.architectId === id && r.published && !r.takenDown);
+  const list = state.redesigns.filter((r) => r.architectId === id && r.published && !r.takenDown && !r.archived);
   return (
     <Page tag="clickable">
       <header className="stack-sm">
         <div className="row"><Badge>Rank {rankOf(id)}</Badge><PointsBadge userId={id} /></div>
         <h1>{a.name}</h1>
-        <p className="muted small">{a.licence}. {list.length} published redesign{list.length === 1 ? '' : 's'}.</p>
+        <p className="muted small">{a.licence}{a.city ? `, ${a.city}, ${a.country}` : ''}. {list.length} published redesign{list.length === 1 ? '' : 's'}.</p>
+        {a.links && Object.values(a.links).some(Boolean) && (
+          <ul className="profile-links small" aria-label="Links">
+            {a.links.website && <li><a href={`https://${a.links.website.replace(/^https?:\/\//, '')}`} target="_blank" rel="noopener noreferrer">Website<span className="visually-hidden"> (opens in a new tab)</span></a></li>}
+            {a.links.linkedin && <li><a href={`https://${a.links.linkedin.replace(/^https?:\/\//, '')}`} target="_blank" rel="noopener noreferrer">LinkedIn<span className="visually-hidden"> (opens in a new tab)</span></a></li>}
+            {a.links.instagram && <li><a href={`https://instagram.com/${a.links.instagram.replace(/^@/, '')}`} target="_blank" rel="noopener noreferrer">Instagram<span className="visually-hidden"> (opens in a new tab)</span></a></li>}
+          </ul>
+        )}
       </header>
       {list.length === 0 && <Empty title="No published redesigns"><p>This architect has nothing for sale right now.</p></Empty>}
       {isMember ? (
@@ -313,7 +318,17 @@ export function Earnings() {
         <div className="card"><span className="small muted">Earned so far (80% share)</span><span className="display">{money(total)}</span><span className="xs muted">placeholder amount</span></div>
         <div className="card"><span className="small muted">Already paid out</span><span className="display">{money(user.paidOut || 0)}</span><span className="xs muted">placeholder amount</span></div>
       </div>
-      <div><Button variant="primary" disabled={balance <= 0} onClick={() => setConfirm(true)}>Request payout</Button>{balance <= 0 && <span className="small muted"> Nothing to pay out yet.</span>}</div>
+      <section className="card stack-sm payout-box" aria-labelledby="payout-h">
+        <h2 id="payout-h" className="h-sm">Payout</h2>
+        <div className="row">
+          <Button variant="primary" disabled aria-describedby="payout-when">Request payout</Button>
+          <span id="payout-when" className="small muted">Payouts open when the financial year ends, on 31 March (placeholder date).</span>
+        </div>
+        <dl className="dl dl-wide small">
+          <dt>Leaving the paid tier</dt><dd>You can still request a payout of what you’ve earned when you downgrade to the free tier.</dd>
+          <dt>Deactivating or deleting</dt><dd>You lose your points. Ask for anything you’re owed before you close your account.</dd>
+        </dl>
+      </section>
 
       <section className="stack">
         <h2>Sales by redesign</h2>

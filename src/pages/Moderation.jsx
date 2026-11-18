@@ -1,52 +1,92 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
-import { Badge, Button, Empty, ImageBox, Input, Page, RoleGate, StatusBadges, Tally } from '../components/ui.jsx';
+import { Badge, Button, Empty, ImageBox, Input, Page, RoleGate, Select, StatusBadges, Tally } from '../components/ui.jsx';
+import { POINTS } from '../lib/points.js';
 import { Crumbs } from '../components/domain.jsx';
 
 function Gate() {
   return (
     <Page narrow tag="simulated">
-      <RoleGate title="Moderators only">Verified architects (50 points or more) review whether uploads qualify as interstitial spaces.</RoleGate>
+      <RoleGate title="Architects only">Architects approve new spaces: each confirms that an upload is an interstitial space.</RoleGate>
     </Page>
   );
 }
 
+const QUOTA = 10; // approvals per architect every 6 months
+
 function StatusCard() {
-  const { user, cfg } = useDemo();
+  const { user, isModerator } = useDemo();
+  const done = Math.min(user.reviewsThisYear || 0, QUOTA);
   return (
     <aside className="card">
-      <div className="row"><Badge kind="solid">Verified moderator</Badge></div>
-      <h3>{user.reviewsThisYear} of {cfg.reviewsRequired} reviews this year</h3>
-      <Tally yes={Math.min(user.reviewsThisYear, cfg.reviewsRequired)} no={0} total={cfg.reviewsRequired} />
-      <p className="small muted">Review {cfg.reviewsRequired} spaces a year to keep the badge. Fall short and you lose it, then wait 3 months before your points are looked at again. Each review earns 2 points.</p>
+      <div className="row"><Badge kind="solid">{isModerator ? 'Moderator' : 'Architect'}</Badge></div>
+      <h3>{done} of {QUOTA} approvals in the last 6 months</h3>
+      <Tally yes={done} no={0} total={QUOTA} />
+      <p className="small muted">Review {QUOTA} spaces every 6 months to keep your architect status. Each review earns {POINTS.review} points.</p>
     </aside>
   );
 }
 
+const emptyRow = (spaceId) => ({ spaceId, yes: 0, no: 0, voted: [], duplicates: [], mergeVotes: 0 });
+
+// Reported updates wait here for a moderator.
+function UpdateReports() {
+  const { state, dispatch, get } = useDemo();
+  const pending = state.updateReports.filter((r) => r.status === 'pending');
+  return (
+    <section className="stack" aria-labelledby="updates-h">
+      <h2 id="updates-h" className="h-sm">Reported updates ({pending.length})</h2>
+      <p className="small muted">Someone says the space changed on the ground. Check the proof. Confirming moves all past contributions to the space’s Archived tab.</p>
+      {pending.length === 0 && <p className="note">No reported updates waiting.</p>}
+      <ul className="list">
+        {pending.map((r) => {
+          const sp = get.space(r.spaceId);
+          return (
+            <li key={r.id} className="stack-sm">
+              <div className="row"><Link className="bold" to={`/space/${r.spaceId}`}>{sp?.name}</Link><span className="small muted">reported by {get.user(r.by)?.name} on {r.date}</span></div>
+              <p>{r.text}</p>
+              <div className="thumbs">{Array.from({ length: r.photos }, (_, i) => <ImageBox key={i} label={`Proof ${i + 1}`} shape="square" />)}</div>
+              <div className="row">
+                <Button variant="primary" onClick={() => dispatch({ type: 'RESOLVE_UPDATE', id: r.id, ok: true })}>Confirm update and archive</Button>
+                <Button onClick={() => dispatch({ type: 'RESOLVE_UPDATE', id: r.id, ok: false })}>Not an update</Button>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
 export function Moderation() {
-  const { state, user, isModerator, get } = useDemo();
-  if (!isModerator) return <Gate />;
-  const rows = state.moderation
-    .map((m) => ({ ...m, space: get.space(m.spaceId) }))
-    .filter((m) => m.space && !m.space.removed && m.space.status === 'pending' && m.space.readyForApproval && m.space.uploadedBy !== user.id);
-  const ownHidden = state.spaces.filter((s) => s.status === 'pending' && s.readyForApproval && s.uploadedBy === user.id).length;
-  const notReady = state.spaces.filter((s) => !s.removed && s.status === 'pending' && !s.readyForApproval).length;
+  const { state, user, isModerator, isArchitect } = useDemo();
+  const [city, setCity] = useState('all');
+  if (!isModerator && !isArchitect) return <Gate />;
+  // Every pending space is listed as soon as it is created; no diagram needed.
+  const pending = state.spaces.filter((s) => !s.removed && s.status === 'pending');
+  const cities = [...new Set(pending.map((s) => s.city || 'Jaipur'))].sort();
+  const rows = pending
+    .filter((s) => s.uploadedBy !== user.id && (city === 'all' || (s.city || 'Jaipur') === city))
+    .map((space) => ({ ...(state.moderation.find((m) => m.spaceId === space.id) || emptyRow(space.id)), space }));
+  const own = pending.filter((s) => s.uploadedBy === user.id).length;
   return (
     <Page tag="simulated">
       <div className="split">
         <div className="stack">
-          <h1>Moderation list</h1>
-          <p className="prose muted">Only spaces that are ready for approval are listed: they have a spatial diagram and enough photos. Pick any space to review. Nothing is assigned. You only confirm that an upload is an interstitial space; community votes decide which spaces get attention.</p>
+          <h1>Spaces to approve</h1>
+          <p className="prose muted">Every new space waits here until architects confirm it is an interstitial space. Pick any. Nothing is assigned. Three yes votes approve a space; community votes then decide which spaces get redesigned.</p>
+          <Select label="City" value={city} onChange={(e) => setCity(e.target.value)} options={[{ value: 'all', label: 'All cities' }, ...cities.map((c) => ({ value: c, label: c }))]} />
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Space</th><th>Photos</th><th>Diagram</th><th>Votes so far</th><th /></tr></thead>
+              <thead><tr><th>Space</th><th>City</th><th>Photos</th><th>Diagrams</th><th>Votes so far</th><th /></tr></thead>
               <tbody>
                 {rows.map((m) => (
                   <tr key={m.spaceId}>
-                    <td><span className="bold">{m.space.name}</span><br /><span className="row"><StatusBadges space={m.space} /></span></td>
+                    <td><span className="bold">{m.space.name}</span><br /><span className="small muted">Added {m.space.addedAt}</span></td>
+                    <td>{m.space.city || 'Jaipur'}</td>
                     <td>{m.space.photos.length}</td>
-                    <td>{m.space.diagram ? (m.space.diagram.source === 'ai' ? 'AI' : 'Architect') : 'None yet'}</td>
+                    <td>{m.space.diagrams.length || 'None yet'}</td>
                     <td><Tally yes={m.yes} no={m.no} /></td>
                     <td><Button to={`/moderation/${m.spaceId}`}>{m.voted.includes(user.id) ? 'View' : 'Review'}</Button></td>
                   </tr>
@@ -54,10 +94,9 @@ export function Moderation() {
               </tbody>
             </table>
           </div>
-          {rows.length === 0 && <p className="note">Nothing is ready for review right now.</p>}
-          {notReady > 0 && <p className="small muted">{notReady} pending space{notReady > 1 ? 's are' : ' is'} not listed yet because {notReady > 1 ? 'they need' : 'it needs'} a spatial diagram or more photos.</p>}
-          {ownHidden > 0 && <p className="small muted">{ownHidden} of your own upload{ownHidden > 1 ? 's are' : ' is'} hidden from this list. You can’t review your own uploads.</p>}
-          <div><Button to="/flags">Open the flag queue</Button></div>
+          {rows.length === 0 && <p className="note">Nothing waiting{city !== 'all' ? ` in ${city}` : ''}.</p>}
+          {own > 0 && <p className="small muted">{own} of your own upload{own > 1 ? 's are' : ' is'} hidden from this list. You can’t review your own uploads.</p>}
+          {isModerator && <><hr className="rule" /><UpdateReports /><div><Button to="/flags">Open the flag queue</Button></div></>}
         </div>
         <StatusCard />
       </div>
@@ -67,18 +106,17 @@ export function Moderation() {
 
 export function ModerationReview() {
   const { id } = useParams();
-  const { state, dispatch, user, isModerator, get, cfg } = useDemo();
+  const { state, dispatch, user, isModerator, isArchitect, get, cfg } = useDemo();
   const [no, setNo] = useState(false);
   const [reason, setReason] = useState('');
   const [err, setErr] = useState('');
-  if (!isModerator) return <Gate />;
+  if (!isModerator && !isArchitect) return <Gate />;
   const space = get.space(id);
-  const m = state.moderation.find((x) => x.spaceId === id);
+  const m = space && (state.moderation.find((x) => x.spaceId === id) || emptyRow(id));
   if (!space || !m) return <Page narrow><Empty title="Nothing to review"><div><Button to="/moderation">Back to the list</Button></div></Empty></Page>;
   if (space.uploadedBy === user.id) return <Page narrow tag="simulated"><Empty title="You can’t review your own upload"><div><Button to="/moderation">Back to the list</Button></div></Empty></Page>;
   const voted = m.voted.includes(user.id);
   const decided = space.status !== 'pending';
-  const hasDiagram = !!space.diagram;
 
   const reject = () => {
     if (reason.trim().length < 10) return setErr('Give a reason. It is shown publicly and sent to the contributor.');
@@ -88,7 +126,7 @@ export function ModerationReview() {
 
   return (
     <Page tag="simulated">
-      <Crumbs items={[['/moderation', 'Moderation list'], [null, space.name]]} />
+      <Crumbs items={[['/moderation', 'Spaces to approve'], [null, space.name]]} />
       <div className="split">
         <div className="stack">
           <div className="row"><StatusBadges space={space} />{space.status === 'approved' && <Badge kind="solid">Approved</Badge>}</div>
@@ -125,12 +163,8 @@ export function ModerationReview() {
           </section>
 
           <section className="card">
-            <h3>Has a spatial diagram?</h3>
-            {hasDiagram ? (
-              <p className="small">Yes: {space.diagram.source === 'ai' ? 'AI diagram from 10+ photos' : `uploaded by ${get.user(space.diagram.by)?.name}, with ${space.photos.length} photos`}. This space can be voted on.</p>
-            ) : (
-              <p className="small bold">Not yet. A space needs an AI diagram (10+ photos) or an architect’s diagram plus 5+ photos before the vote opens. It stays pending.</p>
-            )}
+            <h3>Documentation so far</h3>
+            <p className="small">{space.photos.length} photos, {space.diagrams.length} spatial diagram{space.diagrams.length === 1 ? '' : 's'}. You can approve a space before it has a diagram.</p>
           </section>
         </div>
 
@@ -138,13 +172,11 @@ export function ModerationReview() {
           <div className="card">
             <h3>Does it qualify as an interstitial space?</h3>
             <Tally yes={m.yes} no={m.no} />
-            <p className="small muted">5 moderators vote. 3 or more yes approves it. There is no deadline.</p>
+            <p className="small muted">Architects vote. 3 yes votes approve it; 3 no votes reject it. There is no deadline.</p>
             {decided ? (
               <p className="bold">{space.status === 'approved' ? 'Approved: 3 yes votes reached.' : 'Did not qualify: 3 no votes reached.'}</p>
             ) : voted ? (
-              <p className="bold">You voted. +2 points.</p>
-            ) : !hasDiagram ? (
-              <p className="small">Voting opens once the space has a diagram.</p>
+              <p className="bold">You voted. +{POINTS.review} points.</p>
             ) : no ? (
               <>
                 <Input label="Reason (public)" textarea value={reason} onChange={(e) => setReason(e.target.value)} error={err} hint="Anyone can read this. The contributor can appeal or resubmit." />

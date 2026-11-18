@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
 import { fmtPoints } from '../lib/points.js';
@@ -10,6 +10,7 @@ const ICONS = {
   redesign: 'M4 16l.9-3.6L13 4.3l2.7 2.7-8.1 8.1Z M11.4 5.9l2.7 2.7',
   locate: 'M10 3v2.5 M10 14.5V17 M3 10h2.5 M14.5 10H17 M10 14.5a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Z M10 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z',
   pin: 'M10 17s5-4.6 5-8.5a5 5 0 0 0-10 0C5 12.4 10 17 10 17Z M10 10.2a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4Z',
+  bell: 'M5.5 13.5V9a4.5 4.5 0 0 1 9 0v4.5l1.5 1.5H4Z M8.5 16.5a1.5 1.5 0 0 0 3 0',
 };
 export function Icon({ name, label }) {
   return (
@@ -89,7 +90,6 @@ export function StatusBadges({ space }) {
     <>
       {space.status === 'pending' && <Badge kind="dashed">Pending</Badge>}
       {space.status === 'rejected' && <Badge kind="dashed">Did not qualify</Badge>}
-      {space.readyForApproval && <Badge>Ready for approval</Badge>}
       {space.removal === 'review' && <Badge kind="dashed">Removal under review</Badge>}
     </>
   );
@@ -142,19 +142,26 @@ export function Choice({ name, value, checked, onChange, disabled, title, childr
 }
 
 // File picker. Real files can be chosen (only their names are kept), or sample names added in one click.
-export function FileDrop({ label, files, onChange, samples = ['drawings.pdf', 'model.3dm'], error }) {
+export function FileDrop({ label, files, onChange, samples = ['drawings.pdf', 'model.3dm'], error, accept }) {
   const ref = useRef(null);
+  const [refused, setRefused] = useState([]);
+  // With `accept` (e.g. ['.dwg', '.dxf']) other file types are refused with a message.
+  const ok = (name) => !accept || accept.some((ext) => name.toLowerCase().endsWith(ext));
+  const addNames = (names) => {
+    setRefused(names.filter((n) => !ok(n)));
+    onChange([...new Set([...files, ...names.filter(ok)])]);
+  };
   return (
     <div className="field">
       <span className="label">{label}</span>
       <div className="drop">
         <div className="row">
           <Button onClick={() => ref.current.click()}>Choose files</Button>
-          <Button variant="quiet" onClick={() => onChange([...new Set([...files, ...samples])])}>Use sample files</Button>
-          <input ref={ref} type="file" multiple hidden aria-label={label} onChange={(e) => onChange([...files, ...[...e.target.files].map((f) => f.name)])} />
+          <Button variant="quiet" onClick={() => addNames(samples)}>Use sample files</Button>
+          <input ref={ref} type="file" multiple hidden aria-label={label} accept={accept?.join(',')} onChange={(e) => addNames([...e.target.files].map((f) => f.name))} />
         </div>
         {files.length === 0 ? (
-          <span className="small muted">No files yet. Nothing is uploaded anywhere — the prototype only keeps file names.</span>
+          <span className="small muted">{accept ? `Accepted: ${accept.join(', ')}. ` : ''}No files yet. Nothing is uploaded anywhere — the prototype only keeps file names.</span>
         ) : (
           <ul className="files">
             {files.map((f) => (
@@ -166,6 +173,7 @@ export function FileDrop({ label, files, onChange, samples = ['drawings.pdf', 'm
           </ul>
         )}
       </div>
+      {refused.length > 0 && <span className="error" role="alert">Not added: {refused.join(', ')}. Only {accept.join(', ')} files are accepted.</span>}
       {error && <span className="error" role="alert">{error}</span>}
     </div>
   );

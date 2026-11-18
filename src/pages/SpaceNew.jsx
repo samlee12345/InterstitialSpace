@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
-import { Badge, Button, FormActions, ImageBox, Input, Modal, Page, RoleGate, Select, Steps } from '../components/ui.jsx';
+import { Badge, Button, FormActions, Icon, ImageBox, Input, Modal, Page, RoleGate, Select, Steps } from '../components/ui.jsx';
 import { typeLabel } from '../components/domain.jsx';
 import { useChoices } from '../design/choices.js';
-import { fmtPoints, uploadPoints } from '../lib/points.js';
+import { POINTS, fmtPoints, uploadPoints } from '../lib/points.js';
 
 /* Create new interstitial space, in three versions (Demo bar: Create new space):
  *  A "inline":  Photos → Area → Questionnaire (opens with "Is it one of these
@@ -25,7 +25,10 @@ const PHOTO_POINT = {
   alone: { lat: 26.9301, lng: 75.8243, label: 'near Tripolia Bazaar' },
 };
 const DEFAULT_SHAPE = { mode: 'rect', pts: [{ x: -12, y: 9 }, { x: 12, y: 9 }, { x: 12, y: -9 }, { x: -12, y: -9 }], r: 12 };
-const TYPES = ['stepwell', 'courtyard', 'chowk steps', 'gateway threshold', 'threshold'];
+const TYPES = ['stepwell', 'courtyard', 'chowk steps', 'gateway threshold', 'threshold', 'other'];
+// Optional questionnaire details; each one filled in earns POINTS.field.
+const DETAIL_FIELDS = ['transition', 'materiality', 'sensory', 'activity', 'materials'];
+const detailsDone = (f) => DETAIL_FIELDS.filter((k) => f[k].trim()).length;
 const RELATIONS = [['same', 'Same space'], ['child', 'It is inside my new space'], ['parent', 'My new space is inside it'], ['none', 'Not related']];
 
 // ── Geometry, in metres east (x) and north (y) of the photo point ──
@@ -76,8 +79,12 @@ function PhotoPicker({ photos, setPhotos, geotag, point, error, compact }) {
           </div>
         ))}
         <button type="button" className="photo-add" onClick={add}>
+          <span className="bold"><Icon name="photo" /> Take a photo</span>
+          {!compact && <span className="xs muted">Opens the camera (simulated)</span>}
+        </button>
+        <button type="button" className="photo-add" onClick={add}>
           <span className="bold">Add photos</span>
-          {!compact && <span className="xs muted">Simulated upload</span>}
+          {!compact && <span className="xs muted">From your library (simulated)</span>}
         </button>
       </div>
       {!compact && photos.length > 0 && (geotag ? (
@@ -222,11 +229,18 @@ function Relations({ candidates, relations, setRelations }) {
 
 // ── Questionnaire with the optional details folded in ──
 function Questionnaire({ f, set }) {
+  const done = detailsDone(f);
   return (
     <div className="stack">
+      <div className="points-meter" role="status">
+        <span className="small"><span className="bold">The more you fill in, the more you earn.</span> Each optional detail adds {fmtPoints(POINTS.field)} points.</span>
+        <span className="small">{done} of {DETAIL_FIELDS.length} details: +{fmtPoints(done * POINTS.field)} points</span>
+        <span className="meter" aria-hidden="true"><span style={{ width: `${(done / DETAIL_FIELDS.length) * 100}%` }} /></span>
+      </div>
       <p className="xs muted">Fields marked * are required.</p>
       <Input label={<>Name of the space<Req /></>} value={f.name} onChange={set('name')} placeholder="e.g. Steps beside the tea stall, Jaipur Darwaza" />
-      <Select label={<>Type<Req /></>} value={f.type} onChange={set('type')} options={TYPES.map((t) => ({ value: t, label: typeLabel(t) }))} />
+      <Select label={<>Type<Req /></>} value={f.type} onChange={set('type')} options={TYPES.map((t) => ({ value: t, label: t === 'other' ? 'Other: name a new type' : typeLabel(t) }))} />
+      {f.type === 'other' && <Input label={<>Name the new type<Req /></>} value={f.customType} onChange={set('customType')} placeholder="e.g. Rooftop edge, bus shelter, temple plinth" hint="Moderators may merge it with an existing type later." />}
       <Input label={<>How did it feel to be there?<Req /></>} textarea value={f.feelings} onChange={set('feelings')} />
       <Input label="What was it like arriving and leaving?" textarea value={f.transition} onChange={set('transition')} />
       <Input label="Materiality: what is it made of?" value={f.materiality} onChange={set('materiality')} />
@@ -234,10 +248,7 @@ function Questionnaire({ f, set }) {
       <h3 className="h-xs">More details</h3>
       <Input label="Activity and who uses it" value={f.activity} onChange={set('activity')} />
       <Input label="Materials, climate, who built or funded it" value={f.materials} onChange={set('materials')} />
-      <div className="field-row">
-        <Select label="3D scans" value={f.scans} onChange={set('scans')} options={[{ value: 0, label: 'None' }, { value: 1, label: '1 scan' }, { value: 2, label: '2 scans' }]} />
-        <Select label="Photos of the surroundings" value={f.context} onChange={set('context')} options={[{ value: 0, label: 'None' }, { value: 2, label: '2 photos' }, { value: 4, label: '4 photos' }]} />
-      </div>
+      <p className="note small">3D scans: in the mobile app you’ll be able to scan the space with your phone and add it here.</p>
     </div>
   );
 }
@@ -256,7 +267,7 @@ export default function SpaceNew() {
   const [step, setStep] = useState(0);
   const [shape, setShape] = useState(DEFAULT_SHAPE);
   const [relations, setRelations] = useState({});
-  const [f, setF] = useState({ name: searchName, type: 'gateway threshold', feelings: '', transition: '', materiality: '', sensory: '', activity: '', materials: '', scans: 0, context: 0, mergeText: '' });
+  const [f, setF] = useState({ name: searchName, type: 'gateway threshold', feelings: '', transition: '', materiality: '', sensory: '', activity: '', materials: '', scans: 0, context: 0, mergeText: '', customType: '' });
   const [err, setErr] = useState('');
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
 
@@ -287,6 +298,7 @@ export default function SpaceNew() {
   const checkQuestionnaire = () => {
     if (merge) return f.mergeText.trim() ? '' : 'Say something about the space. Every contribution needs a comment.';
     if (!f.name.trim() || !f.feelings.trim()) return 'Fill in the fields marked *: name, type and how it felt.';
+    if (f.type === 'other' && !f.customType.trim()) return 'Name the new type, or pick one from the list.';
     return '';
   };
 
@@ -298,7 +310,7 @@ export default function SpaceNew() {
     }
     const id = `s-${Date.now()}`;
     dispatch({
-      type: 'CREATE_SPACE', id, userId: user.id, name: f.name.trim(), spaceType: f.type, photos: photos.length, scans: Number(f.scans), full: true,
+      type: 'CREATE_SPACE', id, userId: user.id, name: f.name.trim(), spaceType: f.type === 'other' ? f.customType.trim().toLowerCase() : f.type, photos: photos.length, scans: 0, fields: detailsDone(f), full: true,
       lat: point.lat, lng: point.lng, area: shape, areaM: Math.round(Math.sqrt(areaM2(shape) / Math.PI)), relations: liveRelations,
       questionnaire: { feelings: f.feelings, transition: f.transition || 'Not given', materiality: f.materiality || 'Not given', sensory: f.sensory || 'Not given' },
       properties: { activity: f.activity || 'Not given', materials: f.materials || 'Not given', climate: 'Not given', authorship: 'Not given' },
@@ -306,7 +318,7 @@ export default function SpaceNew() {
     return nav(`/space/${id}`, { state: { banner: { title: 'Space submitted', text: 'It shows as Pending until moderators confirm it qualifies. Your points arrive then.' } } });
   };
 
-  const pts = uploadPoints({ photos: photos.length, scans: Number(f.scans), full: true });
+  const pts = uploadPoints({ photos: photos.length, fields: detailsDone(f), full: true });
   const area = <AreaEditor center={point} shape={shape} setShape={setShape} candidates={candidates} />;
   const relationsBlock = candidates.length > 0 && <Relations candidates={candidates} relations={liveRelations} setRelations={setRelations} />;
   const questionnaireBlock = merge ? (
@@ -320,8 +332,8 @@ export default function SpaceNew() {
       <div className="card">
         <h2 className="h-sm">{merge ? `Adding to ${merge.name}` : f.name}</h2>
         <dl className="dl">
-          <dt>Photos</dt><dd>{photos.length}{Number(f.context) > 0 && ` + ${f.context} of the surroundings`}</dd>
-          {!merge && <><dt>Type</dt><dd>{typeLabel(f.type)}</dd><dt>How it felt</dt><dd>{f.feelings}</dd><dt>Area</dt><dd>{shape.mode === 'circle' ? 'Circle' : 'Four corners'}, about {Math.round(areaM2(shape))} m²</dd></>}
+          <dt>Photos</dt><dd>{photos.length}</dd>
+          {!merge && <><dt>Type</dt><dd>{f.type === 'other' ? typeLabel(f.customType || 'Other') : typeLabel(f.type)}</dd><dt>Details filled in</dt><dd>{detailsDone(f)} of {DETAIL_FIELDS.length}</dd><dt>How it felt</dt><dd>{f.feelings}</dd><dt>Area</dt><dd>{shape.mode === 'circle' ? 'Circle' : 'Four corners'}, about {Math.round(areaM2(shape))} m²</dd></>}
           {merge && <><dt>Your comment</dt><dd>{f.mergeText}</dd></>}
           <dt>Licence</dt><dd>Creative Commons. You keep ownership.</dd>
         </dl>

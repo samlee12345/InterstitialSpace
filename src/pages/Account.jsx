@@ -163,7 +163,7 @@ export function Contributions() {
     if (exp.length) did.push(`${exp.length} ${exp.length === 1 ? 'experience' : 'experiences'}`);
     const ph = s.photos.filter((p) => p.credit === user.id).length;
     if (ph) did.push(`${ph} ${ph === 1 ? 'photo' : 'photos'}`);
-    if (s.diagram?.by === user.id) did.push('Spatial diagram');
+    if (s.diagrams?.some((d) => d.by === user.id)) did.push('Spatial diagram');
     const rd = state.redesigns.filter((r) => r.spaceId === s.id && r.architectId === user.id).length;
     if (rd) did.push(`${rd} ${rd === 1 ? 'redesign' : 'redesigns'}`);
     const en = state.contests.filter((c) => c.spaceId === s.id).flatMap((c) => c.entries).filter((e) => e.architectId === user.id).length;
@@ -171,7 +171,6 @@ export function Contributions() {
     return { s, did };
   }).filter((r) => r.did.length);
   const live = rows.filter((r) => !r.s.removed);
-  const removed = rows.filter((r) => r.s.removed);
   return (
     <Page>
       <header className="stack-sm">
@@ -199,14 +198,6 @@ export function Contributions() {
           </div>
         )}
       </section>
-      <section className="stack" aria-labelledby="removed-h">
-        <h2 id="removed-h">Removed spaces ({removed.length})</h2>
-        <p className="small muted">Spaces taken off the platform at an owner’s request. Only contributors see them here, and you keep your photos.</p>
-        <ul className="list">
-          {removed.map(({ s, did }) => <li key={s.id}>{s.name} <span className="small muted">({did.join(', ')})</span></li>)}
-          {removed.length === 0 && <li className="muted">None.</li>}
-        </ul>
-      </section>
     </Page>
   );
 }
@@ -214,7 +205,7 @@ export function Contributions() {
 // Account settings only: photo, details, account type, delete account.
 export function Profile() {
   const { user, isArchitect, rankOf, dispatch } = useDemo();
-  const [f, setF] = useState({ name: user?.name.replace(' (you)', '') || '', email: user ? `${user.id}@example.com` : '' });
+  const [f, setF] = useState({ name: user?.name.replace(' (you)', '') || '', email: user ? `${user.id}@example.com` : '', city: user?.city || '', country: user?.country || '', linkedin: user?.links?.linkedin || '', instagram: user?.links?.instagram || '', website: user?.links?.website || '' });
   const [hasPhoto, setHasPhoto] = useState(false);
   const [del, setDel] = useState(false);
   const [confirmText, setConfirmText] = useState('');
@@ -231,10 +222,19 @@ export function Profile() {
           {hasPhoto && <Button variant="quiet" onClick={() => setHasPhoto(false)}>Remove</Button>}
         </div>
       </section>
-      <form className="stack" onSubmit={(e) => { e.preventDefault(); dispatch({ type: 'TOAST', text: 'Profile saved' }); }}>
+      <form className="stack" onSubmit={(e) => { e.preventDefault(); dispatch({ type: 'SAVE_PROFILE', userId: user.id, city: f.city.trim(), country: f.country.trim(), links: { linkedin: f.linkedin.trim(), instagram: f.instagram.trim(), website: f.website.trim() } }); }}>
         <h2 className="h-sm">Your details</h2>
         <Input label="Name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
         <Input label="Email" type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
+        <div className="field-row">
+          <Input label="City" value={f.city} onChange={(e) => setF({ ...f, city: e.target.value })} autoComplete="address-level2" />
+          <Input label="Country" value={f.country} onChange={(e) => setF({ ...f, country: e.target.value })} autoComplete="country-name" />
+        </div>
+        <h3 className="h-xs">Links on your public profile</h3>
+        <p className="xs muted">Optional. Shown on your architect page and next to your experiences.</p>
+        <Input label="LinkedIn" value={f.linkedin} onChange={(e) => setF({ ...f, linkedin: e.target.value })} placeholder="linkedin.com/in/your-name" />
+        <Input label="Instagram" value={f.instagram} onChange={(e) => setF({ ...f, instagram: e.target.value })} placeholder="@yourhandle" />
+        <Input label="Website" inputMode="url" value={f.website} onChange={(e) => setF({ ...f, website: e.target.value })} placeholder="yourstudio.com" />
         <FormActions><Button variant="primary" type="submit">Save changes</Button></FormActions>
       </form>
       <section className="stack" aria-labelledby="tier-h">
@@ -248,12 +248,12 @@ export function Profile() {
       </section>
       <section className="danger-zone" aria-labelledby="del-h">
         <h2 id="del-h" className="h-sm">Delete account</h2>
-        <p className="small">Your account, points and co-op vote are removed. Purchases can’t be downloaded again afterwards.</p>
+        <p className="small">Your account, your {fmtPoints(user.points)} points and your co-op vote are removed. Points can’t be recovered or paid out. Purchases can’t be downloaded again afterwards.</p>
         <div><Button onClick={() => setDel(true)}>Delete account</Button></div>
       </section>
       {del && (
         <Modal title="Delete your account?" onClose={() => setDel(false)}>
-          <p>This can’t be undone. Type DELETE to confirm.</p>
+          <p>This can’t be undone. You lose your {fmtPoints(user.points)} points. Type DELETE to confirm.</p>
           <Input label="Confirm" value={confirmText} onChange={(e) => setConfirmText(e.target.value)} />
           <p className="xs muted">Simulated: in the prototype nothing is deleted.</p>
           <FormActions>

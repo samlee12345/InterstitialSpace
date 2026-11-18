@@ -34,15 +34,22 @@ function useFinish() {
   };
 }
 
-function Professional({ onBack }) {
+// Architects: diploma first (required), then the licence. Licensed architects are
+// looked up in their register and upload an ID that matches it; architects whose
+// licence is pending can add an application or exam number if they have one.
+function Architect({ status, onBack }) {
   const finish = useFinish();
-  const [f, setF] = useState({ country: 'India', name: '', number: '', email: '', docs: [] });
+  const licensed = status === 'licensed';
+  const [f, setF] = useState({ school: SCHOOLS[0].name, year: '', diploma: [], country: 'India', name: '', number: '', email: '', docs: [] });
   const [lookup, setLookup] = useState('idle'); // idle | checking | found
   const [step, setStep] = useState(0);
   const [err, setErr] = useState('');
   const [done, setDone] = useState(false);
   const reg = REGISTERS[f.country];
-  const set = (k) => (e) => { setF({ ...f, [k]: e.target.value }); if (k !== 'email') setLookup('idle'); };
+  const steps = licensed ? ['Diploma', 'Licence', 'Identity document', 'Account'] : ['Diploma', 'Licence (optional)', 'Account'];
+  const account = steps.length - 1;
+  const set = (k) => (e) => { setF({ ...f, [k]: e.target.value }); if (['country', 'name', 'number'].includes(k)) setLookup('idle'); };
+  const go = (n) => { setErr(''); setStep(n); };
 
   useEffect(() => {
     if (lookup !== 'checking') return undefined;
@@ -61,12 +68,24 @@ function Professional({ onBack }) {
     return setLookup('checking');
   };
   if (done) {
-    return <div className="alert" role="status"><div className="row"><div className="spinner" aria-hidden="true" /><h2 className="h-sm">Checking your document against the register…</h2></div><p className="small muted">Simulated. You’ll be signed in as an architect in a moment.</p></div>;
+    return <div className="alert" role="status"><div className="row"><div className="spinner" aria-hidden="true" /><h2 className="h-sm">Checking your documents…</h2></div><p className="small muted">Simulated. You’ll be signed in as {licensed ? 'a licensed architect' : 'an architect with a licence pending'} in a moment.</p></div>;
   }
   return (
     <div className="stack">
-      <Steps steps={['Registration', 'Identity document', 'Account']} current={step} />
+      <Steps steps={steps} current={step} />
       {step === 0 && (
+        <div className="stack">
+          <p>Upload your architecture degree. Every architect on the platform needs one.</p>
+          <Select label="School you graduated from" value={f.school} onChange={set('school')} options={SCHOOLS.map((x) => x.name)} />
+          <Input label="Year of graduation" inputMode="numeric" value={f.year} onChange={set('year')} placeholder="e.g. 2021" />
+          <FileDrop label="Diploma or degree certificate" files={f.diploma} onChange={(diploma) => { setF({ ...f, diploma }); setErr(''); }} samples={['b-arch-diploma.pdf']} error={err} />
+          <FormActions>
+            <Button onClick={onBack}>Back</Button>
+            <Button variant="primary" onClick={() => (f.diploma.length && f.year.trim() ? go(1) : setErr('Add your graduation year and upload your diploma.'))}>Continue</Button>
+          </FormActions>
+        </div>
+      )}
+      {step === 1 && licensed && (
         <div className="stack">
           <Select label="Country where you are registered" value={f.country} onChange={set('country')} options={Object.keys(REGISTERS)} />
           <p className="small muted">We look you up in the {reg.body}.</p>
@@ -76,28 +95,40 @@ function Professional({ onBack }) {
           {lookup === 'found' && <p className="note small" role="status">Found on the register: {f.name.trim()}, {f.number.trim()}, status active. (Simulated.)</p>}
           {err && <span className="error" role="alert">{err}</span>}
           <FormActions>
-            <Button onClick={onBack}>Back</Button>
-            {lookup === 'found' ? <Button variant="primary" onClick={() => setStep(1)}>Continue</Button> : <Button variant="primary" onClick={check}>Look me up</Button>}
+            <Button onClick={() => go(0)}>Back</Button>
+            {lookup === 'found' ? <Button variant="primary" onClick={() => go(2)}>Continue</Button> : <Button variant="primary" onClick={check}>Look me up</Button>}
           </FormActions>
         </div>
       )}
-      {step === 1 && (
+      {step === 1 && !licensed && (
+        <div className="stack">
+          <p>If you’ve applied for your licence or are sitting the exam, add the number and we’ll check it when your licence comes through. You can skip this and add it later from your profile.</p>
+          <Select label="Country you’re getting licensed in" value={f.country} onChange={set('country')} options={Object.keys(REGISTERS)} />
+          <Input label="Application or exam number (optional)" value={f.number} onChange={set('number')} />
+          <p className="small muted">Until your licence is confirmed your profile shows “Licence pending”. You can publish redesigns and enter contests open to students.</p>
+          <FormActions>
+            <Button onClick={() => go(0)}>Back</Button>
+            <Button variant="primary" onClick={() => go(2)}>{f.number.trim() ? 'Continue' : 'Skip for now'}</Button>
+          </FormActions>
+        </div>
+      )}
+      {step === 2 && licensed && (
         <div className="stack">
           <p>Upload a government ID or your registration certificate. The name must match the register: <span className="bold">{f.name.trim()}</span>.</p>
           <FileDrop label="Identity document" files={f.docs} onChange={(docs) => setF({ ...f, docs })} samples={['passport-scan.pdf']} error={err} />
           <p className="xs muted">Used only to confirm the match, then deleted. Never shown on your profile.</p>
           <FormActions>
-            <Button onClick={() => setStep(0)}>Back</Button>
-            <Button variant="primary" onClick={() => { if (!f.docs.length) return setErr('Upload a document whose name matches the register.'); setErr(''); return setStep(2); }}>Continue</Button>
+            <Button onClick={() => go(1)}>Back</Button>
+            <Button variant="primary" onClick={() => (f.docs.length ? go(3) : setErr('Upload a document whose name matches the register.'))}>Continue</Button>
           </FormActions>
         </div>
       )}
-      {step === 2 && (
+      {step === account && (
         <form className="stack" onSubmit={(e) => { e.preventDefault(); if (!f.email.includes('@')) return setErr('Enter an email address.'); setErr(''); return setDone(true); }}>
           <Input label="Email" type="email" value={f.email} onChange={set('email')} error={err} autoComplete="email" />
           <Input label="Password" type="password" autoComplete="new-password" />
           <FormActions>
-            <Button onClick={() => setStep(1)}>Back</Button>
+            <Button onClick={() => go(step - 1)}>Back</Button>
             <Button variant="primary" type="submit">Create architect account</Button>
           </FormActions>
         </form>
@@ -172,11 +203,19 @@ export function ForArchitects() {
       {!path && (
         <fieldset className="stack-sm plain">
           <legend className="bold">Which describes you?</legend>
-          <Choice name="arch" checked={false} onChange={() => setPath('pro')} title="I’m a licensed architect">We check your national register and an ID that matches it.</Choice>
+          <Choice name="arch" checked={false} onChange={() => setPath('arch')} title="I’m an architect">You have an architecture degree. We check your diploma, and your licence if you have one.</Choice>
           <Choice name="arch" checked={false} onChange={() => setPath('student')} title="I’m an architecture student">We check your school email, your programme’s accreditation and your enrolment.</Choice>
         </fieldset>
       )}
-      {path === 'pro' && <Professional onBack={() => setPath(null)} />}
+      {path === 'arch' && (
+        <fieldset className="stack-sm plain">
+          <legend className="bold">Are you licensed?</legend>
+          <Choice name="licence" checked={false} onChange={() => setPath('licensed')} title="Licensed">You’re on your country’s register. We look you up and match it to your ID.</Choice>
+          <Choice name="licence" checked={false} onChange={() => setPath('pending')} title="Licence pending">You’ve graduated and are working towards your licence. Add your application number if you have one.</Choice>
+          <div><Button onClick={() => setPath(null)}>Back</Button></div>
+        </fieldset>
+      )}
+      {(path === 'licensed' || path === 'pending') && <Architect key={path} status={path} onBack={() => setPath('arch')} />}
       {path === 'student' && <Student onBack={() => setPath(null)} />}
       <p className="small muted">Not an architect? <Link to="/signup">Create a free community account</Link>. Already have an account? <Link to="/login">Log in</Link></p>
     </Page>

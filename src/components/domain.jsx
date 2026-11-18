@@ -13,6 +13,17 @@ export const SPACE_CARD_VARIANTS = {
 
 export const typeLabel = (t) => t.charAt(0).toUpperCase() + t.slice(1);
 
+// Who may enter contests: three versions to compare (Demo bar, Contest details).
+export const ELIGIBILITY = {
+  both: { text: 'Licensed architects and accredited architecture students', can: () => true },
+  licensed: { text: 'Licensed architects only', can: (kind) => kind === 'licensed', no: 'This contest is for licensed architects only.' },
+  students: {
+    text: 'Architecture students only. It’s a concept contest: the brief pairs the winner with a licensed architect to develop and sign off the design.',
+    can: (kind) => kind === 'student',
+    no: 'This contest is for architecture students only.',
+  },
+};
+
 function Stat({ icon, n, label }) {
   return (
     <span className="stat">
@@ -26,14 +37,14 @@ function Stat({ icon, n, label }) {
 export function SpaceCard({ space, faded, active, onHover, headingLevel = 3, variant }) {
   const { spaceCard } = useChoices();
   const { state } = useDemo();
-  const nRedesigns = state.redesigns.filter((r) => r.spaceId === space.id && r.published && !r.takenDown).length;
+  const nRedesigns = state.redesigns.filter((r) => r.spaceId === space.id && r.published && !r.takenDown && !r.archived).length;
   const v = SPACE_CARD_VARIANTS[variant] ? variant : spaceCard;
   const H = `h${headingLevel}`;
   const votes = <Stat icon="vote" n={space.votes} label={space.votes === 1 ? 'vote' : 'votes'} />;
   const photos = <Stat icon="photo" n={space.photos.length} label={space.photos.length === 1 ? 'photo' : 'photos'} />;
   const redesigns = <Stat icon="redesign" n={nRedesigns} label={nRedesigns === 1 ? 'redesign' : 'redesigns'} />;
   const badges = <StatusBadges space={space} />;
-  const hasBadges = space.status !== 'approved' || space.readyForApproval || space.removal === 'review';
+  const hasBadges = space.status !== 'approved' || space.removal === 'review';
 
   let body;
   if (v === 'footer') {

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { ROLES, useDemo } from '../state/DemoContext.jsx';
-import { Badge, Button, Modal, Toasts } from './ui.jsx';
+import { Badge, Button, Icon, Modal, Toasts } from './ui.jsx';
 import { fmtPoints } from '../lib/points.js';
 import { activateNotes, notesActive, notesCounts, setNotesPage, startNotesTool } from '../review/notes-tool.js';
 import { PAGE_GROUPS, pageFor } from '../demo/pages.js';
@@ -14,7 +14,7 @@ function roleLinks({ isMember, isArchitect, isModerator, isPaid }) {
   const l = [];
   if (isArchitect) l.push(['/portfolio', 'Portfolio'], ['/earnings', 'Earnings']);
   l.push(['/contributions', 'Contributions'], ['/purchases', 'My purchases'], ['/points', 'Points & membership']);
-  if (isModerator) l.push(['/moderation', 'Moderation'], ['/flags', 'Flag queue']);
+  if (isModerator) l.push(['/moderation', 'Spaces to approve'], ['/flags', 'Flag queue']);
   if (isPaid) l.push(['/contest/request', 'Host a contest']);
   l.push(['/profile', 'Profile']);
   return l;
@@ -22,7 +22,7 @@ function roleLinks({ isMember, isArchitect, isModerator, isPaid }) {
 
 // A button that opens a small menu (disclosure pattern). Opening moves focus to the
 // first item; Escape closes and returns focus to the button; navigation or a click outside closes.
-function Dropdown({ label, children }) {
+export function Dropdown({ label, children }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const btn = useRef(null);
@@ -53,7 +53,7 @@ function NotificationsMenu() {
   const mine = state.notifications.filter((n) => n.to === user.id);
   const unread = mine.filter((n) => !n.read).length;
   return (
-    <Dropdown label={<>Notifications {unread > 0 && <span className="dot">{unread}</span>}</>}>
+    <Dropdown label={<><Icon name="bell" /><span className="visually-hidden">Notifications</span>{unread > 0 && <span className="dot">{unread}<span className="visually-hidden"> unread</span></span>}</>}>
       {mine.length === 0 && <p className="small muted">Nothing yet.</p>}
       <ul className="list small">
         {mine.slice(0, 5).map((n) => (
@@ -99,7 +99,7 @@ function AccountMenu() {
 }
 
 function Header() {
-  const { isMember, role } = useDemo();
+  const { isMember, isArchitect, user, role } = useDemo();
   return (
     <header className="header">
       <div className="header-in">
@@ -110,9 +110,16 @@ function Header() {
           <NavLink to="/contests" className={link}>Contests</NavLink>
           <NavLink to="/ranking" className={link}>Architect ranking</NavLink>
           {isMember && <NavLink to="/co-op" className={link}>Co-op</NavLink>}
+          {!isMember && <NavLink to="/about" className={link}>About us</NavLink>}
         </nav>
         {isMember ? (
           <div className="row">
+            {isArchitect && (
+              <Link to="/moderation" className="btn btn-default approvals-chip" title="Approve 10 spaces every 6 months to keep your architect status">
+                Approvals <span className="approvals-count">{Math.min(user.reviewsThisYear || 0, 10)}/10</span>
+                <span className="visually-hidden"> in the last 6 months</span>
+              </Link>
+            )}
             <NotificationsMenu />
             <AccountMenu />
           </div>
@@ -147,6 +154,27 @@ function countFor(counts, page, viewId, path) {
   }, ZERO);
 }
 
+// The view a page is showing, from the design choices. Each becomes a notes
+// key suffix, e.g. /space/s2~strip. Default views keep their old suffix so
+// earlier notes stay with them ('tabs' for the space page, 'map' for landing).
+export function viewFor(pageId, choices) {
+  if (pageId === 'space') return { portrait: 'tabs', strip: 'strip', compact: 'compact' }[choices.spaceHeader] || 'tabs';
+  if (pageId === 'landing') return 'map';
+  if (pageId === 'space-new') return ['overlay', 'confirm'].includes(choices.createFlow) ? choices.createFlow : '';
+  if (pageId === 'contest') return choices.contestEligibility === 'both' ? '' : choices.contestEligibility;
+  return '';
+}
+
+// Notes left on views that no longer exist (e.g. the old one-page space layout).
+function retired(counts, page) {
+  if (!page.views) return ZERO;
+  const ids = page.views.map((v) => v.id);
+  return Object.entries(counts).reduce((n, [key, c]) => {
+    const [p, suffix] = splitKey(key);
+    return pageFor(p) === page && !ids.includes(suffix) ? add(n, c) : n;
+  }, ZERO);
+}
+
 // Keys that belong to no page in the list (the sandbox, a mistyped address).
 function otherKeys(counts) {
   return Object.entries(counts).filter(([key, c]) => !pageFor(splitKey(key)[0]) && c.note + c.discussion > 0);
@@ -177,15 +205,13 @@ function useNotesCounts() {
 
 function PageList({ close }) {
   const { state, dispatch, role } = useDemo();
-  const { landingLayout } = useChoices();
+  const choices = useChoices();
   const loc = useLocation();
   const nav = useNavigate();
   const counts = useNotesCounts();
-  const { createFlow } = useChoices();
-  const currentView = (page) => (page.id === 'space' ? (state.layout === 'tabs' ? 'tabs' : '') : page.id === 'landing' ? (landingLayout === 'map' ? 'map' : '') : page.id === 'space-new' ? (['overlay', 'confirm'].includes(createFlow) ? createFlow : '') : '');
+  const currentView = (page) => viewFor(page.id, choices);
   const go = (page, view) => {
     if (page.role && page.role !== role) dispatch({ type: 'SET_ROLE', role: page.role });
-    if (view?.layout) dispatch({ type: 'SET_LAYOUT', layout: view.layout });
     if (view?.choice) setChoice(...view.choice);
     nav(page.to);
     if (window.matchMedia('(max-width: 64rem)').matches) close();
@@ -231,6 +257,17 @@ function PageList({ close }) {
                       </ul>
                     </div>
                   )}
+                  {p.controls === 'architect-kind' && (
+                    <fieldset className="demo-control">
+                      <legend>The signed-in architect is</legend>
+                      {[['licensed', 'Licensed'], ['student', 'A student']].map(([val, l]) => (
+                        <label key={val} className="row xs">
+                          <input type="radio" name="architect-kind" checked={state.architectKind === val} onChange={() => dispatch({ type: 'SET_ARCHITECT_KIND', kind: val })} />
+                          {l}
+                        </label>
+                      ))}
+                    </fieldset>
+                  )}
                   {p.views && (
                     <ul className="demo-views">
                       {p.views.map((v) => {
@@ -255,6 +292,14 @@ function PageList({ close }) {
                           </li>
                         );
                       })}
+                      {retired(counts, p).note + retired(counts, p).discussion > 0 && (
+                        <li>
+                          <span className="demo-page demo-view demo-retired">
+                            <span className="grow">Notes on retired layouts</span>
+                            <NoteCounts n={retired(counts, p)} />
+                          </span>
+                        </li>
+                      )}
                     </ul>
                   )}
                 </li>
@@ -354,6 +399,7 @@ const PROMPT_COPY = {
   upload: 'Create a free account to document a space.',
   comment: 'Create a free account to comment.',
   vote: 'Create a free account to vote for spaces you want improved.',
+  report: 'Create a free account to report that a space has changed.',
   buy: 'Create a free account to buy redesigns and measured models.',
 };
 
@@ -391,13 +437,10 @@ function SignupPrompt() {
 // The key adds the view when it isn't the default, e.g. "/space/s2~tabs".
 export function NotesBridge({ page }) {
   const loc = useLocation();
-  const { layout } = useDemo();
-  const { landingLayout, createFlow } = useChoices();
+  const choices = useChoices();
   const path = page || loc.pathname;
   const pageDef = page ? null : pageFor(path);
-  const view = pageDef?.id === 'space' && layout === 'tabs' ? 'tabs'
-    : pageDef?.id === 'landing' && landingLayout === 'map' ? 'map'
-      : pageDef?.id === 'space-new' && ['overlay', 'confirm'].includes(createFlow) ? createFlow : '';
+  const view = pageDef ? viewFor(pageDef.id, choices) : '';
   const key = view ? `${path}~${view}` : path;
   useEffect(() => { startNotesTool(); }, []);
   useEffect(() => { setNotesPage(key); }, [key]);
