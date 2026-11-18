@@ -42,7 +42,7 @@ const spaceRows = [
   ['s11', 'Haveli entrance steps, Gangori Bazaar', 'gateway threshold', 26.9291, 75.8201, 'pending', 4, null, 'u-a2', 2, { private: true }],
   ['s12', 'Stepwell side steps, Nahargarh foothill', 'stepwell', 26.9363, 75.8155, 'pending', 10, { source: 'ai' }, 'u-c3', 6],
   // Two spaces right by the east gateway, so "nearby" and "spaces within spaces" have examples.
-  ['s13', 'Bench ledge inside the Jaipur Darwaza arch', 'threshold', 26.91965, 75.83105, 'approved', 7, { source: 'architect', by: 'u-a3' }, 'u-c2', 14, { parentId: 's4' }],
+  ['s13', 'Bench ledge inside the Jaipur Darwaza arch', 'threshold', 26.91965, 75.83105, 'approved', 7, { source: 'architect', by: 'u-a1' }, 'u-c2', 14, { parentId: 's4' }],
   ['s14', 'Chai stall steps outside Jaipur Darwaza', 'chowk steps', 26.91952, 75.83085, 'pending', 4, null, 'u-c1', 5],
 ];
 
@@ -70,6 +70,10 @@ const spaces = spaceRows.map(([id, name, type, lat, lng, status, n, diagram, upl
     diagram: diagram
       ? { ...diagram, credits: diagram.source === 'ai' ? [...new Set(ph.map((p) => p.credit))] : [] }
       : null,
+    city: 'Jaipur',
+    country: 'India',
+    // Spread over the summer and autumn so "Latest added" has something to sort.
+    addedAt: new Date(Date.UTC(2026, 5, 1) + ((i * 37) % 160) * 86400000).toISOString().slice(0, 10),
     removed: false,
     removal: null,
     private: false,
@@ -95,6 +99,7 @@ const seed = {
     { id: 'r3', spaceId: 's2', architectId: 'u-a2', title: 'Courtyard water channel and jaali screen', description: 'Brings back a shallow water channel and adds a screen for shade and privacy.', files: ['set-v2.pdf', 'model.3dm'], version: 2, published: true, takenDown: false, sales: 5 },
     { id: 'r4', spaceId: 's4', architectId: 'u-a3', title: 'Threshold benches and drinking water point', description: 'Two benches inside the gate and a public water point for people waiting.', files: ['drawings.pdf'], version: 1, published: true, takenDown: false, sales: 2 },
     { id: 'r5', spaceId: 's1', architectId: 'u-a4', title: 'Stepwell handrail and night lighting', description: 'A continuous handrail and shielded lights along the main descent.', files: ['student-set.pdf'], version: 1, published: true, takenDown: false, sales: 0 },
+    { id: 'r6', spaceId: 's2', architectId: 'u-a1', title: 'Shade sails over the haveli courtyard', description: 'Two tensioned sails anchored to the existing parapets, with a ground-level bench along the north wall.', files: ['sails-plan.pdf', 'section.pdf'], version: 1, published: true, takenDown: false, sales: 0 },
   ],
   models: [
     { id: 'm1', spaceId: 's1', title: 'Measured model — Stepwell landing, Amer Road side', files: ['plan.dwg', 'section.dwg', 'model.obj'], takenDown: false },
@@ -156,7 +161,7 @@ const seed = {
       entries: [
         { id: 'e9', architectId: 'u-a2', title: 'Benches in the arch', submittedAt: '2026-08-12' },
         { id: 'e10', architectId: 'u-a3', title: 'Waiting wall', submittedAt: '2026-08-20' },
-        { id: 'e11', architectId: 'u-a1', title: 'Threshold shade', submittedAt: '2026-08-28' },
+        { id: 'e11', architectId: 'u-a1', title: 'Threshold shade', submittedAt: '2026-08-28', statement: 'A perforated stone canopy over the waiting ledge, with a drinking-water point set into the arch wall.', files: ['entry-boards.pdf', 'canopy-section.pdf'], units: 'Metric (m / mm)', scope: ['Canopy and shade', 'Water and drainage'], cost: '$5,000 to $25,000' },
       ],
       plans: [
         { when: 'Sep 2026', text: 'Winner announced; the co-host bought the design.', done: true },
@@ -238,7 +243,7 @@ const seed = {
     { id: 'l5', userId: 'u-p1', text: 'Paid tier, one month', pts: -50 },
   ],
   payouts: [{ id: 'po1', userId: 'u-a1', amount: 64, date: '2026-10-31' }],
-  diagramUploads: [],
+  diagramUploads: [{ id: 'm-s13', spaceId: 's13', userId: 'u-a1', date: '2026-10-12', files: ['plan.dwg', 'section.dwg', 'model.obj'], notes: 'Measured with a tape and laser distance meter, cross-checked against a phone scan.' }],
 };
 
 // Every photo belongs to an experience (a comment plus optional photos).
@@ -265,7 +270,17 @@ seed.spaces.forEach((sp, si) => {
 seed.comments.forEach((c) => { c.photoIds = c.photoIds || []; });
 
 // When each seeded redesign was published (drives the one-a-week limit).
-['2026-08-02', '2026-10-05', '2026-09-14', '2026-07-21', '2026-10-30'].forEach((d, i) => { seed.redesigns[i].createdAt = Date.parse(d); });
+['2026-08-02', '2026-10-05', '2026-09-14', '2026-07-21', '2026-10-30', '2026-09-20'].forEach((d, i) => { seed.redesigns[i].createdAt = Date.parse(d); });
+// Upload details (units, scope, cost) for the seeded redesigns.
+const DETAILS = [
+  { units: 'Metric (m / mm)', scope: ['Surface and seating', 'Canopy and shade'], cost: '$1,000 to $5,000' },
+  { units: 'Metric (m / mm)', scope: ['Surface and seating', 'Lighting'], cost: '$5,000 to $25,000' },
+  { units: 'Metric (m / mm)', scope: ['Water and drainage', 'Full spatial reconfiguration'], cost: 'Over $25,000' },
+  { units: 'Imperial (ft / in)', scope: ['Tactical / low-cost', 'Surface and seating'], cost: 'Under $1,000' },
+  { units: 'Metric (m / mm)', scope: ['Lighting'], cost: 'Not sure' },
+  { units: 'Metric (m / mm)', scope: ['Canopy and shade'], cost: '$1,000 to $5,000' },
+];
+seed.redesigns.forEach((r, i) => { r.details = { ...DETAILS[i], agency: true }; });
 // Where each seeded notification leads.
 const links = { n1: '/earnings', n2: '/contest/c2', n3: '/points', n4: '/ranking', n5: '/co-op', n6: '/profile', n7: '/purchases', n8: '/space/s2', n9: '/co-op', n10: '/moderation', n11: '/earnings', n12: '/contest/c1', n13: '/co-op' };
 seed.notifications.forEach((n) => { n.link = links[n.id]; });

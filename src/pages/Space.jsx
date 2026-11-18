@@ -120,12 +120,12 @@ function Redesigns({ space }) {
   const list = state.redesigns
     .filter((r) => r.spaceId === space.id && r.published && !r.takenDown)
     .sort((a, b) => rankOf(a.architectId) - rankOf(b.architectId));
-  const limit = isArchitect ? uploadLimit(user.id) : null;
+  const limit = isArchitect ? uploadLimit(user.id, space.id) : null;
   return (
     <section className="stack" data-screen-label="Redesigns" aria-labelledby="redesigns-heading">
       <SectionHead id="redesigns-heading" title={`Redesigns (${list.length})`} note="Proposals by architects, paid per download. Architects ranked higher appear first.">
         {isArchitect && limit.allowed && <Button variant="primary" to={`/space/${space.id}/upload-redesign`}>Upload redesign</Button>}
-        {isArchitect && !limit.allowed && <span className="small muted">You can publish one redesign a week. Next: {limit.next.toLocaleDateString()}.</span>}
+        {isArchitect && !limit.allowed && <span className="small muted">You published a redesign for this space this week. You can add another here on {limit.next.toLocaleDateString()}; other spaces are open now.</span>}
       </SectionHead>
       {list.length === 0 && (
         <Empty title="No redesigns yet">
@@ -358,7 +358,7 @@ function ContestCard({ contest }) {
         </p>
       </div>
       {isArchitect && contest.status === 'live' && !entered && (
-        <Button variant="primary" className="above-stretch" to={`/space/${contest.spaceId}/upload-redesign?contest=${contest.id}`}>Submit an entry</Button>
+        <Button variant="primary" className="above-stretch" to={`/contest/${contest.id}/enter`}>Submit an entry</Button>
       )}
     </section>
   );

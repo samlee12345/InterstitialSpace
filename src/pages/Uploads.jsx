@@ -37,18 +37,30 @@ export const COSTS = ['Not sure', 'Under $1,000', '$1,000 to $5,000', '$5,000 to
 const Req = () => (<><span className="req" aria-hidden="true"> *</span><span className="visually-hidden"> (required)</span></>);
 
 // One flow for both: a redesign for the Redesign Library, or an entry to a live contest (?contest=id).
-function RedesignForm({ space }) {
-  const { dispatch, user, cfg, uploadLimit, get } = useDemo();
+function RedesignForm({ space, contestId: fromRoute }) {
+  const { state, dispatch, user, cfg, uploadLimit, get } = useDemo();
   const nav = useNavigate();
-  const contestId = new URLSearchParams(useLocation().search).get('contest');
+  const contestId = fromRoute || new URLSearchParams(useLocation().search).get('contest');
   const contest = contestId ? get.contest(contestId) : null;
   const isEntry = !!contest && contest.status === 'live';
   const [step, setStep] = useState(0);
   const [f, setF] = useState({ title: '', description: '', files: [], units: '', scaled: false, scope: [], cost: 'Not sure', agency: true, attest: false });
   const [err, setErr] = useState({});
-  const limit = uploadLimit(user.id);
+  const [from, setFrom] = useState('new'); // contest entries: 'new' or the id of one of your redesigns
+  const limit = uploadLimit(user.id, space.id);
+  const mine = state.redesigns.filter((r) => r.spaceId === space.id && r.architectId === user.id && r.published && !r.takenDown);
   const steps = isEntry ? ['Files and description', 'Details and rights', 'Prize and rights'] : ['Files and description', 'Details and licence', 'Price and payout'];
-  const crumbs = [['/browse', 'Browse spaces'], [`/space/${space.id}`, space.name], [null, isEntry ? 'Submit a contest entry' : 'Upload redesign']];
+  const crumbs = isEntry
+    ? [['/contests', 'Contests'], [`/contest/${contest.id}`, contest.title], [null, 'Submit an entry']]
+    : [['/browse', 'Browse spaces'], [`/space/${space.id}`, space.name], [null, 'Upload redesign']];
+  // Entering with a published redesign copies its files and details; everything stays editable.
+  const pick = (id) => {
+    setFrom(id);
+    setErr({});
+    if (id === 'new') { setF({ ...f, title: '', description: '', files: [], units: '', scaled: false, scope: [], cost: 'Not sure' }); return; }
+    const r = mine.find((x) => x.id === id);
+    setF({ ...f, title: r.title, description: r.description, files: r.files, units: r.details?.units || '', scaled: !!r.details, scope: r.details?.scope || [], cost: r.details?.cost || 'Not sure' });
+  };
 
   if (contest && !isEntry) {
     return <Page narrow><Empty title="This contest isn’t open for entries"><div><Button to={`/contest/${contest.id}`}>Back to the contest</Button></div></Empty></Page>;
@@ -60,10 +72,10 @@ function RedesignForm({ space }) {
     return (
       <Page narrow>
         <Crumbs items={crumbs} />
-        <Empty title="One redesign a week">
-          <p>Each architect can publish one redesign a week, so points reflect considered work. You can publish your next one on {limit.next.toLocaleDateString()}.</p>
-          <p>You can still edit the redesigns you have published.</p>
-          <div className="row"><Button to="/portfolio">Open your portfolio</Button><Button to={`/space/${space.id}`}>Back to the space</Button></div>
+        <Empty title="One redesign per space each week">
+          <p>You published a redesign for this space this week, so points reflect considered work. You can add another here on {limit.next.toLocaleDateString()}.</p>
+          <p>You can upload to other spaces now, and edit the redesigns you have published.</p>
+          <div className="row"><Button to="/browse">Browse spaces</Button><Button to={`/space/${space.id}`}>Back to the space</Button></div>
         </Empty>
       </Page>
     );
@@ -97,7 +109,7 @@ function RedesignForm({ space }) {
   const finish = () => {
     const title = f.title.trim();
     if (isEntry) {
-      const entry = { id: `e-${Date.now()}`, submittedAt: new Date().toISOString().slice(0, 10), architectId: user.id, title, statement: f.description.trim(), files: f.files, ...details };
+      const entry = { id: `e-${Date.now()}`, submittedAt: new Date().toISOString().slice(0, 10), architectId: user.id, title, statement: f.description.trim(), files: f.files, fromRedesign: from === 'new' ? null : from, ...details };
       dispatch({ type: 'SUBMIT_ENTRY', contestId: contest.id, entry });
       return nav(`/space/${space.id}`, { replace: true, state: { banner: { title: 'Contest entry submitted', text: `“${title}” is entered in “${contest.title}”. The co-host judges after ${contest.deadline}; you’ll get a notification with the result.`, links: [[`/contest/${contest.id}`, 'Contest details'], ['/portfolio', 'Open your portfolio']] } } });
     }
@@ -117,6 +129,32 @@ function RedesignForm({ space }) {
 
       {step === 0 && (
         <div className="stack">
+          {isEntry && mine.length > 0 && (
+            <fieldset className="stack-sm">
+              <legend className="h-xs">Start from</legend>
+              <p className="small muted">You’ve published {mine.length === 1 ? 'a redesign' : 'redesigns'} for this space. Enter {mine.length === 1 ? 'it' : 'one of them'}, or upload a new design.</p>
+              <div className="pick-list">
+                {mine.map((r) => (
+                  <label key={r.id} className={`pick ${from === r.id ? 'pick-on' : ''}`}>
+                    <input type="radio" name="from" checked={from === r.id} onChange={() => pick(r.id)} />
+                    <span className="pick-img"><ImageBox label="Redesign" shape="square" /></span>
+                    <span className="stack-sm">
+                      <span className="bold">{r.title}</span>
+                      <span className="small muted">Published {new Date(r.createdAt).toLocaleDateString()}{r.files?.length ? `, ${r.files.length} files` : ''}</span>
+                    </span>
+                  </label>
+                ))}
+                <label className={`pick ${from === 'new' ? 'pick-on' : ''}`}>
+                  <input type="radio" name="from" checked={from === 'new'} onChange={() => pick('new')} />
+                  <span className="stack-sm">
+                    <span className="bold">Upload a new design</span>
+                    <span className="small muted">Start with empty fields</span>
+                  </span>
+                </label>
+              </div>
+              {from !== 'new' && <p className="note small">The files and details are copied from your redesign. Adjust them for the brief if you need to. Your redesign stays on sale in the library; people who already bought it keep their licence.</p>}
+            </fieldset>
+          )}
           <p className="xs muted">Fields marked * are required.</p>
           <Input label={<>Title<Req /></>} value={f.title} onChange={(e) => upd({ title: e.target.value })} error={err.title} placeholder="e.g. Shaded seating along the lower steps" />
           <Input label={<>Description<Req /></>} textarea value={f.description} onChange={(e) => upd({ description: e.target.value })} error={err.description} hint={isEntry ? 'How your design meets the co-host’s criteria.' : 'What changes, and which resident requests it answers.'} />
@@ -226,20 +264,35 @@ function RedesignForm({ space }) {
   );
 }
 
+// Spatial diagram: files first (previews appear once uploaded), then the licence,
+// because diagrams are sold as downloads from the Base Library.
+const isDrawing = (f) => /\.(dwg|dxf|pdf|png|jpe?g|svg)$/i.test(f);
+const drawingLabel = (f) => (/section/i.test(f) ? 'Section' : /plan/i.test(f) ? 'Plan' : 'Drawing');
+
 function DiagramForm({ space }) {
   const { dispatch, user, cfg } = useDemo();
   const nav = useNavigate();
+  const [step, setStep] = useState(0);
   const [files, setFiles] = useState([]);
   const [notes, setNotes] = useState('');
-  const [confirm, setConfirm] = useState(false);
+  const [measured, setMeasured] = useState(false);
+  const [agree, setAgree] = useState(false);
   const [err, setErr] = useState({});
+  const drawings = files.filter(isDrawing);
 
-  const submit = () => {
+  const check0 = () => {
     const e = {};
-    if (files.length === 0) e.files = 'Add a plan and a section.';
-    if (!confirm) e.confirm = 'Confirm the drawing is measured.';
+    if (drawings.length < 2) e.files = 'Add a plan and a section (DWG, DXF, PDF or image).';
+    if (!measured) e.measured = 'Confirm the drawing is measured.';
+    return e;
+  };
+  const toTerms = () => {
+    const e = check0();
     setErr(e);
-    if (Object.keys(e).length) return;
+    if (!Object.keys(e).length) { setStep(1); window.scrollTo(0, 0); }
+  };
+  const submit = () => {
+    if (!agree) { setErr({ agree: 'Agree to the Base Library licence to add your diagram.' }); return; }
     dispatch({ type: 'UPLOAD_DIAGRAM', spaceId: space.id, userId: user.id, files, notes, modelId: `m-${Date.now()}` });
     const ready = space.status === 'pending' && space.photos.length >= cfg.manualDiagramMinPhotos;
     const extra = ready
@@ -265,22 +318,70 @@ function DiagramForm({ space }) {
       <Crumbs items={[['/browse', 'Browse spaces'], [`/space/${space.id}`, space.name], [null, 'Upload spatial diagram']]} />
       <h1>Upload a spatial diagram</h1>
       <SpaceSummary space={space} />
-      <p className="prose">A measured plan and section with correct proportions, plus a simple 3D model if you have one. You earn {POINTS.diagram} points. The platform keeps the download fee.</p>
-      <div className="halves">
-        <ImageBox label="Plan goes here" />
-        <ImageBox label="Section goes here" />
-      </div>
-      <FileDrop label="Diagram files" files={files} onChange={setFiles} samples={['plan.dwg', 'section.dwg', 'model.obj']} error={err.files} />
-      <Input label="Notes on how it was measured (optional)" textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
-      <Choice type="checkbox" checked={confirm} onChange={(e) => setConfirm(e.target.checked)} title="This drawing is measured on site or from a scan" />
-      {err.confirm && <span className="error" role="alert">{err.confirm}</span>}
-      <FormActions>
-        <Button to={`/space/${space.id}`}>Cancel</Button>
-        <Button variant="primary" onClick={submit}>Add to Base Library</Button>
-      </FormActions>
+      <Steps steps={['Drawings', 'Licence and terms']} current={step} />
+
+      {step === 0 && (
+        <div className="stack">
+          <p className="prose">A measured plan and section with correct proportions, plus a simple 3D model if you have one. You earn {POINTS.diagram} points.</p>
+          <FileDrop label={<>Diagram files<Req /></>} files={files} onChange={(v) => { setFiles(v); setErr({ ...err, files: undefined }); }} samples={['plan.dwg', 'section.dwg', 'model.obj']} error={err.files} />
+          {drawings.length > 0 && (
+            <ul className="halves preview-list" aria-label="Preview of your drawings">
+              {drawings.map((f) => (
+                <li key={f} className="stack-sm">
+                  <ImageBox label={`${drawingLabel(f)}: ${f}`} />
+                </li>
+              ))}
+            </ul>
+          )}
+          <Input label="Notes on how it was measured (optional)" textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
+          <Choice type="checkbox" checked={measured} onChange={(e) => { setMeasured(e.target.checked); setErr({ ...err, measured: undefined }); }} title={<>This drawing is measured on site or from a scan<Req /></>} />
+          {err.measured && <span className="error" role="alert">{err.measured}</span>}
+          <FormActions>
+            <Button to={`/space/${space.id}`}>Cancel</Button>
+            <Button variant="primary" onClick={toTerms}>Continue</Button>
+          </FormActions>
+        </div>
+      )}
+
+      {step === 1 && (
+        <div className="stack">
+          <h2 className="h-sm">How your diagram is sold</h2>
+          <dl className="dl dl-wide">
+            <dt>Download price</dt><dd>{cfg.priceLabel} or {cfg.modelPointsCost} points, the same for every diagram. The platform keeps the download fee; you earn {POINTS.diagram} points now.</dd>
+            <dt>Copyright</dt><dd>You keep copyright. You give the platform a non-exclusive, permanent licence to sell downloads of this diagram, which continues if you leave.</dd>
+            <dt>What buyers can do</dt><dd>Use it as the base for redesigns and their own projects. They can’t resell or redistribute the files, and you’re credited wherever it’s shown.</dd>
+            <dt>Corrections</dt><dd>Others can flag errors. Moderators can ask you to fix or remove a diagram that doesn’t match the space.</dd>
+            <dt>Liability</dt><dd>Diagrams are survey drawings for design, not certified measured surveys. Buyers check dimensions before building.</dd>
+          </dl>
+          <Choice type="checkbox" checked={agree} onChange={(e) => { setAgree(e.target.checked); setErr({}); }} title={<>I made these drawings or have the right to share them, and I agree to the Base Library licence above<Req /></>} />
+          {err.agree && <span className="error" role="alert">{err.agree}</span>}
+          <FormActions>
+            <Button onClick={() => setStep(0)}>Back</Button>
+            <Button variant="primary" onClick={submit}>Add to Base Library</Button>
+          </FormActions>
+        </div>
+      )}
     </Page>
   );
 }
 
 export const UploadRedesign = () => <Guard>{(space) => <RedesignForm space={space} />}</Guard>;
+
+// Contest entry page: /contest/:id/enter
+export function ContestEntry() {
+  const { id } = useParams();
+  const { get, isArchitect } = useDemo();
+  const contest = get.contest(id);
+  const space = contest && get.space(contest.spaceId);
+  if (!contest || !space) return <Page narrow><Empty title="Contest not found"><div><Button to="/contests">All contests</Button></div></Empty></Page>;
+  if (!isArchitect) {
+    return (
+      <Page narrow tag="clickable">
+        <RoleGate title="Architects only">Only licensed architects and accredited students can enter contests.</RoleGate>
+        <div><Button to={`/contest/${contest.id}`}>Back to the contest</Button></div>
+      </Page>
+    );
+  }
+  return <RedesignForm space={space} contestId={contest.id} />;
+}
 export const UploadDiagram = () => <Guard>{(space) => <DiagramForm space={space} />}</Guard>;

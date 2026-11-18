@@ -101,7 +101,7 @@ function reducer(s, a) {
         ...s,
         spaces: mapById(s.spaces, a.spaceId, (x) => ({ ...x, diagram: { source: 'architect', by: a.userId, credits: [] }, readyForApproval: ready })),
         models: [...s.models, { id: a.modelId, spaceId: a.spaceId, title: `Measured model — ${sp.name}`, files: a.files, takenDown: false }],
-        diagramUploads: [{ id: a.modelId, spaceId: a.spaceId, userId: a.userId, date: today() }, ...s.diagramUploads],
+        diagramUploads: [{ id: a.modelId, spaceId: a.spaceId, userId: a.userId, date: today(), files: a.files, notes: a.notes }, ...s.diagramUploads],
       };
       n = awardToast(n, a.userId, POINTS.diagram, 'spatial diagram added to the Base Library');
       if (ready) n = notify(n, sp.uploadedBy, 'points', `“${sp.name}” now has a spatial diagram and is ready for approval.`, `/space/${a.spaceId}`);
@@ -193,7 +193,7 @@ function reducer(s, a) {
     case 'CREATE_SPACE': {
       const sp = {
         id: a.id, name: a.name, type: a.spaceType,
-        lat: a.lat ?? 26.9255 + (s.seq % 5) * 0.002, lng: a.lng ?? 75.8205 + (s.seq % 7) * 0.002, areaM: a.areaM || null, area: a.area || null,
+        lat: a.lat ?? 26.9255 + (s.seq % 5) * 0.002, lng: a.lng ?? 75.8205 + (s.seq % 7) * 0.002, city: 'Jaipur', country: 'India', addedAt: today(), areaM: a.areaM || null, area: a.area || null,
         // "The new space is inside this one" → parent. Only one parent.
         parentId: Object.entries(a.relations || {}).find(([, r]) => r === 'parent')?.[0] || null,
         status: 'pending', readyForApproval: false, uploadedBy: a.userId, votes: 0,
@@ -312,10 +312,10 @@ export function DemoProvider({ children }) {
       role: state.role,
       here, // current in-app address, for returning after sign-up
       layout: state.layout,
-      // One redesign per architect per week.
-      uploadLimit: (userId) => {
+      // One redesign per space per architect per week; other spaces stay open.
+      uploadLimit: (userId, spaceId) => {
         const now = Date.now() + state.weekSkip * WEEK;
-        const last = Math.max(0, ...state.redesigns.filter((r) => r.architectId === userId).map((r) => r.createdAt || 0));
+        const last = Math.max(0, ...state.redesigns.filter((r) => r.architectId === userId && r.spaceId === spaceId).map((r) => r.createdAt || 0));
         return { allowed: now >= last + WEEK, next: new Date(last + WEEK) };
       },
       isMember: !!user,

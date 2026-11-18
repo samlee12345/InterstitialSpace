@@ -187,6 +187,9 @@
           "u-c3"
         ]
       },
+      "city": "Jaipur",
+      "country": "India",
+      "addedAt": "2026-06-01",
       "removed": false,
       "removal": null,
       "private": false,
@@ -266,6 +269,9 @@
         "by": "u-a2",
         "credits": []
       },
+      "city": "Jaipur",
+      "country": "India",
+      "addedAt": "2026-07-08",
       "removed": false,
       "removal": null,
       "private": false,
@@ -360,6 +366,9 @@
           "u-a4"
         ]
       },
+      "city": "Jaipur",
+      "country": "India",
+      "addedAt": "2026-08-14",
       "removed": false,
       "removal": null,
       "private": false,
@@ -434,6 +443,9 @@
         "by": "u-a3",
         "credits": []
       },
+      "city": "Jaipur",
+      "country": "India",
+      "addedAt": "2026-09-20",
       "removed": false,
       "removal": null,
       "private": false,
@@ -523,6 +535,9 @@
           "u-c2"
         ]
       },
+      "city": "Jaipur",
+      "country": "India",
+      "addedAt": "2026-10-27",
       "removed": false,
       "removal": null,
       "private": false,
@@ -592,6 +607,9 @@
         "by": "u-a2",
         "credits": []
       },
+      "city": "Jaipur",
+      "country": "India",
+      "addedAt": "2026-06-26",
       "removed": false,
       "removal": null,
       "private": false,
@@ -656,6 +674,9 @@
         "by": "u-a3",
         "credits": []
       },
+      "city": "Jaipur",
+      "country": "India",
+      "addedAt": "2026-08-02",
       "removed": false,
       "removal": null,
       "private": false,
@@ -716,6 +737,9 @@
         "authorship": "Unknown / vernacular"
       },
       "diagram": null,
+      "city": "Jaipur",
+      "country": "India",
+      "addedAt": "2026-09-08",
       "removed": false,
       "removal": null,
       "private": false,
@@ -761,6 +785,9 @@
         "authorship": "Unknown / vernacular"
       },
       "diagram": null,
+      "city": "Jaipur",
+      "country": "India",
+      "addedAt": "2026-10-15",
       "removed": false,
       "removal": null,
       "private": false,
@@ -846,6 +873,9 @@
         "authorship": "Unknown / vernacular"
       },
       "diagram": null,
+      "city": "Jaipur",
+      "country": "India",
+      "addedAt": "2026-06-14",
       "removed": false,
       "removal": null,
       "private": false,
@@ -896,6 +926,9 @@
         "authorship": "Unknown / vernacular"
       },
       "diagram": null,
+      "city": "Jaipur",
+      "country": "India",
+      "addedAt": "2026-07-21",
       "removed": false,
       "removal": null,
       "private": true,
@@ -985,6 +1018,9 @@
           "u-a4"
         ]
       },
+      "city": "Jaipur",
+      "country": "India",
+      "addedAt": "2026-08-27",
       "removed": false,
       "removal": null,
       "private": false,
@@ -1051,9 +1087,12 @@
       },
       "diagram": {
         "source": "architect",
-        "by": "u-a3",
+        "by": "u-a1",
         "credits": []
       },
+      "city": "Jaipur",
+      "country": "India",
+      "addedAt": "2026-10-03",
       "removed": false,
       "removal": null,
       "private": false,
@@ -1104,6 +1143,9 @@
         "authorship": "Unknown / vernacular"
       },
       "diagram": null,
+      "city": "Jaipur",
+      "country": "India",
+      "addedAt": "2026-06-02",
       "removed": false,
       "removal": null,
       "private": false,
@@ -1126,7 +1168,16 @@
       "published": true,
       "takenDown": false,
       "sales": 3,
-      "createdAt": 1785628800000
+      "createdAt": 1785628800000,
+      "details": {
+        "units": "Metric (m / mm)",
+        "scope": [
+          "Surface and seating",
+          "Canopy and shade"
+        ],
+        "cost": "$1,000 to $5,000",
+        "agency": true
+      }
     },
     {
       "id": "r2",
@@ -1142,7 +1193,16 @@
       "published": true,
       "takenDown": false,
       "sales": 1,
-      "createdAt": 1791158400000
+      "createdAt": 1791158400000,
+      "details": {
+        "units": "Metric (m / mm)",
+        "scope": [
+          "Surface and seating",
+          "Lighting"
+        ],
+        "cost": "$5,000 to $25,000",
+        "agency": true
+      }
     },
     {
       "id": "r3",
@@ -1158,7 +1218,16 @@
       "published": true,
       "takenDown": false,
       "sales": 5,
-      "createdAt": 1789344000000
+      "createdAt": 1789344000000,
+      "details": {
+        "units": "Metric (m / mm)",
+        "scope": [
+          "Water and drainage",
+          "Full spatial reconfiguration"
+        ],
+        "cost": "Over $25,000",
+        "agency": true
+      }
     },
     {
       "id": "r4",
@@ -1173,7 +1242,16 @@
       "published": true,
       "takenDown": false,
       "sales": 2,
-      "createdAt": 1784592000000
+      "createdAt": 1784592000000,
+      "details": {
+        "units": "Imperial (ft / in)",
+        "scope": [
+          "Tactical / low-cost",
+          "Surface and seating"
+        ],
+        "cost": "Under $1,000",
+        "agency": true
+      }
     },
     {
       "id": "r5",
@@ -1188,7 +1266,39 @@
       "published": true,
       "takenDown": false,
       "sales": 0,
-      "createdAt": 1793318400000
+      "createdAt": 1793318400000,
+      "details": {
+        "units": "Metric (m / mm)",
+        "scope": [
+          "Lighting"
+        ],
+        "cost": "Not sure",
+        "agency": true
+      }
+    },
+    {
+      "id": "r6",
+      "spaceId": "s2",
+      "architectId": "u-a1",
+      "title": "Shade sails over the haveli courtyard",
+      "description": "Two tensioned sails anchored to the existing parapets, with a ground-level bench along the north wall.",
+      "files": [
+        "sails-plan.pdf",
+        "section.pdf"
+      ],
+      "version": 1,
+      "published": true,
+      "takenDown": false,
+      "sales": 0,
+      "createdAt": 1789862400000,
+      "details": {
+        "units": "Metric (m / mm)",
+        "scope": [
+          "Canopy and shade"
+        ],
+        "cost": "$1,000 to $5,000",
+        "agency": true
+      }
     }
   ],
   "models": [
@@ -1384,7 +1494,18 @@
           "id": "e11",
           "architectId": "u-a1",
           "title": "Threshold shade",
-          "submittedAt": "2026-08-28"
+          "submittedAt": "2026-08-28",
+          "statement": "A perforated stone canopy over the waiting ledge, with a drinking-water point set into the arch wall.",
+          "files": [
+            "entry-boards.pdf",
+            "canopy-section.pdf"
+          ],
+          "units": "Metric (m / mm)",
+          "scope": [
+            "Canopy and shade",
+            "Water and drainage"
+          ],
+          "cost": "$5,000 to $25,000"
         }
       ],
       "plans": [
@@ -2429,5 +2550,18 @@
       "date": "2026-10-31"
     }
   ],
-  "diagramUploads": []
+  "diagramUploads": [
+    {
+      "id": "m-s13",
+      "spaceId": "s13",
+      "userId": "u-a1",
+      "date": "2026-10-12",
+      "files": [
+        "plan.dwg",
+        "section.dwg",
+        "model.obj"
+      ],
+      "notes": "Measured with a tape and laser distance meter, cross-checked against a phone scan."
+    }
+  ]
 }

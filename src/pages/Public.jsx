@@ -420,7 +420,7 @@ export function Terms() {
   const rows = [
     ['Documentation of spaces', 'Photos, scans and questionnaire answers are shared under a Creative Commons licence and stay open. You keep ownership of what you upload.'],
     ['Redesigns and measured models', 'Sold under the platform purchase licence. Buyers can use and adapt the files. They cannot redistribute them.'],
-    ['Architects', 'Keep copyright in their redesigns and receive 80% of each sale; the platform keeps 20%. They can publish one redesign a week. An agency can buy full design rights: the price and terms are agreed between the agency and the architect, and the architect must be credited.'],
+    ['Architects', 'Keep copyright in their redesigns and receive 80% of each sale; the platform keeps 20%. They can publish one redesign per space each week. An agency can buy full design rights: the price and terms are agreed between the agency and the architect, and the architect must be credited.'],
     ['Spatial diagrams', 'The platform keeps the download fee for Base Library diagrams and models. Community photographers are credited.'],
     ['Contests', 'The co-host funds the prize, sets the criteria and judges. The winning architect receives the full prize and sells the design to the co-host.'],
     ['Private owners', 'Anyone can document a space visible from public ground. An owner can request removal with proof of ownership; the team reviews each request.'],
@@ -435,6 +435,48 @@ export function Terms() {
         {rows.map(([t, d]) => (
           <div key={t} className="card"><dt className="bold">{t}</dt><dd>{d}</dd></div>
         ))}
+      </dl>
+    </Page>
+  );
+}
+
+// Footer pages: short placeholders for the class demo.
+export function About() {
+  return (
+    <Page narrow tag="simulated">
+      <h1>About us</h1>
+      <p className="prose">Interstitial Spaces documents the in-between places of a city: steps, thresholds, courtyards and edges that people use but nobody designed for. Residents record how they feel; architects propose redesigns; civic bodies and co-hosts fund the ones people vote for.</p>
+      <p className="prose">The platform is a co-operative. Every account holder is a member with one vote, and any year-end surplus is returned to members by points.</p>
+      <p className="small muted">A class project for New Economies and Societies at Parsons. All content is placeholder.</p>
+    </Page>
+  );
+}
+
+export function Contact() {
+  return (
+    <Page narrow tag="simulated">
+      <h1>Contact us</h1>
+      <dl className="dl dl-wide">
+        <dt>General questions</dt><dd>hello@interstitial.example</dd>
+        <dt>Removal requests</dt><dd>Open the space and choose “Request removal”, or write to removals@interstitial.example with proof of ownership.</dd>
+        <dt>Contests and partnerships</dt><dd>partners@interstitial.example, or <Link to="/contest/request">host a contest</Link>.</dd>
+        <dt>Press</dt><dd>press@interstitial.example</dd>
+      </dl>
+      <p className="small muted">Placeholder addresses for the class demo.</p>
+    </Page>
+  );
+}
+
+export function Privacy() {
+  return (
+    <Page narrow tag="simulated">
+      <h1>Privacy policy</h1>
+      <p className="muted">A plain summary for the class demo, not legal text.</p>
+      <dl className="dl dl-wide">
+        <dt>What we keep</dt><dd>Your name, email, the work you upload, and for architects the register or school details used to verify you.</dd>
+        <dt>Photo locations</dt><dd>Used to place spaces on the map. The exact point is shown only for the space, not linked to where you live.</dd>
+        <dt>Identity documents</dt><dd>Checked against the register, then deleted. We keep only the result.</dd>
+        <dt>Deleting your account</dt><dd>Removes your profile. Documentation you shared stays under its Creative Commons licence, credited as “Former member”.</dd>
       </dl>
     </Page>
   );

@@ -123,7 +123,7 @@ export function Contest() {
           ) : mine ? (
             <p className="small bold">You entered “{mine.title}”.</p>
           ) : isArchitect ? (
-            <Button variant="primary" to={`/space/${c.spaceId}/upload-redesign?contest=${c.id}`}>Submit an entry</Button>
+            <Button variant="primary" to={`/contest/${c.id}/enter`}>Submit an entry</Button>
           ) : (
             <p className="small muted">{isMember ? 'Only architects can enter contests.' : 'Sign up as an architect to enter.'}</p>
           )}

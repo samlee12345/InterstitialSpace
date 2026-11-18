@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
-import { Badge, Button, Empty, FileDrop, ImageBox, Input, Modal, Page, PointsBadge, RoleGate } from '../components/ui.jsx';
-import { RedesignCard } from '../components/domain.jsx';
-import { fmtPoints } from '../lib/points.js';
+import { Badge, Button, Empty, FileDrop, ImageBox, Input, Modal, Page, PointsBadge, RoleGate, Select } from '../components/ui.jsx';
+import { RedesignCard, typeLabel } from '../components/domain.jsx';
+import { POINTS, fmtPoints } from '../lib/points.js';
 
 function EditModal({ redesign, onClose }) {
   const { dispatch } = useDemo();
@@ -29,6 +29,29 @@ function EditModal({ redesign, onClose }) {
   );
 }
 
+function PortfolioItem({ label, badges, title, description, meta, details, files, actions }) {
+  return (
+    <li className="pf-item">
+      <div className="thumb"><ImageBox label={label} /></div>
+      <div className="stack-sm grow">
+        <div className="row">{badges}</div>
+        {title}
+        {description && <span className="small">{description}</span>}
+        <span className="small muted">{meta}</span>
+        {details && (
+          <dl className="dl dl-compact small">
+            {details.units && <><dt>Units</dt><dd>{details.units}</dd></>}
+            {details.scope?.length > 0 && <><dt>Scope</dt><dd>{details.scope.join(', ')}</dd></>}
+            {details.cost && <><dt>Estimated cost</dt><dd>{details.cost}</dd></>}
+          </dl>
+        )}
+        {files?.length > 0 && <span className="small muted">Files: {files.join(', ')}</span>}
+        {actions && <div className="row">{actions}</div>}
+      </div>
+    </li>
+  );
+}
+
 export function Portfolio() {
   const { state, dispatch, user, isArchitect, get, cfg, rankOf } = useDemo();
   const [edit, setEdit] = useState(null);
@@ -41,28 +64,52 @@ export function Portfolio() {
   const diagrams = state.diagramUploads.filter((d) => d.userId === user.id);
   const entries = state.contests.flatMap((c) => c.entries.filter((e) => e.architectId === user.id).map((e) => ({ ...e, contest: c })));
 
+  // Redesigns, spatial diagrams and contest entries share one row format.
   const row = (r) => (
-    <li key={r.id} className="row row-top">
-      <div className="thumb"><ImageBox label="Redesign preview" /></div>
-      <div className="stack-sm grow">
-        <div className="row">
-          <Badge>Version {r.version}</Badge>
-          {r.takenDown ? <Badge kind="dashed">Taken down by a moderator</Badge> : r.published ? <Badge kind="solid">Published</Badge> : <Badge kind="dashed">Unpublished</Badge>}
-        </div>
-        <Link className="bold" to={`/item/${r.id}`}>{r.title}</Link>
-        <span className="small">{r.description}</span>
-        <span className="small muted">
-          For <Link to={`/space/${r.spaceId}?tab=redesigns`}>{get.space(r.spaceId)?.name}</Link>. {r.sales} sale{r.sales === 1 ? '' : 's'} at {cfg.priceLabel}. Files: {r.files.join(', ')}
-        </span>
-        {!r.takenDown && (
-          <div className="row">
-            <Button onClick={() => setEdit(r)}>Edit</Button>
-            {r.published ? <Button onClick={() => setUnpub(r)}>Unpublish</Button> : <Button onClick={() => dispatch({ type: 'SET_PUBLISHED', id: r.id, on: true })}>Publish again</Button>}
-          </div>
-        )}
-      </div>
-    </li>
+    <PortfolioItem
+      key={r.id}
+      label="Redesign preview"
+      badges={<><Badge>Redesign</Badge><Badge>Version {r.version}</Badge>{r.takenDown ? <Badge kind="dashed">Taken down by a moderator</Badge> : r.published ? <Badge kind="solid">Published</Badge> : <Badge kind="dashed">Unpublished</Badge>}</>}
+      title={<Link className="bold" to={`/item/${r.id}`}>{r.title}</Link>}
+      description={r.description}
+      meta={<>For <Link to={`/space/${r.spaceId}?tab=redesigns`}>{get.space(r.spaceId)?.name}</Link>. Published {new Date(r.createdAt).toLocaleDateString()}. {r.sales} sale{r.sales === 1 ? '' : 's'} at {cfg.priceLabel}.</>}
+      details={r.details}
+      files={r.files}
+      actions={!r.takenDown && (
+        <>
+          <Button onClick={() => setEdit(r)}>Edit</Button>
+          {r.published ? <Button onClick={() => setUnpub(r)}>Unpublish</Button> : <Button onClick={() => dispatch({ type: 'SET_PUBLISHED', id: r.id, on: true })}>Publish again</Button>}
+        </>
+      )}
+    />
   );
+  const diagramRow = (d) => (
+    <PortfolioItem
+      key={d.id}
+      label="Plan preview"
+      badges={<><Badge>Spatial diagram</Badge><Badge kind="solid">In the Base Library</Badge></>}
+      title={<Link className="bold" to={`/space/${d.spaceId}?tab=diagram`}>Measured plan and section: {get.space(d.spaceId)?.name}</Link>}
+      description={d.notes || 'A measured plan and section with correct proportions.'}
+      meta={<>Added {d.date}. +{POINTS.diagram} points. Sold for {cfg.priceLabel}; the platform keeps the download fee.</>}
+      files={d.files}
+    />
+  );
+  const entryRow = (e) => {
+    const c = e.contest;
+    const status = c.status === 'live' ? ['Submitted', ''] : c.status === 'judging' ? ['Being judged', ''] : c.winner === e.id ? ['Winner', 'solid'] : ['Not selected', 'dashed'];
+    return (
+      <PortfolioItem
+        key={e.id}
+        label="Entry board"
+        badges={<><Badge>Contest entry</Badge><Badge kind={status[1]}>{status[0]}</Badge></>}
+        title={<Link className="bold" to={`/contest/${c.id}`}>{e.title}</Link>}
+        description={e.statement}
+        meta={<>Entry in <Link to={`/contest/${c.id}`}>{c.title}</Link>, for {get.space(c.spaceId)?.name}. Submitted {e.submittedAt}. Prize {c.prize}.</>}
+        details={e.units || e.scope ? { units: e.units, scope: e.scope, cost: e.cost } : null}
+        files={e.files}
+      />
+    );
+  };
 
   return (
     <Page tag="clickable">
@@ -70,10 +117,6 @@ export function Portfolio() {
         <div className="stack-sm">
           <h1>Your portfolio</h1>
           <p className="muted small">Rank {rankOf(user.id)} of {state.users.filter((u) => u.role === 'architect').length} architects, {fmtPoints(user.points)} points.</p>
-        </div>
-        <div className="row">
-          <Button to={`/architect/${user.id}`}>View public page</Button>
-          <Button to="/earnings">Earnings</Button>
         </div>
       </div>
       <p className="note">To add a redesign, open a space and choose “Upload redesign”. <Link to="/browse">Browse spaces</Link></p>
@@ -92,13 +135,13 @@ export function Portfolio() {
       <section className="stack">
         <h2>Spatial diagrams you uploaded ({diagrams.length})</h2>
         {diagrams.length === 0 ? <p className="muted small">None yet. Open a pending space without a diagram to add one.</p> : (
-          <ul className="list">{diagrams.map((d) => <li key={d.id}><Link to={`/space/${d.spaceId}?tab=diagram`}>{get.space(d.spaceId)?.name}</Link> <span className="small muted">added {d.date}, +2 points</span></li>)}</ul>
+          <ul className="list">{diagrams.map(diagramRow)}</ul>
         )}
       </section>
       <section className="stack">
         <h2>Contest entries ({entries.length})</h2>
         {entries.length === 0 ? <p className="muted small">None yet. <Link to="/contests">Browse contests</Link></p> : (
-          <ul className="list">{entries.map((e) => <li key={e.id}><span className="bold">{e.title}</span> <span className="small muted">in <Link to={`/contest/${e.contest.id}`}>{e.contest.title}</Link></span></li>)}</ul>
+          <ul className="list">{entries.map(entryRow)}</ul>
         )}
       </section>
 
@@ -179,6 +222,72 @@ export function Ranking() {
         </table>
       </div>
       {!isMember && <p className="small muted">Points and badges are shown to signed-in members.</p>}
+    </Page>
+  );
+}
+
+// Spaces ranked by votes to rebuild or by date added, filterable by place.
+const SPACE_SORTS = {
+  votes: { label: 'Most voted to rebuild', fn: (a, b) => b.votes - a.votes },
+  latest: { label: 'Latest added', fn: (a, b) => (b.addedAt || '').localeCompare(a.addedAt || '') },
+};
+export function SpaceRanking() {
+  const { visibleSpaces } = useDemo();
+  const [sort, setSort] = useState('votes');
+  const [country, setCountry] = useState('all');
+  const [city, setCity] = useState('all');
+  const spaces = visibleSpaces.filter((s) => !s.private);
+  const countries = [...new Set(spaces.map((s) => s.country).filter(Boolean))].sort();
+  const cities = [...new Set(spaces.filter((s) => country === 'all' || s.country === country).map((s) => s.city).filter(Boolean))].sort();
+  const list = spaces
+    .filter((s) => (country === 'all' || s.country === country) && (city === 'all' || s.city === city))
+    .sort(SPACE_SORTS[sort].fn);
+  return (
+    <Page tag="clickable">
+      <header className="stack-sm">
+        <h1>Space ranking</h1>
+        <p className="prose muted">Votes show which spaces people most want rebuilt. Co-hosts use this list to choose where to run contests.</p>
+      </header>
+      <div className="row row-end filters">
+        <fieldset className="segmented">
+          <legend>Sort by</legend>
+          <div className="segmented-track">
+            {Object.entries(SPACE_SORTS).map(([k, v]) => (
+              <label key={k} className="segment">
+                <input type="radio" name="space-sort" checked={sort === k} onChange={() => setSort(k)} />
+                <span>{v.label}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+        <Select label="Country" value={country} onChange={(e) => { setCountry(e.target.value); setCity('all'); }} options={[{ value: 'all', label: 'All countries' }, ...countries.map((c) => ({ value: c, label: c }))]} />
+        <Select label="City" value={city} onChange={(e) => setCity(e.target.value)} options={[{ value: 'all', label: 'All cities' }, ...cities.map((c) => ({ value: c, label: c }))]} />
+      </div>
+      <p className="small muted" aria-live="polite">{list.length} {list.length === 1 ? 'space' : 'spaces'}{city !== 'all' ? ` in ${city}` : country !== 'all' ? ` in ${country}` : ''}. The sample data only covers Jaipur, India.</p>
+      <div className="table-wrap">
+        <table>
+          <thead><tr><th>{sort === 'votes' ? 'Rank' : '#'}</th><th>Space</th><th>Type</th><th>City</th><th>Country</th><th className="num">Votes to rebuild</th><th>Added</th></tr></thead>
+          <tbody>
+            {list.map((s, i) => (
+              <tr key={s.id}>
+                <td>{i + 1}</td>
+                <td>
+                  <span className="row">
+                    <span className="thumb-sm"><ImageBox label="Photo" shape="square" /></span>
+                    <Link to={`/space/${s.id}`}>{s.name}</Link>
+                    {s.status === 'pending' && <Badge kind="dashed">Pending</Badge>}
+                  </span>
+                </td>
+                <td>{typeLabel(s.type)}</td>
+                <td>{s.city || 'Not given'}</td>
+                <td>{s.country || 'Not given'}</td>
+                <td className="num">{s.votes}</td>
+                <td>{s.addedAt ? new Date(s.addedAt).toLocaleDateString(undefined, { timeZone: 'UTC' }) : 'Not given'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </Page>
   );
 }

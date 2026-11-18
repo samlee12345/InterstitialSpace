@@ -114,6 +114,20 @@ a space page), and the Demo bar shows the count per page and per view.
   licence terms. From a live contest ("Submit an entry") the licence
   statement becomes the contest rights transfer and the last step shows the
   prize and rights instead of price.
+- **Contest entries** have their own page (/contest/:id/enter) from
+  "Submit an entry". If you have published redesigns for that space, pick
+  one to start from: its files and details are copied in and stay editable.
+  Architect A can try this on both live contests.
+- **Spatial diagram upload** is two steps: drawings (previews appear only
+  after files are added) and the Base Library licence, since diagrams are
+  sold as downloads.
+- **Portfolio** shows redesigns, spatial diagrams and contest entries in the
+  same format: image, badges, description, details and files.
+- **Space ranking** (top bar) sorts spaces by most voted to rebuild or latest
+  added, and filters by country and city. The sample data only covers Jaipur.
+- **Footer** on every page: explore links, for architects, host a contest,
+  co-op, About us, Contact us, Terms of Use, Privacy policy. Terms left the
+  top bar.
 - **Sign-up.** The header for visitors shows "For architects" and "Log in".
   For architects asks licensed architect or student. Licensed: country,
   register number looked up in that country's register (India CoA, US
@@ -220,7 +234,7 @@ Agreed before building:
 Changed on Nov 16 after review:
 
 6. Full design rights have no fixed price: the buyer messages the architect and they agree price and terms. Only the use + adapt licence goes through checkout.
-7. One redesign per architect per week. Spatial diagrams, experiences and contest entries are not limited.
+7. One redesign per space per architect each week; other spaces stay open. Spatial diagrams, experiences and contest entries are not limited.
 8. Contest prizes show placeholder amounts ($2,500 and $1,800) so the prize is visible.
 9. "Most relevant" experiences means contributors with more points first.
 10. The moderation list shows only spaces that are ready for approval.

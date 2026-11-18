@@ -106,10 +106,10 @@ function Header() {
         <Link to="/" className="brand">Interstitial Spaces</Link>
         <nav className="nav" aria-label="Main">
           <NavLink to="/browse" className={link}>Browse spaces</NavLink>
+          <NavLink to="/spaces/ranking" className={link}>Space ranking</NavLink>
           <NavLink to="/contests" className={link}>Contests</NavLink>
           <NavLink to="/ranking" className={link}>Architect ranking</NavLink>
           {isMember && <NavLink to="/co-op" className={link}>Co-op</NavLink>}
-          <NavLink to="/terms" className={link}>Terms</NavLink>
         </nav>
         {isMember ? (
           <div className="row">
@@ -418,6 +418,34 @@ function NotesButton() {
   );
 }
 
+function Footer() {
+  const cols = [
+    ['Explore', [['/browse', 'Browse spaces'], ['/spaces/ranking', 'Space ranking'], ['/contests', 'Contests'], ['/ranking', 'Architect ranking']]],
+    ['Take part', [['/architects', 'For architects'], ['/contest/request', 'Host a contest'], ['/co-op', 'The co-op']]],
+    ['About', [['/about', 'About us'], ['/contact', 'Contact us']]],
+    ['Legal', [['/terms', 'Terms of Use'], ['/privacy', 'Privacy policy']]],
+  ];
+  return (
+    <footer className="footer">
+      <div className="footer-inner">
+        <div className="stack-sm footer-brand">
+          <span className="bold">Interstitial Spaces</span>
+          <span className="small muted">A co-operative for documenting and redesigning the in-between places of a city.</span>
+        </div>
+        {cols.map(([h, links]) => (
+          <nav key={h} aria-label={h} className="stack-sm">
+            <h2 className="footer-h">{h}</h2>
+            <ul className="footer-links">
+              {links.map(([to, label]) => <li key={to}><Link to={to}>{label}</Link></li>)}
+            </ul>
+          </nav>
+        ))}
+      </div>
+      <p className="xs muted footer-note">Class prototype, Parsons, 2026. All people, places, prices and organisations are placeholders.</p>
+    </footer>
+  );
+}
+
 export default function Shell() {
   const loc = useLocation();
   useEffect(() => { window.scrollTo(0, 0); }, [loc.pathname]);
@@ -426,6 +454,7 @@ export default function Shell() {
       <a className="skip" href="#main" onClick={(e) => { e.preventDefault(); document.getElementById('main')?.focus(); }}>Skip to content</a>
       <Header />
       <Outlet />
+      <Footer />
       <SignupPrompt />
       <Toasts />
       <DemoPanel />
