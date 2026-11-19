@@ -3,8 +3,8 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import { ROLES, useDemo } from '../state/DemoContext.jsx';
 import { Badge, Button, Icon, Modal, Toasts } from './ui.jsx';
 import { fmtPoints } from '../lib/points.js';
-import { activateNotes, notesActive, notesCounts, setNotesPage, startNotesTool } from '../review/notes-tool.js';
-import { PAGE_GROUPS, pageFor } from '../demo/pages.js';
+import { activateNotes, addReply, allDiscussions, notesActive, notesCounts, revealNote, setNotesPage, startNotesTool } from '../review/notes-tool.js';
+import { ALL_PAGES, PAGE_GROUPS, pageFor } from '../demo/pages.js';
 import { setChoice, useChoices } from '../design/choices.js';
 
 const link = ({ isActive }) => (isActive ? 'active' : '');
@@ -355,6 +355,133 @@ function PageList({ close }) {
   );
 }
 
+function useAllDiscussions() {
+  const [list, setList] = useState(allDiscussions);
+  useEffect(() => {
+    const sync = () => setList(allDiscussions());
+    window.addEventListener('isp-notes-change', sync);
+    window.addEventListener('storage', sync);
+    return () => { window.removeEventListener('isp-notes-change', sync); window.removeEventListener('storage', sync); };
+  }, []);
+  return list;
+}
+
+// Where a notes key lives: "/space/s2~tabs" → the page, its view and a label.
+function placeOf(key) {
+  const [path, suffix] = splitKey(key);
+  const page = path === 'sandbox' ? null : pageFor(path);
+  const view = page?.views?.find((v) => v.id === suffix);
+  const retiredView = page?.views && suffix && !view;
+  const title = path === 'sandbox' ? 'Component sandbox' : page ? page.label : path;
+  const sub = view ? view.label : retiredView ? `Retired layout (${suffix})` : suffix || '';
+  return { path, page, view, title, sub, retiredView };
+}
+
+function DiscussionItem({ pageKey, d, open }) {
+  const [writing, setWriting] = useState(false);
+  const [text, setText] = useState('');
+  const save = () => { addReply(pageKey, d.id, text); setText(''); setWriting(false); };
+  const done = d.replies.length > 0;
+  return (
+    <li className={`demo-disc ${done ? 'is-done' : ''}`}>
+      <button type="button" className="demo-disc-open" onClick={open} title="Open this discussion on its page">
+        <span className="demo-disc-num" aria-label={`Discussion ${d.number}${done ? ', discussed' : ', open'}`}>{d.number}</span>
+        <span className="demo-disc-text">{d.text}</span>
+      </button>
+      {d.replies.length > 0 && (
+        <ul className="demo-disc-replies" aria-label={`Responses to discussion ${d.number}`}>
+          {d.replies.map((r) => <li key={r.id}>{r.text}</li>)}
+        </ul>
+      )}
+      {writing ? (
+        <div className="stack-sm demo-disc-form">
+          <textarea
+            className="input"
+            rows={2}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="What did you decide?"
+            aria-label={`Response to discussion ${d.number}`}
+            autoFocus
+            onKeyDown={(e) => {
+              e.stopPropagation();
+              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) save();
+              if (e.key === 'Escape') { setWriting(false); setText(''); }
+            }}
+          />
+          <div className="row">
+            <button type="button" className="btn btn-sm btn-primary" onClick={save} disabled={!text.trim()}>Save response</button>
+            <button type="button" className="btn btn-sm btn-quiet" onClick={() => { setWriting(false); setText(''); }}>Cancel</button>
+            <span className="xs muted">⌘↵ to save</span>
+          </div>
+        </div>
+      ) : (
+        <button type="button" className="link-btn xs demo-disc-reply" onClick={() => setWriting(true)}>
+          {done ? 'Add another response' : 'Add a response'}<span className="visually-hidden"> to discussion {d.number}</span>
+        </button>
+      )}
+    </li>
+  );
+}
+
+// Every discussion, grouped by the page (and layout) it's pinned to.
+function DiscussionsTab({ close }) {
+  const { dispatch, role } = useDemo();
+  const nav = useNavigate();
+  const groups = useAllDiscussions();
+  const [show, setShow] = useState('open');
+  const total = groups.reduce((t, g) => t + g.items.length, 0);
+  const openCount = groups.reduce((t, g) => t + g.items.filter((d) => !d.replies.length).length, 0);
+  // Same order as the Pages tab; anything not in it goes last.
+  const rank = (key) => { const i = ALL_PAGES.indexOf(placeOf(key).page); return i === -1 ? ALL_PAGES.length : i; };
+  const visible = [...groups]
+    .sort((a, b) => rank(a.key) - rank(b.key) || a.key.localeCompare(b.key))
+    .map((g) => ({ ...g, items: show === 'open' ? g.items.filter((d) => !d.replies.length) : g.items }))
+    .filter((g) => g.items.length);
+  const go = (key, id) => {
+    const { path, page, view } = placeOf(key);
+    if (path === 'sandbox') { window.location.href = `${import.meta.env.BASE_URL}sandbox.html`; return; }
+    if (page?.role && page.role !== role) dispatch({ type: 'SET_ROLE', role: page.role });
+    if (view?.choice) setChoice(...view.choice);
+    nav(path);
+    revealNote(id);
+    if (window.matchMedia('(max-width: 64rem)').matches) close();
+  };
+  if (!total) {
+    return <p className="small muted">No discussions yet. Turn on notes and press D, then select something on a page to start one.</p>;
+  }
+  return (
+    <div className="stack">
+      <div className="row between">
+        <div className="demo-filter" role="group" aria-label="Show">
+          <button type="button" aria-pressed={show === 'open'} onClick={() => setShow('open')}>Needs a response <span className="muted">{openCount}</span></button>
+          <button type="button" aria-pressed={show === 'all'} onClick={() => setShow('all')}>All <span className="muted">{total}</span></button>
+        </div>
+      </div>
+      <p className="xs muted">Select a discussion to open it on its page. Discussions with a response count as discussed.</p>
+      {visible.length === 0 && <p className="small muted">Every discussion has a response.</p>}
+      {visible.map((g) => {
+        const where = placeOf(g.key);
+        const all = groups.find((x) => x.key === g.key).items;
+        return (
+          <section key={g.key} className="stack-sm" aria-label={`${where.title}${where.sub ? `, ${where.sub}` : ''}`}>
+            <div className="demo-disc-head">
+              <h3 className="demo-h">{where.title}</h3>
+              <span className="xs muted">{all.filter((d) => d.replies.length).length}/{all.length} discussed</span>
+            </div>
+            <p className="xs muted demo-disc-path">{where.path}{where.sub ? ` · ${where.sub}` : ''}</p>
+            {where.retiredView && <p className="xs muted">This layout is retired, so these open the page without their pins.</p>}
+            <ul className="demo-discs">
+              {g.items.map((d) => <DiscussionItem key={d.id} pageKey={g.key} d={d} open={() => go(g.key, d.id)} />)}
+            </ul>
+          </section>
+        );
+      })}
+    </div>
+  );
+}
+
+const TAB_KEY = 'isp-demo-tab';
 function DemoPanel() {
   const { state, dispatch, role } = useDemo();
   const [open, setOpenRaw] = useState(() => { try { return localStorage.getItem(DRAWER_KEY) === '1'; } catch { return false; } });
@@ -362,6 +489,15 @@ function DemoPanel() {
   const nav = useNavigate();
   const counts = useNotesCounts();
   const totals = Object.values(counts).reduce(add, ZERO);
+  const [tab, setTabRaw] = useState(() => { try { return localStorage.getItem(TAB_KEY) || 'pages'; } catch { return 'pages'; } });
+  const setTab = (t) => { setTabRaw(t); try { localStorage.setItem(TAB_KEY, t); } catch { /* ignore */ } };
+  const onTabKey = (e) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+    e.preventDefault();
+    const next = tab === 'pages' ? 'discussions' : 'pages';
+    setTab(next);
+    document.getElementById(`demo-tab-${next}`)?.focus();
+  };
   // While the drawer is open, the page makes room for it instead of being covered.
   useEffect(() => {
     document.body.classList.toggle('demo-open', open);
@@ -383,7 +519,19 @@ function DemoPanel() {
         <h2 className="demo-title">Demo controls</h2>
         <button type="button" className="btn btn-quiet" onClick={() => setOpen(false)} aria-expanded="true">Close</button>
       </div>
-      <div className="demo-drawer-body">
+      <div className="demo-tabs" role="tablist" aria-label="Demo controls">
+        <button type="button" role="tab" id="demo-tab-pages" aria-selected={tab === 'pages'} aria-controls="demo-panel-pages" tabIndex={tab === 'pages' ? 0 : -1} onClick={() => setTab('pages')} onKeyDown={onTabKey}>Pages</button>
+        <button type="button" role="tab" id="demo-tab-discussions" aria-selected={tab === 'discussions'} aria-controls="demo-panel-discussions" tabIndex={tab === 'discussions' ? 0 : -1} onClick={() => setTab('discussions')} onKeyDown={onTabKey}>
+          Discussions <span className="demo-tab-count">{totals.discussed}/{totals.discussion}</span>
+        </button>
+      </div>
+      {tab === 'discussions' && (
+        <div className="demo-drawer-body" role="tabpanel" id="demo-panel-discussions" aria-labelledby="demo-tab-discussions">
+          <DiscussionsTab close={() => setOpen(false)} />
+        </div>
+      )}
+      {tab === 'pages' && (
+      <div className="demo-drawer-body" role="tabpanel" id="demo-panel-pages" aria-labelledby="demo-tab-pages">
         <section className="stack-sm" aria-labelledby="demo-role-h">
           <h3 id="demo-role-h" className="demo-h">Viewing as</h3>
           <div className="demo-roles">
@@ -415,6 +563,7 @@ function DemoPanel() {
           <p className="xs muted">All spaces, people, prices and organisations are placeholders.</p>
         </section>
       </div>
+      )}
     </aside>
   );
 }

@@ -85,3 +85,7 @@ body[data-nt-kind="discussion"] .nt-hovered { outline-color: var(--review-discus
 .nt-reply-btn:hover { color: var(--gray-900); }
 .nt-reply-btn:focus-visible { outline: var(--border-thick) solid var(--review-discuss-soft); outline-offset: var(--border-thick); }
 .nt-kind-discussion.nt-discussed .nt-badge, .nt-kind-discussion.nt-marker.nt-discussed { background: var(--review-surface); color: var(--review-discuss-strong); box-shadow: inset 0 0 0 var(--border-thick) var(--review-discuss); }
+/* A card opened from the Discussions tab flashes once. */
+.nt-card.nt-flash { animation: nt-flash 1.8s ease-out; }
+@keyframes nt-flash { 0%, 40% { box-shadow: 0 0 0 3px var(--review-discuss, #0f766e); } 100% { box-shadow: 0 0 0 3px transparent; } }
+@media (prefers-reduced-motion: reduce) { .nt-card.nt-flash { animation: none; outline: 3px solid var(--review-discuss, #0f766e); } }

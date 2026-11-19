@@ -61,6 +61,13 @@ so testers can paste them into a message. Notes never leave the
 tester's browser. Each view keeps its own notes (for example the photo strip
 header of a space page), and the Demo bar shows the count per page and per view.
 
+**Discussions tab** in the Demo controls lists every discussion from every
+page, grouped by page (and layout) in the same order as the Pages tab, with
+discussed/total per page. "Needs a response" shows only open ones; "All"
+shows everything with its responses. Select a discussion to go to its page
+(switching role and layout if needed); notes turn on and its card flashes.
+"Add a response" writes one right there, without leaving the page you're on.
+
 **Fill fields** in the notes toolbar puts sample answers into every empty
 field on the page (or in the open dialog): text, selects, radio groups,
 "I agree" boxes, the test card and sample files, plus one photo if none has

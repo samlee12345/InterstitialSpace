@@ -46,6 +46,62 @@ const saveNotes = () => { store.set(pageKey(), notes); announce(); };
 // A discussion counts as discussed once it has at least one response.
 export const isDiscussed = (n) => kindOf(n) === 'discussion' && (n.replies || []).length > 0;
 
+// Every discussion on every page, for the Discussions tab in the Demo drawer:
+// [{ key: '/space/s2~tabs', items: [{ id, number, text, replies }] }], pages in storage order.
+export function allDiscussions() {
+  const out = [];
+  try {
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const k = localStorage.key(i);
+      if (!k || !k.startsWith(PREFIX)) continue;
+      const list = store.get(k, []) || [];
+      const numbers = numberByKind(list);
+      const items = list.filter((n) => kindOf(n) === 'discussion').map((n) => ({ id: n.id, number: numbers[n.id], text: n.text, replies: n.replies || [] }));
+      if (items.length) out.push({ key: k.slice(PREFIX.length), items });
+    }
+  } catch { /* storage blocked */ }
+  return out.sort((a, b) => a.key.localeCompare(b.key));
+}
+
+// Add a response from outside the page (the Demo drawer). Works for any page key.
+export function addReply(key, id, text) {
+  const v = text.trim();
+  if (!v) return;
+  const reply = { id: uid(), text: v, at: new Date().toISOString() };
+  if (PREFIX + key === pageKey()) {
+    notes = notes.map((n) => (n.id === id ? { ...n, replies: [...(n.replies || []), reply] } : n));
+    saveNotes();
+    if (isActive) rerenderAll();
+    return;
+  }
+  const list = store.get(PREFIX + key, []) || [];
+  store.set(PREFIX + key, list.map((n) => (n.id === id ? { ...n, replies: [...(n.replies || []), reply] } : n)));
+  announce();
+}
+
+// Open a discussion's card once its page has rendered: notes turn on, the page
+// scrolls to what it's pinned to, and the card flashes.
+let pendingReveal = null;
+export function revealNote(id) {
+  pendingReveal = { id, until: Date.now() + 4000 };
+  if (!isActive) activate();
+  else if (isHidden) toggleHide();
+  else tryReveal();
+}
+function tryReveal() {
+  if (!pendingReveal) return;
+  if (Date.now() > pendingReveal.until) { pendingReveal = null; return; }
+  const note = notes.find((n) => n.id === pendingReveal.id);
+  const card = document.querySelector(`.nt-card[data-note-id="${CSS.escape(pendingReveal.id)}"]`);
+  if (!note || !card) return;
+  pendingReveal = null;
+  setTimeout(() => {
+    findByFingerprint(note.fp)?.scrollIntoView({ block: 'center' });
+    const c = document.querySelector(`.nt-card[data-note-id="${CSS.escape(note.id)}"]`);
+    if (c) { c.classList.remove('nt-flash'); void c.offsetWidth; c.classList.add('nt-flash'); }
+  }, 120);
+}
+
 // Counts for every page key by kind, e.g. { '/browse': { note: 2, discussion: 3, discussed: 1 } }.
 export function notesCounts() {
   const out = {};
@@ -725,6 +781,7 @@ function rerenderAll() {
   renderBadges();
   refreshToolbar();
   schedule();
+  tryReveal();
 }
 
 function el(tag, cls) { const e = document.createElement(tag); if (cls) e.className = cls; return e; }
