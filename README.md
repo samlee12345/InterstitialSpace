@@ -32,6 +32,21 @@ The link is https://samlee12345.github.io/InterstitialSpace/ . Pages use
 be shared directly. Each visitor gets their own copy of the demo data, which
 resets when they reload.
 
+## End-to-end test
+
+`tests/test_pages.py` (Python Playwright) clicks through every flow and every route for every role. Build, serve and run:
+
+```
+npm run build
+mkdir -p /tmp/site && rm -rf /tmp/site/InterstitialSpace && cp -r dist /tmp/site/InterstitialSpace
+(cd /tmp/site && python3 -m http.server 8099 &)
+python3 tests/test_pages.py      # ends with "ERRORS: 0"
+```
+
+## Current state and gaps
+
+What the prototype does today, what's missing and what's undecided lives in the Claude Doc "Interstitial Spaces prototype: current state and gaps" (copy: `03 - Design Project/Interstitial Spaces prototype - current state and gaps.md`). Update it after every round.
+
 ## Component sandbox
 
 `sandbox.html` (Demo bar, "Open component sandbox") shows versions of a
