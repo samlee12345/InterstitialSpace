@@ -277,7 +277,49 @@ export function RedesignCard({ redesign, blurred }) {
   return <Link to={`/item/${redesign.id}`} className="card card-link">{body}</Link>;
 }
 
-export const contestStatus = (c) => (c.status === 'live' ? 'Open for entries' : c.status === 'judging' ? 'Judging' : 'Closed');
+// Two rounds: an open concept round, then a paid shortlist that develops full proposals.
+export const contestStatus = (c) => {
+  if (c.status === 'closed') return 'Closed';
+  if (c.status === 'judging') return c.phase === 2 ? 'Final judging' : 'Shortlisting';
+  return c.phase === 2 ? 'Round 2: shortlist at work' : 'Round 1: open for concepts';
+};
+const fmtD = (d) => (d ? new Date(`${d}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '');
+
+// The four moments of a contest, with the two deadlines. `at` marks where it is now.
+export function ContestRounds({ contest: c }) {
+  const step = c.status === 'closed' ? 4 : c.phase === 2 ? (c.status === 'judging' ? 3 : 2) : c.status === 'judging' ? 1 : 0;
+  const items = [
+    ['Round 1: concepts due', fmtD(c.deadline), `Open to every eligible architect. A light submission: one concept sheet and a short statement.`],
+    ['Shortlist announced', '', `The co-host picks ${c.shortlistSize} ${c.shortlistSize === 1 ? 'entry' : 'entries'}. Each shortlisted architect is paid ${c.shortlistPay} to develop the idea.`],
+    ['Round 2: full proposals due', fmtD(c.deadline2), 'Shortlisted architects develop their concept into drawings the co-host can build from.'],
+    ['Winner announced', '', `The winner receives the ${c.prize} prize and sells the design to the co-host. Everyone else keeps their rights and can publish in the Redesign Library.`],
+  ];
+  return (
+    <ol className="rounds">
+      {items.map(([t, d, note], i) => (
+        <li key={t} className={i < step ? 'is-done' : i === step ? 'is-now' : ''} aria-current={i === step ? 'step' : undefined}>
+          <span className="rounds-dot" aria-hidden="true" />
+          <div className="stack-sm">
+            <span className="bold small">{t}{d && <span className="rounds-date">{d}</span>}</span>
+            <span className="xs muted">{note}</span>
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+// Who is paid what. Shortlisted entries are paid, not just the winner.
+export function ContestMoney({ contest: c }) {
+  return (
+    <dl className="dl contest-money">
+      <dt>Prize to the winner</dt><dd className="bold">{c.prize}</dd>
+      <dt>Shortlist</dt><dd><span className="bold">{c.shortlistPay} each</span> to {c.shortlistSize} shortlisted architects to develop their idea</dd>
+      <dt>Total funded</dt><dd>{c.budget}, held in escrow by the co-host</dd>
+      <dt>To enter</dt><dd>Free for paid members; {c.entryFee} entry fee for everyone else</dd>
+    </dl>
+  );
+}
 
 // The winning entry of a closed contest, or null.
 export const contestWinner = (c) => (c.status === 'closed' ? c.entries.find((e) => e.id === c.winner) || null : null);
@@ -309,7 +351,8 @@ export function ContestCard({ contest }) {
     <Link to={`/contest/${contest.id}`} className="card card-link">
       <div className="row"><Badge kind={contest.status === 'live' ? 'solid' : ''}>{contestStatus(contest)}</Badge></div>
       <h3>{contest.title}</h3>
-      <p><span className="display-sm">{contest.prize}</span> <span className="small muted">prize, plus {contest.entryPay} for every entry</span></p>
+      <p><span className="display-sm">{contest.prize}</span> <span className="small muted">prize, and {contest.shortlistPay} to each of {contest.shortlistSize} shortlisted</span></p>
+      <p className="xs muted">{contest.status === 'live' && contest.phase === 1 ? `Concepts due ${fmtD(contest.deadline)}` : contest.status === 'closed' ? 'Closed' : `Proposals due ${fmtD(contest.deadline2)}`}</p>
       <p className="small muted">Site: {sp?.name}</p>
       {won ? (
         <div className="stack-sm">

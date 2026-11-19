@@ -448,10 +448,10 @@ function ContestCard({ contest }) {
         <div className="row"><Badge kind={contest.status === 'live' ? 'solid' : ''}>Contest: {contestStatus(contest).toLowerCase()}</Badge>{entered && <Badge>You entered</Badge>}</div>
         <h2 id={`contest-${contest.id}`}><Link className="stretched" to={`/contest/${contest.id}`}>{contest.title}</Link></h2>
         <p className="small">
-          <span className="display-sm">{contest.prize}</span> prize, and {contest.entryPay} for every entry. Co-hosted by {contest.coHost}. {contest.status === 'live' ? `Entries close ${contest.deadline}.` : `Entries closed ${contest.deadline}.`}
+          <span className="display-sm">{contest.prize}</span> prize, and {contest.shortlistPay} to each of {contest.shortlistSize} shortlisted architects. Co-hosted by {contest.coHost}. Round 1 concepts due {contest.deadline}; round 2 proposals due {contest.deadline2}.
         </p>
       </div>
-      {isArchitect && contest.status === 'live' && !entered && (
+      {isArchitect && contest.status === 'live' && contest.phase !== 2 && !entered && (
         <Button variant="primary" className="above-stretch" to={`/contest/${contest.id}/enter`}>Submit an entry</Button>
       )}
     </section>

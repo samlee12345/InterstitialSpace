@@ -1592,7 +1592,13 @@
           "submittedAt": "2026-11-14"
         }
       ],
-      "entryPay": "$150"
+      "entryFee": "$25",
+      "phase": 1,
+      "deadline2": "2027-02-28",
+      "shortlistSize": 5,
+      "shortlistPay": "$300",
+      "shortlist": [],
+      "budget": "$4,000"
     },
     {
       "id": "c3",
@@ -1618,7 +1624,13 @@
           "submittedAt": "2026-11-10"
         }
       ],
-      "entryPay": "$200"
+      "entryFee": "$25",
+      "phase": 1,
+      "deadline2": "2027-03-15",
+      "shortlistSize": 5,
+      "shortlistPay": "$250",
+      "shortlist": [],
+      "budget": "$4,250"
     },
     {
       "id": "c2",
@@ -1673,9 +1685,25 @@
             "night-steps-plan.pdf",
             "night-steps-section.pdf"
           ]
+        },
+        {
+          "id": "e14",
+          "architectId": "u-a1",
+          "title": "Steps that glow",
+          "submittedAt": "2026-10-31",
+          "summary": "Photoluminescent strips in the step nosings: no wiring, no glare, and the stepwell stays untouched.",
+          "files": [
+            "steps-that-glow-concept.pdf"
+          ]
         }
       ],
-      "entryPay": "$100"
+      "entryFee": "$25",
+      "phase": 1,
+      "deadline2": "2027-01-10",
+      "shortlistSize": 2,
+      "shortlistPay": "$200",
+      "shortlist": [],
+      "budget": "$2,200"
     },
     {
       "id": "c4",
@@ -1684,7 +1712,7 @@
       "title": "Plinth steps that drain in the monsoon",
       "brief": "Water pools on the temple plinth steps for weeks every monsoon. Propose a fix for drainage that keeps the steps usable for sitting and selling.",
       "prize": "$1,500",
-      "deadline": "2026-11-10",
+      "deadline": "2026-09-15",
       "coHost": "Johari Bazaar traders' association (placeholder)",
       "coHostId": null,
       "eligibility": "Licensed architects and accredited architecture students",
@@ -1707,7 +1735,16 @@
           "submittedAt": "2026-11-08"
         }
       ],
-      "entryPay": "$100"
+      "entryFee": "$25",
+      "phase": 2,
+      "deadline2": "2026-11-10",
+      "shortlistSize": 2,
+      "shortlistPay": "$200",
+      "shortlist": [
+        "e7",
+        "e8"
+      ],
+      "budget": "$1,900"
     },
     {
       "id": "c5",
@@ -1716,7 +1753,7 @@
       "title": "A place to wait at Jaipur Darwaza",
       "brief": "People wait inside the gateway for buses with nowhere to sit and no water. Design benches and a water point that leave the arch clear for traffic on foot.",
       "prize": "$2,000",
-      "deadline": "2026-08-30",
+      "deadline": "2026-07-15",
       "coHost": "Walled City NGO (placeholder)",
       "coHostId": null,
       "eligibility": "Licensed architects and accredited architecture students",
@@ -1779,7 +1816,17 @@
           "done": false
         }
       ],
-      "entryPay": "$100"
+      "entryFee": "$25",
+      "phase": 2,
+      "deadline2": "2026-08-30",
+      "shortlistSize": 3,
+      "shortlistPay": "$250",
+      "shortlist": [
+        "e9",
+        "e10",
+        "e11"
+      ],
+      "budget": "$2,750"
     },
     {
       "id": "c6",
@@ -1788,7 +1835,7 @@
       "title": "Shade for the Amer Road stepwell landing",
       "brief": "The landing is unusable in May and June. Propose shade that can go up in a season and does not hide the stepwell.",
       "prize": "$2,200",
-      "deadline": "2026-06-30",
+      "deadline": "2026-05-15",
       "coHost": "Amer Road residents' welfare association (placeholder)",
       "coHostId": null,
       "eligibility": "Licensed architects and accredited architecture students",
@@ -1829,7 +1876,16 @@
           "done": false
         }
       ],
-      "entryPay": "$100"
+      "entryFee": "$25",
+      "phase": 2,
+      "deadline2": "2026-06-30",
+      "shortlistSize": 2,
+      "shortlistPay": "$250",
+      "shortlist": [
+        "e12",
+        "e13"
+      ],
+      "budget": "$2,700"
     }
   ],
   "comments": [

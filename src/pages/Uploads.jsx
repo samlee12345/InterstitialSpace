@@ -43,7 +43,8 @@ function RedesignForm({ space, contestId: fromRoute }) {
   const nav = useNavigate();
   const contestId = fromRoute || new URLSearchParams(useLocation().search).get('contest');
   const contest = contestId ? get.contest(contestId) : null;
-  const isEntry = !!contest && contest.status === 'live';
+  // Contest entries have their own two-round flow now; the redesign form only publishes redesigns.
+  const isEntry = false;
   const [step, setStep] = useState(0);
   const [f, setF] = useState({ title: '', description: '', files: [], units: '', agency: true, attest: false, collaborators: [] });
   const [err, setErr] = useState({});
@@ -352,7 +353,7 @@ export const UploadRedesign = () => <Guard>{(space) => <RedesignForm space={spac
 // Contest entry page: /contest/:id/enter
 export function ContestEntry() {
   const { id } = useParams();
-  const { state, get, isArchitect } = useDemo();
+  const { state, get, isArchitect, user } = useDemo();
   const { contestEligibility } = useChoices();
   const contest = get.contest(id);
   const space = contest && get.space(contest.spaceId);
@@ -366,6 +367,100 @@ export function ContestEntry() {
       </Page>
     );
   }
-  return <RedesignForm space={space} contestId={contest.id} />;
+  const mine = contest.entries.find((e) => e.architectId === user?.id);
+  if (contest.status === 'live' && contest.phase === 2) {
+    if (mine && contest.shortlist.includes(mine.id)) return <ProposalEntry contest={contest} space={space} entry={mine} />;
+    return <Page narrow><RoleGate title="Round 2 is for the shortlist">Only shortlisted architects submit full proposals.</RoleGate><div><Button to={`/contest/${contest.id}`}>Back to the contest</Button></div></Page>;
+  }
+  if (contest.status !== 'live') return <Page narrow><Empty title="Entries are closed"><div><Button to={`/contest/${contest.id}`}>Back to the contest</Button></div></Empty></Page>;
+  if (mine) return <Page narrow><Empty title="You’ve already entered this contest"><p>Your concept is “{mine.title}”.</p><div><Button to={`/contest/${contest.id}`}>Back to the contest</Button></div></Empty></Page>;
+  return <ConceptEntry contest={contest} space={space} />;
+}
+
+// Round 1: a light submission, one concept sheet and a short statement.
+// Paid members enter free; everyone else pays the entry fee.
+const CONCEPT_FILES = ['.pdf', '.jpg', '.jpeg', '.png'];
+const MAX_WORDS = 300;
+function ConceptEntry({ contest, space }) {
+  const { dispatch, user } = useDemo();
+  const nav = useNavigate();
+  const [f, setF] = useState({ title: '', statement: '', files: [], collaborators: [], agree: false, pay: 'card' });
+  const [err, setErr] = useState('');
+  const words = f.statement.trim() ? f.statement.trim().split(/\s+/).length : 0;
+  const fee = !user.paid;
+  const submit = () => {
+    if (!f.title.trim()) return setErr('Give your concept a title.');
+    if (!f.statement.trim()) return setErr('Add a short statement about the idea.');
+    if (words > MAX_WORDS) return setErr(`Keep the statement to ${MAX_WORDS} words. It’s ${words} now.`);
+    if (!f.files.length) return setErr('Add your concept sheet.');
+    if (!f.agree) return setErr('Agree to the contest terms to enter.');
+    setErr('');
+    const entry = { id: `e-${Date.now()}`, submittedAt: new Date().toISOString().slice(0, 10), architectId: user.id, title: f.title.trim(), statement: f.statement.trim(), files: f.files, collaborators: f.collaborators };
+    dispatch({ type: 'SUBMIT_ENTRY', contestId: contest.id, entry, fee });
+    return nav(`/contest/${contest.id}`, { replace: true });
+  };
+  return (
+    <Page narrow>
+      <Crumbs items={[['/contests', 'Contests'], [`/contest/${contest.id}`, contest.title], [null, 'Submit a concept']]} />
+      <div className="stack-sm">
+        <h1>Submit a concept</h1>
+        <p className="muted">Round 1 for {space.name}. Concepts are due {contest.deadline}. Keep it light: one sheet and a short statement. If you’re shortlisted you’re paid {contest.shortlistPay} to develop it into a full proposal.</p>
+      </div>
+      <div className="stack">
+        <Input label="Title" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} />
+        <Input label="Statement" textarea rows={5} value={f.statement} onChange={(e) => setF({ ...f, statement: e.target.value })} hint={`The idea in your own words. ${words} of ${MAX_WORDS} words.`} />
+        <FileDrop label="Concept sheet (one page)" files={f.files} onChange={(files) => setF({ ...f, files: files.slice(-1) })} accept={CONCEPT_FILES} samples={['concept-sheet.pdf']} />
+        <Collaborators value={f.collaborators} onChange={(collaborators) => setF({ ...f, collaborators })} />
+        <section className="card stack-sm" aria-labelledby="fee-h">
+          <h2 id="fee-h" className="h-sm">Entry fee</h2>
+          {fee ? (
+            <>
+              <Choice name="fee" checked={f.pay === 'card'} onChange={() => setF({ ...f, pay: 'card' })} title={`Pay the ${contest.entryFee} entry fee`}>Charged to your card when you submit.</Choice>
+              <p className="small">Or <Link to="/membership">join the paid tier</Link> and enter every contest free.</p>
+            </>
+          ) : <p className="small">Free: you’re a paid member.</p>}
+        </section>
+        <section className="card stack-sm" aria-labelledby="ct-h">
+          <h2 id="ct-h" className="h-sm">Contest terms</h2>
+          <dl className="dl dl-wide small">
+            <dt>If you’re shortlisted</dt><dd>You’re paid {contest.shortlistPay} to develop your concept into a full proposal, due {contest.deadline2}.</dd>
+            <dt>If you win</dt><dd>You receive the {contest.prize} prize and sell the design to {contest.coHost}.</dd>
+            <dt>If you don’t win</dt><dd>You keep all rights to your work and can publish it in the Redesign Library.</dd>
+          </dl>
+          <label className="row small"><input type="checkbox" checked={f.agree} onChange={(e) => setF({ ...f, agree: e.target.checked })} /> I have read and agree to these terms</label>
+        </section>
+        {err && <span className="error" role="alert">{err}</span>}
+        <FormActions><Button to={`/contest/${contest.id}`}>Cancel</Button><Button variant="primary" onClick={submit}>{fee ? `Pay ${contest.entryFee} and submit` : 'Submit entry'}</Button></FormActions>
+      </div>
+    </Page>
+  );
+}
+
+// Round 2: a shortlisted architect adds the full proposal to their concept.
+function ProposalEntry({ contest, space, entry }) {
+  const { dispatch } = useDemo();
+  const nav = useNavigate();
+  const [files, setFiles] = useState([]);
+  const [text, setText] = useState(entry.statement || '');
+  const [err, setErr] = useState('');
+  const submit = () => {
+    if (!files.length) return setErr('Add your drawings.');
+    dispatch({ type: 'SUBMIT_PROPOSAL', contestId: contest.id, entryId: entry.id, proposal: { files, text: text.trim(), date: new Date().toISOString().slice(0, 10) } });
+    return nav(`/contest/${contest.id}`, { replace: true });
+  };
+  return (
+    <Page narrow>
+      <Crumbs items={[['/contests', 'Contests'], [`/contest/${contest.id}`, contest.title], [null, 'Full proposal']]} />
+      <div className="stack-sm">
+        <h1>Submit your full proposal</h1>
+        <p className="muted">“{entry.title}” is shortlisted for {space.name}. You’re paid {contest.shortlistPay} for this round. Proposals are due {contest.deadline2}.</p>
+      </div>
+      <div className="stack">
+        <FileDrop label="Drawings" files={files} onChange={(v) => { setFiles(v); setErr(''); }} accept={[...REDESIGN_FILES, '.pdf']} samples={['plan.dwg', 'section.dwg', 'proposal-boards.pdf']} error={err} />
+        <Input label="Description" textarea rows={5} value={text} onChange={(e) => setText(e.target.value)} hint="How the proposal develops your concept." />
+        <FormActions><Button to={`/contest/${contest.id}`}>Cancel</Button><Button variant="primary" onClick={submit}>Submit proposal</Button></FormActions>
+      </div>
+    </Page>
+  );
 }
 export const UploadDiagram = () => <Guard>{(space) => <DiagramForm space={space} />}</Guard>;

@@ -184,6 +184,19 @@ been added. Use it to click through long forms quickly in the demo.
   timeline), on the contest page and on the space page.
 - **Map pins** are plain: solid for approved spaces, dashed and hollow for
   pending ones. Space cards show votes, redesigns and photos.
+- **Two-round contests (round 17; replaces round 16's pay-every-entry).**
+  Round 1 is open to every eligible architect with a light concept (one
+  sheet, a statement of up to 300 words). Paid members enter free; others pay
+  a $25 entry fee. The co-host shortlists (we suggest 5) and each shortlisted
+  architect is paid to develop a full proposal in round 2; the winner gets
+  the prize and sells the design to the co-host, and everyone else keeps
+  their rights and can publish in the Redesign Library. Contest pages show
+  both deadlines, a four-step timeline and "Who is paid". Hosts enter a
+  total budget, the shortlist size and the payment per shortlisted architect
+  (suggested 10% of the total each); the prize is what's left. Judging runs
+  twice: pick the shortlist (comment on each concept), then, after round 2,
+  score the shortlist's proposals and pick the winner. A "Demo · Skip to the
+  round 2 deadline" button moves a contest along.
 - **Points for everyone (round 16; replaces round 13's ghost points).**
   Free and paid members both earn real points and can spend them on 3D-model
   and diagram downloads (Points and Earnings show how many downloads they're

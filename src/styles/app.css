@@ -674,3 +674,18 @@ body.demo-open .demo-tray { right: calc(var(--width-demo-drawer) + var(--space-3
 .demo-btn-inline { align-self: center; border-style: dashed; display: inline-flex; align-items: center; gap: var(--space-1); }
 .demo-btn-tag { font-size: 0.625rem; text-transform: none; padding: 0 var(--space-1); border-radius: var(--radius-sm); background: var(--review-accent); color: #fff; }
 .demo-btn-inline:hover .demo-btn-tag { background: #fff; color: var(--review-accent); }
+
+/* Contest rounds: a short vertical timeline with the two deadlines */
+.rounds { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.rounds li { display: grid; grid-template-columns: 1rem minmax(0, 1fr); gap: var(--space-3); position: relative; }
+.rounds li:not(:last-child)::before { content: ''; position: absolute; left: calc(0.5rem - 1px); top: 1.1rem; bottom: calc(var(--space-3) * -1); width: 2px; background: var(--color-border); }
+.rounds-dot { width: 1rem; height: 1rem; margin-top: 2px; border-radius: 50%; border: 2px solid var(--color-border-strong); background: var(--color-surface); }
+.rounds li.is-done .rounds-dot { background: var(--color-action); border-color: var(--color-action); }
+.rounds li.is-now .rounds-dot { border-color: var(--color-action); box-shadow: inset 0 0 0 3px var(--color-surface), inset 0 0 0 8px var(--color-action); }
+.rounds-date { margin-left: var(--space-2); font-weight: var(--weight-regular, 400); color: var(--color-text-muted); }
+.contest-money dd { margin: 0; }
+
+.budget-split { background: var(--color-sunken); }
+.budget-split.is-over { border-color: var(--status-declined); }
+.budget-split .dl dd { margin: 0; }
+.sticky-aside > .badge { align-self: flex-start; }

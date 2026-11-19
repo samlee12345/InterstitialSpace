@@ -307,9 +307,27 @@ seed.notifications.forEach((n) => { n.link = links[n.id]; });
 
 // A second spatial diagram on the Chandpole courtyard, so spaces show more than one.
 seed.spaces.find((x) => x.id === 's2').diagrams.push({ id: 'dg-s2-b', source: 'architect', by: 'u-a2', credits: [], date: '2026-10-20', label: 'Long section through the courtyard and lane' });
-// Round 16: every complete entry is paid, win or lose.
-const ENTRY_PAY = { c1: '$150', c2: '$100', c3: '$200', c4: '$100' };
-seed.contests.forEach((c) => { c.entryPay = ENTRY_PAY[c.id] || '$100'; });
+// Round 17: contests run in two rounds. Round 1 is open to a light concept
+// submission; the co-host shortlists (we suggest 5) and pays each shortlisted
+// architect to develop a full proposal in round 2; the winner gets the prize and
+// sells the design to the co-host. Paid members enter free; others pay an entry fee.
+// phase: 1 or 2. status: live (a round is open), judging (shortlisting or final), closed.
+const ROUNDS = {
+  c1: { phase: 1, deadline: '2026-12-20', deadline2: '2027-02-28', shortlistSize: 5, shortlistPay: '$300', shortlist: [] },
+  c3: { phase: 1, deadline: '2027-01-15', deadline2: '2027-03-15', shortlistSize: 5, shortlistPay: '$250', shortlist: [] },
+  c2: { phase: 1, deadline: '2026-11-01', deadline2: '2027-01-10', shortlistSize: 2, shortlistPay: '$200', shortlist: [] },
+  c4: { phase: 2, deadline: '2026-09-15', deadline2: '2026-11-10', shortlistSize: 2, shortlistPay: '$200', shortlist: ['e7', 'e8'] },
+  c5: { phase: 2, deadline: '2026-07-15', deadline2: '2026-08-30', shortlistSize: 3, shortlistPay: '$250', shortlist: ['e9', 'e10', 'e11'] },
+  c6: { phase: 2, deadline: '2026-05-15', deadline2: '2026-06-30', shortlistSize: 2, shortlistPay: '$250', shortlist: ['e12', 'e13'] },
+};
+seed.contests.forEach((c) => {
+  Object.assign(c, { entryFee: '$25', ...ROUNDS[c.id] });
+  const pay = Number(c.shortlistPay.replace(/[^\d]/g, ''));
+  const prize = Number(c.prize.replace(/[^\d]/g, ''));
+  c.budget = `$${(prize + pay * c.shortlistSize).toLocaleString('en-US')}`;
+});
+// A fourth concept for the contest the Paid account is shortlisting.
+seed.contests.find((c) => c.id === 'c2').entries.push({ id: 'e14', architectId: 'u-a1', title: 'Steps that glow', submittedAt: '2026-10-31', summary: 'Photoluminescent strips in the step nosings: no wiring, no glare, and the stepwell stays untouched.', files: ['steps-that-glow-concept.pdf'] });
 
 // Round 13: the Chandpole courtyard (s2) is the fully populated example. Every
 // tab has something: photos, experiences with ratings, three spatial diagrams

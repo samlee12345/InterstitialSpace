@@ -504,9 +504,10 @@ const TERMS = [
     ['Taken down or unpublished', 'People who bought a listing keep their copy.'],
   ]],
   ['contests', 'Contests', [
-    ['Hosting', 'Paid members and partners can request to host. The co-host funds the prize and a set payment for every entry, sets the brief and criteria, and judges.'],
-    ['Entering', 'Eligibility is set per contest: licensed architects, accredited students, or both. Every complete entry is paid the contest’s entry payment, win or lose.'],
-    ['Winning', 'The winning architect also receives the prize and sells the design to the co-host.'],
+    ['Hosting', 'Paid members and partners can request to host. The co-host sets a total budget and how many architects to shortlist (we suggest 5), writes the brief and criteria, and judges.'],
+    ['Two rounds', 'Round 1 is open to every eligible architect and asks for a light concept: one sheet and a short statement. The co-host shortlists some concepts, and each shortlisted architect is paid to develop a full proposal in round 2. Each round has its own deadline.'],
+    ['Entering', 'Eligibility is set per contest: licensed architects, accredited students, or both. Paid members enter free; everyone else pays an entry fee.'],
+    ['Winning', 'The winner receives the prize and sells the design to the co-host. Everyone else keeps all rights to their work and can publish it in the Redesign Library.'],
   ]],
   ['conduct', 'Conduct and moderation', [
     ['Reports', 'Anyone can report a listing, a contribution or a change to a space. Moderators review reports and can take content down.'],

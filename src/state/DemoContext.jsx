@@ -151,15 +151,38 @@ function reducer(s, a) {
     case 'SUBMIT_ENTRY': {
       const c = s.contests.find((x) => x.id === a.contestId);
       let n = { ...s, contests: mapById(s.contests, a.contestId, (x) => ({ ...x, entries: [...x.entries, a.entry] })) };
-      n = notify(n, a.entry.architectId, 'contest', `Your entry “${a.entry.title}” was received for “${c.title}”. You’ll be paid ${c.entryPay || 'the entry payment'} for entering.`, `/contest/${a.contestId}`);
+      n = notify(n, a.entry.architectId, 'contest', `Your concept “${a.entry.title}” was received for “${c.title}”. If it’s shortlisted you’ll be paid ${c.shortlistPay} to develop it.`, `/contest/${a.contestId}`);
       n = notifyCollaborators(n, a.entry.collaborators, a.entry.architectId, `the contest entry “${a.entry.title}”`, `/contest/${a.contestId}`);
-      return toast(n, `Entry submitted. You’ll be paid ${c.entryPay || 'the entry payment'} for it.`);
+      return toast(n, a.fee ? `Concept submitted. Entry fee of ${c.entryFee} paid.` : 'Concept submitted');
     }
     // Host a contest: the request goes to the team; nothing else happens until it's approved.
     case 'REQUEST_CONTEST': {
       const r = { id: `cr-${s.seq}`, ...a.request, hostId: a.userId, date: new Date().toISOString(), status: 'review' };
       return toast({ ...s, seq: s.seq + 1, contestRequests: [r, ...(s.contestRequests || [])] }, 'Request sent to the team');
     }
+    // Round 1 closes: the co-host's shortlist moves on to round 2 and is paid to develop it.
+    case 'SET_SHORTLIST': {
+      const c = s.contests.find((x) => x.id === a.contestId);
+      // Unused shortlist places go to the prize.
+      const num = (v) => Number(String(v).replace(/[^\d]/g, '')) || 0;
+      const extra = Math.max(c.shortlistSize - a.ids.length, 0) * num(c.shortlistPay);
+      let n = { ...s, contests: mapById(s.contests, a.contestId, (x) => ({ ...x, shortlist: a.ids, phase: 2, status: 'live', prize: extra ? `$${(num(x.prize) + extra).toLocaleString('en-US')}` : x.prize })) };
+      c.entries.forEach((e) => {
+        n = a.ids.includes(e.id)
+          ? notify(n, e.architectId, 'contest', `Your concept “${e.title}” is shortlisted for “${c.title}”. You’ll be paid ${c.shortlistPay} to develop it; full proposals are due ${c.deadline2}.`, `/contest/${c.id}`)
+          : notify(n, e.architectId, 'contest', `“${e.title}” wasn’t shortlisted for “${c.title}”. It’s still yours: you can publish it in the Redesign Library.`, `/space/${c.spaceId}/upload-redesign`);
+      });
+      return toast(n, `Shortlist confirmed. ${a.ids.length} architects are paid ${c.shortlistPay} each to develop their ideas.`);
+    }
+    // Round 2: a shortlisted architect adds the full proposal to their entry.
+    case 'SUBMIT_PROPOSAL':
+      return toast({
+        ...s,
+        contests: mapById(s.contests, a.contestId, (x) => ({ ...x, entries: x.entries.map((e) => (e.id === a.entryId ? { ...e, proposal: a.proposal } : e)) })),
+      }, 'Full proposal submitted');
+    // Demo shortcut: round 2's deadline passes.
+    case 'END_ROUND_2':
+      return { ...s, contests: mapById(s.contests, a.contestId, (x) => ({ ...x, status: 'judging', phase: 2 })) };
     // The host's scores and comment on one entry while judging.
     case 'JUDGE_ENTRY':
       return {
