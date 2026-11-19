@@ -29,9 +29,9 @@ export function Button({ variant = 'default', to, className = '', ...p }) {
 
 
 // `tag` (clickable / simulated) is kept for reference; the Demo bar shows it now, not the page.
-export function Page({ narrow, wide, children }) {
+export function Page({ narrow, wide, className = '', children }) {
   return (
-    <main id="main" tabIndex={-1} className={`page stack-lg ${narrow ? 'narrow' : ''} ${wide ? 'page-wide' : ''}`} data-screen-label="page">
+    <main id="main" tabIndex={-1} className={`page stack-lg ${narrow ? 'narrow' : ''} ${wide ? 'page-wide' : ''} ${className}`} data-screen-label="page">
       {children}
     </main>
   );

@@ -4,7 +4,7 @@ import { useDemo } from '../state/DemoContext.jsx';
 import { Badge, Button, Choice, DemoOnly, Empty, FileDrop, FormActions, Icon, ImageBox, Input, Modal, Page, RoleGate, StatusBadges } from '../components/ui.jsx';
 import { Crumbs } from '../components/domain.jsx';
 import { surplusShare } from '../lib/points.js';
-import { fmtPoints } from '../lib/points.js';
+import { POINTS, fmtPoints } from '../lib/points.js';
 
 // Free vs paid, side by side. "See the paid tier" links land here.
 const PLAN_ROWS = [
@@ -126,16 +126,17 @@ export function Points() {
             <table>
               <thead><tr><th>Action</th><th className="num">On site</th><th className="num">Off site</th></tr></thead>
               <tbody>
-                <tr><td>Like, comment or vote</td><td className="num">0.25</td><td className="num">0.125</td></tr>
-                <tr><td>Photo (after qualification)</td><td className="num">0.5</td><td className="num">0.25</td></tr>
-                <tr><td>Scan (after qualification)</td><td className="num">1</td><td className="num">0.5</td></tr>
-                <tr><td>Spatial diagram</td><td className="num">2</td><td className="num">2</td></tr>
-                <tr><td>Redesign</td><td className="num">5</td><td className="num">5</td></tr>
-                <tr><td>Moderator review</td><td className="num">2</td><td className="num">2</td></tr>
+                <tr><td>Your first experience on a space</td><td className="num">{fmtPoints(POINTS.interactOnSite)}</td><td className="num">{fmtPoints(POINTS.interactOffSite)}</td></tr>
+                <tr><td>Photo, when the space is approved (creator only)</td><td className="num">{fmtPoints(POINTS.photo)}</td><td className="num">Needs location data</td></tr>
+                <tr><td>Each optional detail when documenting a space</td><td className="num">{fmtPoints(POINTS.field)}</td><td className="num">{fmtPoints(POINTS.field)}</td></tr>
+                <tr><td>3D model or scan upload</td><td className="num">{fmtPoints(POINTS.diagram)}</td><td className="num">{fmtPoints(POINTS.diagram)}</td></tr>
+                <tr><td>Spatial diagram</td><td className="num">{fmtPoints(POINTS.diagram)}</td><td className="num">{fmtPoints(POINTS.diagram)}</td></tr>
+                <tr><td>Redesign</td><td className="num">{fmtPoints(POINTS.redesign)}</td><td className="num">{fmtPoints(POINTS.redesign)}</td></tr>
+                <tr><td>Approval review</td><td className="num">{fmtPoints(POINTS.review)}</td><td className="num">{fmtPoints(POINTS.review)}</td></tr>
               </tbody>
             </table>
           </div>
-          <p className="small muted">Off site also covers a declined location prompt and photos without a geotag.</p>
+          <p className="small muted">Off site also covers continuing without sharing your location. Photos without location data can’t be used to document a space.</p>
         </div>
         <div className="stack">
           <h2>Your history</h2>

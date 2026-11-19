@@ -107,7 +107,8 @@ been added. Use it to click through long forms quickly in the demo.
   photo beside the title (default), a photo strip under it, or compact with
   a thumbnail in the title row.
   - Experiences: one per person per space. Posting again updates yours
-    until the space is rebuilt. The overlay has four steps: location, your
+    until the space is rebuilt. The overlay has four steps: location (two
+    choices: "Share location: I'm here" or "I'm not there: continue"), your
     experience (take or choose photos), quick questions, and "Is this space
     working well, or should it be redesigned?" on a 0–10 scale; 6 or more
     asks why (Unused, Unsafe, Underutilized). Contributors show a Verified
@@ -199,6 +200,11 @@ been added. Use it to click through long forms quickly in the demo.
   timeline), on the contest page and on the space page.
 - **Map pins** are plain: solid for approved spaces, dashed and hollow for
   pending ones. Space cards show votes, redesigns and photos.
+- **Round 18.** Host a contest uses the full page width for every field,
+  with a larger map beside the space list (the intro keeps a reading
+  width). The location step of Add your experience offers two choices, with
+  the points rule as a smaller line. The rate table on Points and membership
+  is built from the point constants, so it matches what the app awards.
 - **Two-round contests (round 17; replaces round 16's pay-every-entry).**
   Round 1 is open to every eligible architect with a light concept (one
   sheet, a statement of up to 300 words). Paid members enter free; others pay
@@ -385,7 +391,7 @@ Navigate with clicks, not the address bar: a page reload resets the data.
    photo point, "Is it one of these nearby spaces?", questionnaire, submit:
    Pending. Your first experience is already there ("Update your
    experience"). On another space, "Add your experience" opens a four-step
-   overlay: share location (on site earns full points), a comment with
+   overlay: share location or continue as not there (on site earns full points), a comment with
    photos, quick questions, then "should it be redesigned?" from 0 to 10
    and why. "Vote to redesign" in the header (+0.25 on site). Options,
    "Report an update" sends proof to moderators.
@@ -415,7 +421,7 @@ Agreed before building:
 
 1. A missing geotag warns and halves points; it does not block (brief wins over the spec).
 2. Prices show as "$XX". Earnings needs numbers, so it uses a labelled placeholder of $40 per sale. Contest hosting share placeholder: 15%.
-3. The location prompt for comments and votes is simulated with three buttons.
+3. The location prompt for experiences is simulated with two buttons: share location (on site) or continue as not there (off site).
 4. The Moderator role is a verified architect (Architect B); their own uploads are hidden from their list.
 5. Layout only from the design skill; grayscale, system font, tokens only.
 

@@ -215,7 +215,7 @@ export function ContestRequest() {
     );
   }
   return (
-    <Page narrow>
+    <Page narrow className="form-full">
       <h1>Host a contest</h1>
       <p className="prose muted">Fund a contest for a documented space. It runs in two rounds: anyone eligible sends a light concept, you shortlist a few, and the shortlist is paid to develop full proposals before you pick a winner.</p>
       <div className="stack">

@@ -409,7 +409,7 @@ def run():
         pg.locator(".space-head").get_by_role("button", name="Add your experience").click()
         dlg = pg.get_by_role("dialog", name="Add your experience")
         expect(dlg.get_by_text("Are you at")).to_be_visible()
-        dlg.get_by_role("button", name="Continue without location").click()
+        dlg.get_by_role("button", name="I’m not there: continue").click()
         expect(dlg.get_by_text("You’ll earn half points")).to_be_visible()
         dlg.get_by_role("button", name="Continue").click()
         expect(dlg.get_by_text("Say something about the space first.")).to_be_visible()
@@ -448,7 +448,7 @@ def run():
         # one experience per person: the button now updates it
         pg.get_by_role("button", name="Update your experience").click()
         dlg = pg.get_by_role("dialog", name="Update your experience")
-        dlg.get_by_role("button", name="Continue without location").click()
+        dlg.get_by_role("button", name="I’m not there: continue").click()
         expect(dlg.get_by_label("Comments")).to_have_value("I pass here daily.")
         dlg.get_by_label("Comments").fill("I pass here daily, mostly at dusk.")
         dlg.get_by_role("button", name="Continue").click()
@@ -1451,6 +1451,30 @@ def run():
         names = pg.locator(".header .nav a").all_inner_texts()
         assert names.index("Architect ranking") < names.index("Contests"), names
         step("login -> membership; Architect ranking before Contests")
+
+        # round 18: full-width host form; two-choice location step; rate table from constants
+        role("Paid account")
+        pg.goto(BASE + "/contest/request")
+        main_w = pg.locator("main").bounding_box()["width"]
+        for lab in ["Which space?", "Brief", "Total you will fund"]:
+            w = pg.locator(".field", has=pg.get_by_text(lab, exact=True)).first.bounding_box()["width"]
+            assert w > main_w * 0.85, (lab, w, main_w)
+        mw = pg.locator(".space-picker .map").bounding_box()
+        assert mw["height"] >= 400 and mw["width"] > 450, mw
+        pg.screenshot(path="/home/claude/r18_request.png", full_page=True)
+        role("Community member")
+        pg.goto(BASE + "/space/s4")
+        pg.get_by_role("button", name=re.compile("(Add|Update) your experience")).first.click()
+        dlg = pg.get_by_role("dialog")
+        expect(dlg.get_by_role("button", name=re.compile("somewhere else"))).to_have_count(0)
+        expect(dlg.get_by_role("button", name="Continue without location")).to_have_count(0)
+        expect(dlg.locator("p.small.muted", has_text="Experiences posted on site")).to_be_visible()
+        pg.screenshot(path="/home/claude/r18_location.png")
+        dlg.get_by_role("button", name="Close").first.click()
+        pg.goto(BASE + "/points")
+        expect(pg.get_by_role("cell", name=re.compile("^Like"))).to_have_count(0)
+        expect(pg.get_by_role("cell", name="3D model or scan upload")).to_be_visible()
+        step("host form full width with big map; location step has two choices; rate table matches rules")
 
         # every route loads for every role without errors
         routes = ["/", "/browse", "/space/s1", "/space/s1?tab=diagram", "/space/new", "/item/r1", "/item/m1", "/checkout?item=r4&rights=licence",

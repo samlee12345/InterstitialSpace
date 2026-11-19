@@ -299,11 +299,13 @@ function ExperienceWizard({ space, mine, onClose, onPosted, initialPhotos = 0 })
         <div className="stack">
           {mine && <p className="note small">You can have one experience per space. Changing it replaces what you posted before; new photos are added to yours.</p>}
           {initialPhotos > 0 && <p className="note small">Your {initialPhotos} photo{initialPhotos === 1 ? ' is' : 's are'} carried over from creating a space.</p>}
-          <p>Are you at {space.name} right now? Sharing your location confirms it. Experiences posted on site earn {POINTS.interactOnSite} points; off site, or without location, {POINTS.interactOffSite}.</p>
           <div className="stack-sm">
+            <p>Are you at {space.name} right now? Sharing your location confirms it.</p>
+            <p className="small muted">Experiences posted on site earn {POINTS.interactOnSite} points; off site, or without location, {POINTS.interactOffSite}.</p>
+          </div>
+          <div className="row">
             <Button variant="primary" onClick={() => pickLocation(true)}><Icon name="locate" />Share location: I’m here</Button>
-            <Button onClick={() => pickLocation(false)}>Share location: I’m somewhere else</Button>
-            <Button variant="quiet" onClick={() => pickLocation(false)}>Continue without location</Button>
+            <Button onClick={() => pickLocation(false)}>I’m not there: continue</Button>
           </div>
 
         </div>

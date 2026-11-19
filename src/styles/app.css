@@ -689,3 +689,8 @@ body.demo-open .demo-tray { right: calc(var(--width-demo-drawer) + var(--space-3
 .budget-split.is-over { border-color: var(--status-declined); }
 .budget-split .dl dd { margin: 0; }
 .sticky-aside > .badge { align-self: flex-start; }
+
+/* Full-width form (Host a contest): every field, the space picker and the map use the page width; the intro keeps a reading measure. */
+.page.narrow.form-full .field, .page.narrow.form-full .drop, .page.narrow.form-full fieldset, .page.narrow.form-full .card p, .page.narrow.form-full .card dd { max-width: none; }
+.form-full .space-picker-body { grid-template-columns: minmax(16rem, 2fr) minmax(0, 3fr); }
+.form-full .map.map-small { min-height: 26rem; }
