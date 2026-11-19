@@ -1591,7 +1591,8 @@
           "title": "Shade first",
           "submittedAt": "2026-11-14"
         }
-      ]
+      ],
+      "entryPay": "$150"
     },
     {
       "id": "c3",
@@ -1616,7 +1617,8 @@
           "title": "Steps that become seats",
           "submittedAt": "2026-11-10"
         }
-      ]
+      ],
+      "entryPay": "$200"
     },
     {
       "id": "c2",
@@ -1672,7 +1674,8 @@
             "night-steps-section.pdf"
           ]
         }
-      ]
+      ],
+      "entryPay": "$100"
     },
     {
       "id": "c4",
@@ -1703,7 +1706,8 @@
           "title": "Raised plinth edge",
           "submittedAt": "2026-11-08"
         }
-      ]
+      ],
+      "entryPay": "$100"
     },
     {
       "id": "c5",
@@ -1774,7 +1778,8 @@
           "text": "Opening, then a follow-up survey on the platform.",
           "done": false
         }
-      ]
+      ],
+      "entryPay": "$100"
     },
     {
       "id": "c6",
@@ -1823,7 +1828,8 @@
           "text": "Check-in with residents on how the shade is working.",
           "done": false
         }
-      ]
+      ],
+      "entryPay": "$100"
     }
   ],
   "comments": [

@@ -359,7 +359,7 @@ export function Login() {
         <FormActions><Button variant="primary" type="submit">Log in</Button></FormActions>
       </form>
       <p className="small muted">
-        New here? <Link to="/signup">Create a free community account</Link>, or{' '}
+        New here? <Link to="/membership">Create an account</Link>, or{' '}
         <span className="tip">
           <Link to="/architects" aria-describedby="arch-tip">get verified as an architect</Link>
           <span id="arch-tip" role="tooltip" className="tip-bubble">You can join as a licensed architect, an architect whose licence is pending, or an architecture student.</span>

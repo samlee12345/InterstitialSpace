@@ -307,6 +307,10 @@ seed.notifications.forEach((n) => { n.link = links[n.id]; });
 
 // A second spatial diagram on the Chandpole courtyard, so spaces show more than one.
 seed.spaces.find((x) => x.id === 's2').diagrams.push({ id: 'dg-s2-b', source: 'architect', by: 'u-a2', credits: [], date: '2026-10-20', label: 'Long section through the courtyard and lane' });
+// Round 16: every complete entry is paid, win or lose.
+const ENTRY_PAY = { c1: '$150', c2: '$100', c3: '$200', c4: '$100' };
+seed.contests.forEach((c) => { c.entryPay = ENTRY_PAY[c.id] || '$100'; });
+
 // Round 13: the Chandpole courtyard (s2) is the fully populated example. Every
 // tab has something: photos, experiences with ratings, three spatial diagrams
 // (one by AI), the 3D model with uploaded scans, redesigns, a connected space,

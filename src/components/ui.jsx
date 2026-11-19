@@ -56,7 +56,6 @@ export function PointsBadge({ userId }) {
   if (!isMember || !u) return null;
   return (
     <>
-      {/* Other people's tier is private, so their badge doesn't say whether the points are ghost points. */}
       <Badge>{fmtPoints(u.points)} pts</Badge>
       {u.verified && <Badge kind="solid">Verified</Badge>}
     </>
@@ -161,9 +160,12 @@ export function FileDrop({ label, files, onChange, samples = ['drawings.pdf', 'm
     <div className="field">
       <span className="label">{label}</span>
       <div className="drop">
-        <DemoOnly><button type="button" className="demo-btn" onClick={() => addNames(samples)}>Use sample files<span className="visually-hidden"> for {typeof label === 'string' ? label : 'this upload'}</span></button></DemoOnly>
         <div className="row">
           <Button onClick={() => ref.current.click()}>Choose files</Button>
+          {/* Demo shortcut: styled apart from the product so it doesn't read as part of the UI. */}
+          <button type="button" className="demo-btn demo-btn-inline" onClick={() => addNames(samples)} title="Demo only">
+            <span className="demo-btn-tag" aria-hidden="true">Demo</span> Add sample file{samples.length > 1 ? 's' : ''}
+          </button>
           <input ref={ref} type="file" multiple hidden aria-label={label} accept={accept?.join(',')} onChange={(e) => addNames([...e.target.files].map((f) => f.name))} />
         </div>
         {files.length === 0 ? (

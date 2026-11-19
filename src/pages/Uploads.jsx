@@ -122,7 +122,7 @@ function RedesignForm({ space, contestId: fromRoute }) {
     <Page narrow>
       <Crumbs items={crumbs} />
       <h1>{isEntry ? `Enter “${contest.title}”` : 'Upload a redesign'}</h1>
-      <p className="small muted">For {space.name}{isEntry ? `. Prize ${contest.prize}, entries close ${contest.deadline}.` : '.'}</p>
+      <p className="small muted">For {space.name}{isEntry ? `. Prize ${contest.prize}; every entry is paid ${contest.entryPay}. Entries close ${contest.deadline}.` : '.'}</p>
       <Steps steps={steps} current={step} />
 
       {step === 0 && (
@@ -187,7 +187,8 @@ function RedesignForm({ space, contestId: fromRoute }) {
             {isEntry ? (
               <dl className="dl dl-wide">
                 <dt>Original work</dt><dd>Your entry is your own work, doesn’t infringe anyone else’s rights, and is a schematic design, not stamped construction documents.</dd>
-                <dt>If you win</dt><dd>You receive the full {contest.prize} prize and sell the design rights to {contest.coHost} at the sale price it set.</dd>
+                <dt>Payment for entering</dt><dd>{contest.entryPay}, paid when your complete entry is accepted, win or lose.</dd>
+                <dt>If you win</dt><dd>You also receive the {contest.prize} prize and sell the design rights to {contest.coHost} at the sale price it set.</dd>
                 <dt>If you don’t win</dt><dd>You keep full copyright to your entry.</dd>
                 <dt>Judging</dt><dd>By the co-host, against its criteria, after {contest.deadline}. Entries stay private until the winner is announced.</dd>
                 <dt>Liability</dt><dd>Code compliance and engineering sign-off are the co-host’s responsibility when it builds.</dd>
@@ -222,7 +223,8 @@ function RedesignForm({ space, contestId: fromRoute }) {
             <section className="card stack" aria-labelledby="prize-h">
               <h2 id="prize-h" className="h-sm">Prize</h2>
               <dl className="dl">
-                <dt>Prize</dt><dd>{contest.prize}. The winner receives the full prize.</dd>
+                <dt>Prize</dt><dd>{contest.prize}, to the winner.</dd>
+                <dt>Every entry is paid</dt><dd>{contest.entryPay}, win or lose.</dd>
                 <dt>If you win</dt><dd>You sell the design rights to {contest.coHost}, at the sale price the co-host sets.</dd>
                 <dt>If you don’t win</dt><dd>You keep full copyright to your entry.</dd>
                 <dt>Judging</dt><dd>By the co-host, against its criteria, after {contest.deadline}.</dd>

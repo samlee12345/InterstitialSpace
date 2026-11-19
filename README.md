@@ -184,6 +184,19 @@ been added. Use it to click through long forms quickly in the demo.
   timeline), on the contest page and on the space page.
 - **Map pins** are plain: solid for approved spaces, dashed and hollow for
   pending ones. Space cards show votes, redesigns and photos.
+- **Points for everyone (round 16; replaces round 13's ghost points).**
+  Free and paid members both earn real points and can spend them on 3D-model
+  and diagram downloads (Points and Earnings show how many downloads they're
+  worth). Only paid members get a year-end surplus share and payouts; free
+  members see their would-be share as "ghost dollars". Points earned on the
+  free tier don't count toward a surplus share after upgrading. The payout
+  rule is a hover hint on the disabled "Request payout" button.
+- **Every contest entry is paid.** Contests have a per-entry payment next
+  to the prize (contest page, cards, entry form, Terms); hosts set it in
+  "Payment per entry" when they request a contest.
+- **Login** says "Create an account" and opens Free and paid membership.
+  The header now reads Architect ranking, then Contests. File uploads have
+  an inline "Demo · Add sample file" button styled apart from the UI.
 - **Hosting and judging contests (round 15).** "Host a contest" ends at
   "Send request": pick the space with a search and a small map of the
   matches, the prize field keeps its "$", and a confirmation says the team

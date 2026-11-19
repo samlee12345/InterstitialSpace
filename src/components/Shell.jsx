@@ -103,7 +103,7 @@ function AccountMenu() {
       label={
         <>
           {user.name}
-          <span className="points-wrap"><PointsFx />{user.paid ? <Badge>{fmtPoints(user.points)} pts</Badge> : <Badge kind="dashed" title="Ghost points: what you’d collect as a paid member">{fmtPoints(user.points)} pts<span className="visually-hidden"> (ghost points)</span></Badge>}</span>
+          <span className="points-wrap"><PointsFx /><Badge>{fmtPoints(user.points)} pts</Badge></span>
           <span className="caret" aria-hidden="true" />
         </>
       }
@@ -113,7 +113,6 @@ function AccountMenu() {
         {user.paid && <Badge>Paid</Badge>}
         <span className="xs muted">{user.role === 'architect' ? 'Architect account' : user.paid ? 'Paid account' : 'Community account'}</span>
       </div>
-      {!user.paid && <p className="xs muted menu-note">Free tier: your {fmtPoints(user.points)} points are ghost points, shown with a dashed outline. Only paid members collect points. <Link to="/membership">Compare free and paid</Link></p>}
       <nav className="menu-links" aria-label="Your account">
         {roleLinks(d).map(([to, label]) => {
           // Contests waiting on your judgement show on Contributions.
@@ -134,8 +133,8 @@ function Header() {
         <nav className="nav" aria-label="Main">
           <NavLink to="/browse" className={link}>Browse spaces</NavLink>
           <NavLink to="/spaces/ranking" className={link}>Space ranking</NavLink>
-          <NavLink to="/contests" className={link}>Contests</NavLink>
           <NavLink to="/ranking" className={link}>Architect ranking</NavLink>
+          <NavLink to="/contests" className={link}>Contests</NavLink>
           {isMember && <NavLink to="/co-op" className={link}>Co-op</NavLink>}
           {!isMember && <NavLink to="/about" className={link}>About us</NavLink>}
         </nav>
@@ -639,7 +638,7 @@ function NotesButton() {
 
 function Footer() {
   const cols = [
-    ['Explore', [['/browse', 'Browse spaces'], ['/spaces/ranking', 'Space ranking'], ['/contests', 'Contests'], ['/ranking', 'Architect ranking']]],
+    ['Explore', [['/browse', 'Browse spaces'], ['/spaces/ranking', 'Space ranking'], ['/ranking', 'Architect ranking'], ['/contests', 'Contests']]],
     ['Take part', [['/architects', 'For architects'], ['/contest/request', 'Host a contest'], ['/co-op', 'The co-op']]],
     ['About', [['/about', 'About us'], ['/contact', 'Contact us']]],
     ['Legal', [['/terms', 'Terms of Use'], ['/privacy', 'Privacy policy']]],

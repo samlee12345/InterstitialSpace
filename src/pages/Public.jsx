@@ -466,19 +466,20 @@ export function Signup() {
 }
 
 // Terms of Use, rewritten in round 13 for the current model: free and paid tiers,
-// ghost points, paid-only payouts, experiences as votes, the Base Library,
+// points for everyone, surplus share and payouts for paid members, experiences as votes, the Base Library,
 // archived rounds, collaborators and contests.
 const TERMS = [
   ['accounts', 'Accounts and membership', [
     ['Who can join', 'Anyone 16 or older can make a free account. Architects and architecture students can also ask to be verified, using their register number or school.'],
-    ['Free tier', 'Document spaces, add your experience, vote in the co-op and browse everything. Your contributions are tallied as ghost points so you can see what you would have earned.'],
-    ['Paid tier', 'Billed monthly, cancel any time. Paid members collect real points, get 10 free 3D-model downloads a month (no rollover) and can request to host contests.'],
+    ['Free tier', 'Document spaces, add your experience, vote in the co-op and browse everything. You earn points for contributions and can spend them on downloads.'],
+    ['Paid tier', 'Billed monthly, cancel any time. Paid members also get a year-end surplus share, 10 free 3D-model downloads a month (no rollover) and can request to host contests.'],
     ['The co-op', 'Every account, free or paid, is a member of the co-operative with one vote on its decisions.'],
   ]],
   ['points', 'Points, payouts and the surplus', [
     ['Earning points', 'Contributions earn points: photos and scans once a space qualifies, experiences, diagrams, redesigns and moderator reviews. Contributions made on site earn more than those made remotely. The current rates are on the Points page.'],
-    ['Who collects points', 'Only paid members. On the free tier, points are ghost points. They have no cash value, can’t be spent and don’t convert when you upgrade. Points count from the day you start the paid tier.'],
-    ['Year-end surplus', 'After costs, any surplus for the financial year is shared among paid members in proportion to the points they collected that year. Spending points doesn’t reduce your share.'],
+    ['Spending points', 'Every member, free or paid, can spend points on 3D-model and spatial-diagram downloads.'],
+    ['Year-end surplus', 'After costs, any surplus for the financial year is shared among paid members in proportion to the points they collected while paid that year. Spending points doesn’t reduce your share. Free members see their would-be share as ghost dollars; it isn’t paid.'],
+    ['Upgrading', 'Points earned on the free tier stay yours to spend but don’t count toward a surplus share. Only points earned from the day you upgrade do.'],
     ['Who is paid out', 'Only paid members are paid out, both for their surplus share and for their redesign sales. Payouts open when the financial year closes (31 March, placeholder).'],
     ['Leaving', 'If you move to the free tier, you can still request a payout of what you earned while paid. If you delete your account, you lose your points, so request anything you are owed first.'],
   ]],
@@ -503,9 +504,9 @@ const TERMS = [
     ['Taken down or unpublished', 'People who bought a listing keep their copy.'],
   ]],
   ['contests', 'Contests', [
-    ['Hosting', 'Paid members and partners can request to host. The co-host funds the prize, sets the brief and criteria, and judges.'],
-    ['Entering', 'Eligibility is set per contest: licensed architects, accredited students, or both.'],
-    ['Winning', 'The winning architect receives the full prize and sells the design to the co-host.'],
+    ['Hosting', 'Paid members and partners can request to host. The co-host funds the prize and a set payment for every entry, sets the brief and criteria, and judges.'],
+    ['Entering', 'Eligibility is set per contest: licensed architects, accredited students, or both. Every complete entry is paid the contest’s entry payment, win or lose.'],
+    ['Winning', 'The winning architect also receives the prize and sells the design to the co-host.'],
   ]],
   ['conduct', 'Conduct and moderation', [
     ['Reports', 'Anyone can report a listing, a contribution or a change to a space. Moderators review reports and can take content down.'],

@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
 import { Badge, Button, Empty, FileDrop, ImageBox, Input, Modal, Page, RoleGate, Select } from '../components/ui.jsx';
 import { RedesignCard, typeLabel } from '../components/domain.jsx';
-import { POINTS, fmtPoints } from '../lib/points.js';
+import { POINTS, fmtPoints, surplusShare } from '../lib/points.js';
 
 function EditModal({ redesign, onClose }) {
   const { dispatch } = useDemo();
@@ -114,7 +114,7 @@ export function Portfolio() {
       <div className="row between">
         <div className="stack-sm">
           <h1>Your portfolio</h1>
-          <p className="muted small">Rank {rankOf(user.id)} of {state.users.filter((u) => u.role === 'architect').length} architects, {fmtPoints(user.points)} {user.paid ? 'points' : 'ghost points'}.</p>
+          <p className="muted small">Rank {rankOf(user.id)} of {state.users.filter((u) => u.role === 'architect').length} architects, {fmtPoints(user.points)} points.</p>
         </div>
       </div>
       <p className="note">To add a redesign, open a space and choose “Upload redesign”. <Link to="/browse">Browse spaces</Link></p>
@@ -307,30 +307,46 @@ export function Earnings() {
   const balance = Math.max(total - (user.paidOut || 0), 0);
   const money = (n) => `$${n.toFixed(2)}`;
   const payouts = state.payouts.filter((p) => p.userId === user.id);
+  const surplus = surplusShare(state, user, cfg);
+  const downloads = Math.floor(user.points / cfg.modelPointsCost);
   return (
     <Page tag="clickable">
       <header className="stack-sm">
         <h1>Earnings and payout</h1>
         <p className="note">Prices are not decided yet, so every sale shows as {cfg.priceLabel}. The dollar figures below use a placeholder of ${cfg.priceValue} per sale so the 80% share can be checked.</p>
       </header>
-      <div className="grid">
-        <div className="card"><span className="small muted">Available to pay out</span><span className="display">{money(balance)}</span><span className="xs muted">placeholder amount</span></div>
-        <div className="card"><span className="small muted">Earned so far (80% share)</span><span className="display">{money(total)}</span><span className="xs muted">placeholder amount</span></div>
-        <div className="card"><span className="small muted">Already paid out</span><span className="display">{money(user.paidOut || 0)}</span><span className="xs muted">placeholder amount</span></div>
-      </div>
+      {user.paid ? (
+        <div className="grid">
+          <div className="card"><span className="small muted">Available to pay out</span><span className="display">{money(balance)}</span><span className="xs muted">placeholder amount</span></div>
+          <div className="card"><span className="small muted">Earned so far (80% share)</span><span className="display">{money(total)}</span><span className="xs muted">placeholder amount</span></div>
+          <div className="card"><span className="small muted">Estimated year-end surplus share</span><span className="display">{money(surplus)}</span><span className="xs muted">from points collected as a paid member</span></div>
+          <div className="card"><span className="small muted">Your points</span><span className="display">{fmtPoints(user.points)}</span><span className="xs muted">worth {downloads} {downloads === 1 ? 'download' : 'downloads'} at {cfg.modelPointsCost} points each</span></div>
+        </div>
+      ) : (
+        <>
+          <div className="grid">
+            <div className="card"><span className="small muted">Your points</span><span className="display">{fmtPoints(user.points)}</span><span className="xs muted">worth {downloads} {downloads === 1 ? 'download' : 'downloads'} of a 3D model or spatial diagram, at {cfg.modelPointsCost} points each</span></div>
+            <div className="card card-ghost"><span className="small muted">Ghost dollars: unrealized surplus share</span><span className="display">{money(surplus)}</span><span className="xs muted">what your points would earn as a paid member. Not paid on the free tier.</span></div>
+            <div className="card"><span className="small muted">Earned from sales (80% share)</span><span className="display">{money(total)}</span><span className="xs muted">placeholder amount</span></div>
+          </div>
+          <p className="note small">Points you earn on the free tier stay yours to spend on downloads, but they won’t turn into a surplus share if you upgrade later. Only points earned from the day you upgrade count.</p>
+        </>
+      )}
       <section className="card stack-sm payout-box" aria-labelledby="payout-h">
         <h2 id="payout-h" className="h-sm">Payout</h2>
         <div className="row">
-          <Button variant="primary" disabled aria-describedby="payout-when">Request payout</Button>
-          <span id="payout-when" className="small muted">
-            {user.paid
-              ? 'Payouts open when the financial year ends, on 31 March (placeholder date).'
-              : 'Only paid members are paid out. Upgrade to request a payout when the financial year ends, on 31 March (placeholder date).'}
+          {/* A disabled button gets no hover, so the hint sits on a focusable wrapper. */}
+          <span className="tip" tabIndex={0} aria-describedby="payout-when">
+            <Button variant="primary" disabled tabIndex={-1}>Request payout</Button>
+            <span id="payout-when" role="tooltip" className="tip-bubble">
+              {user.paid
+                ? 'Payouts open when the financial year ends, on 31 March (placeholder date).'
+                : 'Only paid members are paid out. Upgrade to request a payout when the financial year ends, on 31 March (placeholder date).'}
+            </span>
           </span>
-          {!user.paid && <Button to="/membership">Compare free and paid</Button>}
         </div>
         <dl className="dl dl-wide small">
-          <dt>Who is paid out</dt><dd>Paid members only. That covers your 80% of sales and your year-end surplus share.</dd>
+          <dt>Who is paid out</dt><dd>Paid members: your 80% of sales and your year-end surplus share. Every member can spend points on downloads.</dd>
           <dt>Leaving the paid tier</dt><dd>You can still request a payout of what you’ve earned when you downgrade to the free tier.</dd>
           <dt>Deactivating or deleting</dt><dd>You lose your points. Ask for anything you’re owed before you close your account.</dd>
         </dl>

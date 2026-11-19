@@ -140,7 +140,7 @@ export function Item() {
             <>
               <span className="small muted">Price</span>
               <span className="display">{rights === 'full' ? cfg.fullRightsLabel : cfg.priceLabel}</span>
-              {(kind === 'model' || kind === 'diagram') && <p className="small">or {cfg.modelPointsCost} points for paid members. {user.paid ? `You have ${fmtPoints(user.points)}.` : 'Your ghost points can’t be spent.'}</p>}
+              {(kind === 'model' || kind === 'diagram') && <p className="small">or {cfg.modelPointsCost} points. You have {fmtPoints(user.points)}.</p>}
               {kind === 'redesign' ? (
                 <fieldset className="stack-sm plain">
                   <legend className="small bold">Choose rights</legend>
@@ -191,7 +191,7 @@ export function Checkout() {
   const rights = kind === 'redesign' && params.get('rights') === 'full' ? 'full' : 'licence';
   const connect = kind === 'redesign' && params.get('connect') === '1';
   const price = rights === 'full' ? cfg.fullRightsLabel : cfg.priceLabel;
-  const enough = user.paid && user.points >= cfg.modelPointsCost;
+  const enough = user.points >= cfg.modelPointsCost;
   const free = kind === 'model' && user.paid && user.freeModelsLeft > 0;
   const amount = method === 'points' ? `${cfg.modelPointsCost} points` : method === 'free' ? 'Free (paid tier)' : price;
 
@@ -256,7 +256,7 @@ export function Checkout() {
               <Choice name="method" value="card" checked={method === 'card'} onChange={() => setMethod('card')} title="Credit or debit card" />
               {(kind === 'model' || kind === 'diagram') && (
                 <Choice name="method" value="points" checked={method === 'points'} onChange={() => setMethod('points')} disabled={!enough} title={`${cfg.modelPointsCost} points`}>
-                  {!user.paid ? 'Only paid members collect points to spend. Your ghost points can’t be used.' : enough ? `You have ${fmtPoints(user.points)} points. ${fmtPoints(user.points - cfg.modelPointsCost)} left after this.` : `Not enough points: you have ${fmtPoints(user.points)}. Pay with money instead.`}
+                  {enough ? `You have ${fmtPoints(user.points)} points. ${fmtPoints(user.points - cfg.modelPointsCost)} left after this.` : `Not enough points: you have ${fmtPoints(user.points)}. Pay with money instead.`}
                 </Choice>
               )}
               {free && (

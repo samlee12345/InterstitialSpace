@@ -21,3 +21,12 @@ export const fmtPoints = (n) => {
   const s = (Math.round(n * 1000) / 1000).toString();
   return s;
 };
+
+// Year-end surplus share in dollars. Paid members: points collected since they
+// upgraded. Free members: the same sum over all their points, shown as "ghost
+// dollars" they won't receive. Pool split over every member's eligible points.
+export function surplusShare(state, user, cfg) {
+  const eligible = (u) => Math.max((u.lifetime || 0) - (u.paid ? u.surplusFrom || 0 : 0), 0);
+  const total = state.users.reduce((t, u) => t + eligible(u), 0) || 1;
+  return (eligible(user) / total) * cfg.surplusPoolPlaceholder;
+}

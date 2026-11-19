@@ -75,7 +75,7 @@ function Diagrams({ space }) {
             </div>
             <div className="row">
               <Button to={`/item/${d.id}`} onClick={(e) => !need('buy') && e.preventDefault()}>Buy this diagram</Button>
-              <span className="small muted">{cfg.priceLabel}, or {cfg.modelPointsCost} points for paid members. Plan and section as .pdf and .dwg.</span>
+              <span className="small muted">{cfg.priceLabel}, or {cfg.modelPointsCost} points. Plan and section as .pdf and .dwg.</span>
             </div>
           </article>
         );
@@ -129,7 +129,7 @@ function Model3D({ space }) {
           <aside className="card stack-sm">
             <h3>Buy the 3D model</h3>
             <p className="small muted">The generated model with plan and section, in .obj, .3dm and .skp.</p>
-            <p><span className="display-sm">{cfg.priceLabel}</span> <span className="small">or {cfg.modelPointsCost} points for paid members</span></p>
+            <p><span className="display-sm">{cfg.priceLabel}</span> <span className="small">or {cfg.modelPointsCost} points</span></p>
             <Button variant="primary" to={`/item/${model.id}`} onClick={(e) => !need('buy') && e.preventDefault()}>Buy 3D model</Button>
           </aside>
         </div>
@@ -448,7 +448,7 @@ function ContestCard({ contest }) {
         <div className="row"><Badge kind={contest.status === 'live' ? 'solid' : ''}>Contest: {contestStatus(contest).toLowerCase()}</Badge>{entered && <Badge>You entered</Badge>}</div>
         <h2 id={`contest-${contest.id}`}><Link className="stretched" to={`/contest/${contest.id}`}>{contest.title}</Link></h2>
         <p className="small">
-          <span className="display-sm">{contest.prize}</span> prize, co-hosted by {contest.coHost}. {contest.status === 'live' ? `Entries close ${contest.deadline}.` : `Entries closed ${contest.deadline}.`}
+          <span className="display-sm">{contest.prize}</span> prize, and {contest.entryPay} for every entry. Co-hosted by {contest.coHost}. {contest.status === 'live' ? `Entries close ${contest.deadline}.` : `Entries closed ${contest.deadline}.`}
         </p>
       </div>
       {isArchitect && contest.status === 'live' && !entered && (

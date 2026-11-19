@@ -670,3 +670,7 @@ body.demo-open .demo-tray { right: calc(var(--width-demo-drawer) + var(--space-3
 .exp-answers dd { margin: 0; }
 .exp-answers > div:last-child { grid-column: 1 / -1; }
 .plan-table th[scope="col"] > .badge { display: inline-flex; width: fit-content; margin-top: var(--space-1); }
+
+.demo-btn-inline { align-self: center; border-style: dashed; display: inline-flex; align-items: center; gap: var(--space-1); }
+.demo-btn-tag { font-size: 0.625rem; text-transform: none; padding: 0 var(--space-1); border-radius: var(--radius-sm); background: var(--review-accent); color: #fff; }
+.demo-btn-inline:hover .demo-btn-tag { background: #fff; color: var(--review-accent); }

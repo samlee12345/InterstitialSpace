@@ -15,7 +15,7 @@ export function Contests() {
       <div className="row between">
         <div className="stack-sm">
           <h1>Contests</h1>
-          <p className="prose muted">A co-host funds a prize for a space the community has documented and voted on. The co-host judges, and the winning architect sells the design to them.</p>
+          <p className="prose muted">A co-host funds a prize for a space the community has documented and voted on, and pays every architect who enters. The co-host judges, and the winning architect sells the design to them.</p>
         </div>
         {isPaid && <Button to="/contest/request">Request to host a contest</Button>}
       </div>
@@ -100,7 +100,8 @@ export function Contest() {
         <aside className="card sticky-aside">
           <span className="small muted">Prize money</span>
           <span className="display">{c.prize}</span>
-          <span className="small">The winner receives the full prize.</span>
+          <span className="small muted">Every entry is paid</span>
+          <span className="display-sm">{c.entryPay}</span>
           <hr className="rule" />
           <dl className="dl">
             <dt>Deadline</dt><dd>{c.deadline}</dd>
@@ -139,7 +140,7 @@ export function ContestRequest() {
   const { state, dispatch, isPaid, user } = useDemo();
   const [sent, setSent] = useState(null);
   const approved = state.spaces.filter((s) => !s.removed && s.status === 'approved');
-  const [f, setF] = useState({ spaceId: '', isPrivate: 'no', deed: [], brief: '', prize: '', criteria: '' });
+  const [f, setF] = useState({ spaceId: '', isPrivate: 'no', deed: [], brief: '', prize: '', entryPay: '', criteria: '' });
   const [err, setErr] = useState('');
   if (!isPaid) {
     return (
@@ -152,9 +153,10 @@ export function ContestRequest() {
   const send = () => {
     if (!f.spaceId) return setErr('Choose the space the contest is for.');
     if (!f.brief.trim() || !f.prize.trim()) return setErr('Add a brief and a prize.');
+    if (!f.entryPay.trim()) return setErr('Set the payment for each entry. Every architect who submits a complete entry is paid.');
     if (f.isPrivate === 'yes' && f.deed.length === 0) return setErr('A private space needs its owner as co-host. Upload the deed so the team can verify it.');
     setErr('');
-    const request = { spaceId: f.spaceId, brief: f.brief.trim(), prize: `$${f.prize.trim()}`, criteria: f.criteria.trim(), isPrivate: f.isPrivate === 'yes' };
+    const request = { spaceId: f.spaceId, brief: f.brief.trim(), prize: `$${f.prize.trim()}`, entryPay: `$${f.entryPay.trim()}`, criteria: f.criteria.trim(), isPrivate: f.isPrivate === 'yes' };
     dispatch({ type: 'REQUEST_CONTEST', userId: user.id, request });
     setSent(request);
     window.scrollTo(0, 0);
@@ -171,6 +173,7 @@ export function ContestRequest() {
         <dl className="dl">
           <dt>Space</dt><dd>{space?.name}</dd>
           <dt>Prize you’ll fund</dt><dd>{sent.prize}, held in escrow when the contest opens</dd>
+          <dt>Payment per entry</dt><dd>{sent.entryPay} to every architect who submits a complete entry</dd>
           <dt>Brief</dt><dd>{sent.brief}</dd>
         </dl>
         <div className="row"><Button variant="primary" to="/contributions#hosted">See hosted contests</Button><Button to="/contests">Back to contests</Button></div>
@@ -190,7 +193,8 @@ export function ContestRequest() {
         </div>
         {f.isPrivate === 'yes' && <FileDrop label="Deed or other proof of ownership" files={f.deed} onChange={(deed) => setF({ ...f, deed })} samples={['deed-scan.pdf']} />}
         <Input label="Brief" textarea value={f.brief} onChange={(e) => setF({ ...f, brief: e.target.value })} />
-        <Input label="Prize you will fund" prefix="$" inputMode="decimal" value={f.prize} onChange={(e) => setF({ ...f, prize: e.target.value.replace(/[^\d,.]/g, '') })} placeholder="2,500" hint="Held in escrow when the contest opens. The winner receives all of it." />
+        <Input label="Prize you will fund" prefix="$" inputMode="decimal" value={f.prize} onChange={(e) => setF({ ...f, prize: e.target.value.replace(/[^\d,.]/g, '') })} placeholder="2,500" hint="Held in escrow when the contest opens, and paid to the winner." />
+        <Input label="Payment per entry" prefix="$" inputMode="decimal" value={f.entryPay} onChange={(e) => setF({ ...f, entryPay: e.target.value.replace(/[^\d,.]/g, '') })} placeholder="150" hint="Paid to every architect who submits a complete entry, win or lose. Charged as entries come in." />
         <Input label="Judging criteria (you set these, and you judge)" textarea value={f.criteria} onChange={(e) => setF({ ...f, criteria: e.target.value })} hint="One per line." />
         {err && <span className="error" role="alert">{err}</span>}
         <FormActions><Button variant="primary" onClick={send}>Send request</Button></FormActions>
@@ -227,11 +231,12 @@ export function ContestJudge() {
         <Crumbs items={[['/contributions#hosted', 'Hosted contests'], [`/contest/${c.id}`, c.title], [null, 'Judging']]} />
         <div className="alert stack-sm">
           <h1 className="h-md">Winner announced: {won.title}</h1>
-          <p>Your prize was held in escrow when the contest opened. It’s now paid to the winner, and your comments are shared with each architect.</p>
+          <p>Your prize was held in escrow when the contest opened. It’s now paid to the winner. Every entry was paid {c.entryPay}, and your comments are shared with each architect.</p>
         </div>
         <dl className="dl">
           <dt>Winner</dt><dd>{won.title} by <UserLink id={won.architectId} /></dd>
-          <dt>Prize</dt><dd>{c.prize}, paid in full to the winner</dd>
+          <dt>Prize</dt><dd>{c.prize}, paid to the winner</dd>
+          <dt>Entry payments</dt><dd>{c.entryPay} × {c.entries.length} entries</dd>
           <dt>Design</dt><dd>Sold to you as co-host, at the price you set</dd>
         </dl>
         <div className="row"><Button to={`/contest/${c.id}`}>View the contest page</Button><Button to="/contributions#hosted">Back to hosted contests</Button></div>

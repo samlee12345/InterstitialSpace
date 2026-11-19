@@ -309,11 +309,11 @@ export function ContestCard({ contest }) {
     <Link to={`/contest/${contest.id}`} className="card card-link">
       <div className="row"><Badge kind={contest.status === 'live' ? 'solid' : ''}>{contestStatus(contest)}</Badge></div>
       <h3>{contest.title}</h3>
-      <p><span className="display-sm">{contest.prize}</span> <span className="small muted">prize</span></p>
+      <p><span className="display-sm">{contest.prize}</span> <span className="small muted">prize, plus {contest.entryPay} for every entry</span></p>
       <p className="small muted">Site: {sp?.name}</p>
       {won ? (
         <div className="stack-sm">
-          <p className="small"><span className="bold">Winner:</span> {won.title} by <UserLink id={won.architectId} you={false} /></p>
+          <p className="small"><span className="bold">Winner:</span> {won.title} by {get.user(won.architectId)?.name}</p>
           {contest.plans?.some((p) => !p.done) && <p className="small muted">Next: {contest.plans.find((p) => !p.done).text} ({contest.plans.find((p) => !p.done).when})</p>}
         </div>
       ) : (

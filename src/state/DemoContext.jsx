@@ -43,8 +43,7 @@ const award = (s, userId, pts, text) => ({
   users: mapById(s.users, userId, (u) => ({ ...u, points: u.points + pts, lifetime: u.lifetime + Math.max(pts, 0) })),
   ledger: [{ id: `l-${s.seq}`, userId, text, pts }, ...s.ledger],
 });
-// Free members only see ghost points: what they would have collected as paid members.
-const ptsWord = (s, userId) => (s.users.find((u) => u.id === userId)?.paid ? 'points' : 'ghost points');
+const ptsWord = () => 'points';
 const awardToast = (s, userId, pts, text) => toast(award(s, userId, pts, text), `+${fmtPoints(pts)} ${ptsWord(s, userId)} — ${text}`);
 
 // People added as collaborators on an upload are credited and told about it.
@@ -152,9 +151,9 @@ function reducer(s, a) {
     case 'SUBMIT_ENTRY': {
       const c = s.contests.find((x) => x.id === a.contestId);
       let n = { ...s, contests: mapById(s.contests, a.contestId, (x) => ({ ...x, entries: [...x.entries, a.entry] })) };
-      n = notify(n, a.entry.architectId, 'contest', `Your entry “${a.entry.title}” was received for “${c.title}”.`, `/contest/${a.contestId}`);
+      n = notify(n, a.entry.architectId, 'contest', `Your entry “${a.entry.title}” was received for “${c.title}”. You’ll be paid ${c.entryPay || 'the entry payment'} for entering.`, `/contest/${a.contestId}`);
       n = notifyCollaborators(n, a.entry.collaborators, a.entry.architectId, `the contest entry “${a.entry.title}”`, `/contest/${a.contestId}`);
-      return toast(n, 'Entry submitted');
+      return toast(n, `Entry submitted. You’ll be paid ${c.entryPay || 'the entry payment'} for it.`);
     }
     // Host a contest: the request goes to the team; nothing else happens until it's approved.
     case 'REQUEST_CONTEST': {
@@ -354,11 +353,10 @@ function reducer(s, a) {
 
     // ── Paid tier, co-op, removal ──────────────────────────
     case 'UPGRADE': {
-      // Ghost points stay as history; real points start counting from today.
-      const u0 = s.users.find((u) => u.id === a.userId);
-      let n = { ...s, users: mapById(s.users, a.userId, (u) => ({ ...u, paid: true, freeModelsLeft: s.config.paidFreeModels, ghostLifetime: u.lifetime, points: 0, lifetime: 0 })) };
-      n = { ...n, seq: n.seq + 1, ledger: [{ id: `l-${n.seq}`, userId: a.userId, text: `Started collecting points. ${fmtPoints(u0.points)} ghost points stay as history.`, pts: 0 }, ...n.ledger] };
-      return toast(n, 'Paid tier is on. You’re collecting points from today.');
+      // Points stay spendable; only points earned from today count toward the surplus share.
+      let n = { ...s, users: mapById(s.users, a.userId, (u) => ({ ...u, paid: true, freeModelsLeft: s.config.paidFreeModels, surplusFrom: u.lifetime })) };
+      n = { ...n, seq: n.seq + 1, ledger: [{ id: `l-${n.seq}`, userId: a.userId, text: 'Started the paid tier. Points from today count toward your surplus share.', pts: 0 }, ...n.ledger] };
+      return toast(n, 'Paid tier is on. Points from today count toward your surplus share.');
     }
     case 'COOP_VOTE':
       return toast({ ...s, coopDecisions: mapById(s.coopDecisions, a.id, (d) => ({ ...d, votes: { ...d.votes, [a.userId]: a.vote } })) }, 'Vote recorded');
