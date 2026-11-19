@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
-import { Badge, Button, Choice, Empty, FileDrop, FormActions, ImageBox, Input, Mine, Page, RoleGate, Select, Steps } from '../components/ui.jsx';
-import { ContestCard, ContestPlans, Crumbs, ELIGIBILITY, contestWinner } from '../components/domain.jsx';
+import { Badge, Button, Choice, Empty, FileDrop, FormActions, ImageBox, Input, Modal, Page, RoleGate } from '../components/ui.jsx';
+import { ContestCard, ContestPlans, Crumbs, ELIGIBILITY, SpacePicker, UserLink, contestWinner } from '../components/domain.jsx';
 import { useChoices } from '../design/choices.js';
 
 // "2026-11-12" → "Nov 12, 2026"
@@ -108,7 +108,15 @@ export function Contest() {
             <dt>Who can enter</dt><dd>{rule.text}</dd>
             <dt>Entries</dt><dd>{c.entries.length}</dd>
           </dl>
-          {c.status !== 'live' ? (
+          {user && c.coHostId === user.id && c.status === 'judging' ? (
+            <div className="stack-sm">
+              <Badge kind="solid">Ready to judge</Badge>
+              <Button variant="primary" to={`/contest/${c.id}/judge`}>Judge entries</Button>
+              <span className="xs muted">You’re the co-host. Entries closed on {c.deadline}.</span>
+            </div>
+          ) : user && c.coHostId === user.id ? (
+            <p className="small muted">You’re the co-host.{c.status === 'live' ? ' You can judge once the deadline passes.' : ''}</p>
+          ) : c.status !== 'live' ? (
             <p className="small muted">{c.status === 'judging' ? 'Entries are closed. The co-host is judging.' : 'This contest is closed.'}</p>
           ) : mine ? (
             <p className="small bold">You entered “{mine.title}”.</p>
@@ -125,115 +133,187 @@ export function Contest() {
   );
 }
 
-const REQ_STEPS = ['Request', 'Team review', 'Judging', 'Prize and payment'];
-
+// Hosting ends at "Send request": the team reviews it. Judging is its own flow,
+// opened from the contest page or from Contributions › Hosted contests.
 export function ContestRequest() {
-  const { state, dispatch, isPaid, cfg, get } = useDemo();
-  const [step, setStep] = useState(0);
-  const [f, setF] = useState({ spaceId: 's1', isPrivate: 'no', deed: [], brief: '', prize: '', criteria: '' });
+  const { state, dispatch, isPaid, user } = useDemo();
+  const [sent, setSent] = useState(null);
+  const approved = state.spaces.filter((s) => !s.removed && s.status === 'approved');
+  const [f, setF] = useState({ spaceId: '', isPrivate: 'no', deed: [], brief: '', prize: '', criteria: '' });
   const [err, setErr] = useState('');
-  const judging = state.contests.find((c) => c.id === 'c2');
-  const [scores, setScores] = useState({});
-  const [winner, setWinner] = useState(judging?.winner || null);
-  if (!isPaid) return <Page narrow tag="simulated"><RoleGate title="Hosting a contest needs a paid account">Paid accounts (authorities, NGOs, owners, resident groups) can request to host.</RoleGate><div><Button to="/points">See the paid tier</Button></div></Page>;
-
+  if (!isPaid) {
+    return (
+      <Page narrow>
+        <RoleGate title="Hosting a contest needs a paid account">Paid accounts (authorities, NGOs, owners, resident groups) can request to host.</RoleGate>
+        <div><Button to="/membership">Compare free and paid</Button></div>
+      </Page>
+    );
+  }
   const send = () => {
+    if (!f.spaceId) return setErr('Choose the space the contest is for.');
     if (!f.brief.trim() || !f.prize.trim()) return setErr('Add a brief and a prize.');
     if (f.isPrivate === 'yes' && f.deed.length === 0) return setErr('A private space needs its owner as co-host. Upload the deed so the team can verify it.');
     setErr('');
-    dispatch({ type: 'TOAST', text: 'Request sent to the team' });
-    return setStep(1);
+    const request = { spaceId: f.spaceId, brief: f.brief.trim(), prize: `$${f.prize.trim()}`, criteria: f.criteria.trim(), isPrivate: f.isPrivate === 'yes' };
+    dispatch({ type: 'REQUEST_CONTEST', userId: user.id, request });
+    setSent(request);
+    window.scrollTo(0, 0);
+    return null;
   };
-
+  if (sent) {
+    const space = state.spaces.find((x) => x.id === sent.spaceId);
+    return (
+      <Page narrow>
+        <div className="alert stack-sm">
+          <h1 className="h-md">Request sent</h1>
+          <p>The team looks at each request case by case and will notify you when it’s approved. {sent.isPrivate ? 'Your deed was received; ownership is being verified. ' : ''}Once the contest opens, track it under Contributions, in Hosted contests.</p>
+        </div>
+        <dl className="dl">
+          <dt>Space</dt><dd>{space?.name}</dd>
+          <dt>Prize you’ll fund</dt><dd>{sent.prize}, held in escrow when the contest opens</dd>
+          <dt>Brief</dt><dd>{sent.brief}</dd>
+        </dl>
+        <div className="row"><Button variant="primary" to="/contributions#hosted">See hosted contests</Button><Button to="/contests">Back to contests</Button></div>
+      </Page>
+    );
+  }
   return (
-    <Page narrow tag="simulated">
+    <Page narrow>
       <h1>Host a contest</h1>
-      <Steps steps={REQ_STEPS} current={step} />
-
-      {step === 0 && (
-        <div className="stack">
-          <Select label="Which space?" value={f.spaceId} onChange={(e) => setF({ ...f, spaceId: e.target.value })} options={state.spaces.filter((s) => !s.removed && s.status === 'approved').map((s) => ({ value: s.id, label: `${s.name} (${s.votes} votes)` }))} />
-          <div className="field">
-            <span className="label">Is this a private space?</span>
-            <Choice name="priv" checked={f.isPrivate === 'no'} onChange={() => setF({ ...f, isPrivate: 'no' })} title="No, it is public" />
-            <Choice name="priv" checked={f.isPrivate === 'yes'} onChange={() => setF({ ...f, isPrivate: 'yes' })} title="Yes, it is privately owned">The owner must co-host, and the team verifies the deed.</Choice>
-          </div>
-          {f.isPrivate === 'yes' && <FileDrop label="Deed or other proof of ownership" files={f.deed} onChange={(deed) => setF({ ...f, deed })} samples={['deed-scan.pdf']} />}
-          <Input label="Brief" textarea value={f.brief} onChange={(e) => setF({ ...f, brief: e.target.value })} />
-          <Input label="Prize you will fund" value={f.prize} onChange={(e) => setF({ ...f, prize: e.target.value })} placeholder="$X,XXX" />
-          <Input label="Judging criteria (you set these, and you judge)" textarea value={f.criteria} onChange={(e) => setF({ ...f, criteria: e.target.value })} />
-          {err && <span className="error" role="alert">{err}</span>}
-          <FormActions><Button variant="primary" onClick={send}>Send request</Button></FormActions>
+      <p className="prose muted">Fund a prize for a documented space. The team reviews each request; once it’s approved the contest opens for entries, and you judge when the deadline passes.</p>
+      <div className="stack">
+        <SpacePicker spaces={approved} value={f.spaceId} onChange={(spaceId) => { setF({ ...f, spaceId }); setErr(''); }} />
+        <div className="field">
+          <span className="label">Is this a private space?</span>
+          <Choice name="priv" checked={f.isPrivate === 'no'} onChange={() => setF({ ...f, isPrivate: 'no' })} title="No, it is public" />
+          <Choice name="priv" checked={f.isPrivate === 'yes'} onChange={() => setF({ ...f, isPrivate: 'yes' })} title="Yes, it is privately owned">The owner must co-host, and the team verifies the deed.</Choice>
         </div>
-      )}
+        {f.isPrivate === 'yes' && <FileDrop label="Deed or other proof of ownership" files={f.deed} onChange={(deed) => setF({ ...f, deed })} samples={['deed-scan.pdf']} />}
+        <Input label="Brief" textarea value={f.brief} onChange={(e) => setF({ ...f, brief: e.target.value })} />
+        <Input label="Prize you will fund" prefix="$" inputMode="decimal" value={f.prize} onChange={(e) => setF({ ...f, prize: e.target.value.replace(/[^\d,.]/g, '') })} placeholder="2,500" hint="Held in escrow when the contest opens. The winner receives all of it." />
+        <Input label="Judging criteria (you set these, and you judge)" textarea value={f.criteria} onChange={(e) => setF({ ...f, criteria: e.target.value })} hint="One per line." />
+        {err && <span className="error" role="alert">{err}</span>}
+        <FormActions><Button variant="primary" onClick={send}>Send request</Button></FormActions>
+      </div>
+    </Page>
+  );
+}
 
-      {step === 1 && (
-        <div className="stack">
-          <div className="alert">
-            <h2>Under manual team review</h2>
-            <p>The team looks at each request case by case. {f.isPrivate === 'yes' ? 'Deed received; ownership is being verified.' : ''} You’ll get a notification when it is approved.</p>
-          </div>
-          <p className="note">Simulated from here: skip ahead to a contest of yours whose deadline has passed.</p>
-          <div><Button variant="primary" onClick={() => setStep(2)}>Skip ahead to judging</Button></div>
-        </div>
-      )}
+// Judging: the host reads every entry, scores it, leaves a comment, then picks a winner.
+export function ContestJudge() {
+  const { id } = useParams();
+  const { get, dispatch, user } = useDemo();
+  const c = get.contest(id);
+  const [current, setCurrent] = useState(c?.entries[0]?.id);
+  const [winner, setWinner] = useState(c?.winner || null);
+  const [confirm, setConfirm] = useState(false);
+  if (!c) return <Page narrow><Empty title="Contest not found"><div><Button to="/contests">Browse contests</Button></div></Empty></Page>;
+  const host = user && c.coHostId === user.id;
+  if (!host) {
+    return <Page narrow><RoleGate title="Only the co-host judges this contest">{c.coHost} set the criteria and picks the winner.</RoleGate><div><Button to={`/contest/${c.id}`}>Back to the contest</Button></div></Page>;
+  }
+  const review = c.review || {};
+  const e = c.entries.find((x) => x.id === current) || c.entries[0];
+  const r = review[e.id] || {};
+  const done = (x) => c.criteria.every((cr) => review[x.id]?.scores?.[cr]);
+  const total = (x) => c.criteria.reduce((t, cr) => t + Number(review[x.id]?.scores?.[cr] || 0), 0);
+  const patch = (p) => dispatch({ type: 'JUDGE_ENTRY', contestId: c.id, entryId: e.id, patch: p });
+  const closed = c.status === 'closed';
+  const won = c.entries.find((x) => x.id === c.winner);
 
-      {step === 2 && judging && (
-        <div className="stack">
-          <h2>Judge: {judging.title}</h2>
-          <p className="muted small">Score each entry against your criteria, then pick a winner.</p>
-          <div className="table-wrap">
-            <table>
-              <thead><tr><th>Entry</th>{judging.criteria.map((c) => <th key={c}>{c}</th>)}<th>Winner</th></tr></thead>
-              <tbody>
-                {judging.entries.map((e) => (
-                  <tr key={e.id}>
-                    <td><span className="bold">{e.title}</span><br /><span className="muted">{get.user(e.architectId)?.name}</span></td>
-                    {judging.criteria.map((c) => (
-                      <td key={c}>
-                        <select className="input" aria-label={`${e.title}: ${c}`} value={scores[e.id + c] || '3'} onChange={(ev) => setScores({ ...scores, [e.id + c]: ev.target.value })}>
-                          {[1, 2, 3, 4, 5].map((n) => <option key={n}>{n}</option>)}
-                        </select>
-                      </td>
-                    ))}
-                    <td><input type="radio" name="winner" aria-label={`Pick ${e.title}`} checked={winner === e.id} onChange={() => setWinner(e.id)} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div>
-            <Button
-              variant="primary"
-              disabled={!winner}
-              onClick={() => {
-                dispatch({ type: 'PICK_WINNER', contestId: judging.id, entryId: winner });
-                setStep(3);
-              }}
-            >
-              Confirm winner
-            </Button>
-          </div>
+  if (closed && won) {
+    return (
+      <Page narrow>
+        <Crumbs items={[['/contributions#hosted', 'Hosted contests'], [`/contest/${c.id}`, c.title], [null, 'Judging']]} />
+        <div className="alert stack-sm">
+          <h1 className="h-md">Winner announced: {won.title}</h1>
+          <p>Your prize was held in escrow when the contest opened. It’s now paid to the winner, and your comments are shared with each architect.</p>
         </div>
-      )}
-
-      {step === 3 && judging && (
-        <div className="stack">
-          <div className="alert">
-            <h2>Prize released from escrow</h2>
-            <p>Your prize was held in escrow when the contest opened. It is now paid out.</p>
-          </div>
-          <div className="card">
-            <h3>Payment summary</h3>
-            <dl className="dl">
-              <dt>Winner</dt><dd>{judging.entries.find((e) => e.id === winner)?.title} by {get.user(judging.entries.find((e) => e.id === winner)?.architectId)?.name}</dd>
-              <dt>Prize in escrow</dt><dd>{judging.prize}</dd>
-              <dt>Winner receives</dt><dd>The full prize</dd>
-              <dt>Design</dt><dd>Sold to you as co-host, at the price you set</dd>
-            </dl>
-          </div>
-          <div className="row"><Button to="/contests">Back to contests</Button><Button variant="quiet" onClick={() => setStep(0)}>Start another request</Button></div>
+        <dl className="dl">
+          <dt>Winner</dt><dd>{won.title} by <UserLink id={won.architectId} /></dd>
+          <dt>Prize</dt><dd>{c.prize}, paid in full to the winner</dd>
+          <dt>Design</dt><dd>Sold to you as co-host, at the price you set</dd>
+        </dl>
+        <div className="row"><Button to={`/contest/${c.id}`}>View the contest page</Button><Button to="/contributions#hosted">Back to hosted contests</Button></div>
+      </Page>
+    );
+  }
+  return (
+    <Page wide>
+      <Crumbs items={[['/contributions#hosted', 'Hosted contests'], [`/contest/${c.id}`, c.title], [null, 'Judging']]} />
+      <div className="row between">
+        <div className="stack-sm">
+          <h1>Judge: {c.title}</h1>
+          <p className="small muted">Read each entry, score it against your criteria and leave a comment. Comments are shared with each architect when you announce the winner.</p>
         </div>
+        <Badge kind="solid">Ready to judge</Badge>
+      </div>
+      <div className="judge">
+        <nav className="judge-list" aria-label="Entries">
+          <h2 className="h-xs">Entries ({c.entries.length})</h2>
+          <ul>
+            {c.entries.map((x, i) => (
+              <li key={x.id}>
+                <button type="button" className="judge-item" aria-current={x.id === e.id ? 'true' : undefined} onClick={() => setCurrent(x.id)}>
+                  <span className="row between"><span className="bold small">{i + 1}. {x.title}</span>{winner === x.id && <Badge kind="solid">Your pick</Badge>}</span>
+                  <span className="xs muted">{get.user(x.architectId)?.name}</span>
+                  <span className="xs">{done(x) ? `Scored ${total(x)} of ${c.criteria.length * 5}` : 'Not scored yet'}{review[x.id]?.comment ? ', commented' : ''}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <article className="judge-entry stack" aria-labelledby="entry-h">
+          <div className="stack-sm">
+            <h2 id="entry-h">{e.title}</h2>
+            <p className="small">By <UserLink id={e.architectId} />{e.collaborators?.length ? <> with {e.collaborators.map((u, i) => <span key={u}>{i ? ', ' : ''}<UserLink id={u} /></span>)}</> : null}. Submitted {e.submittedAt}.</p>
+          </div>
+          <div className="judge-images">
+            <ImageBox label="Plan" />
+            <ImageBox label="Section" />
+            <ImageBox label="View" />
+          </div>
+          <p className="prose">{e.summary || 'The architect’s description of the design appears here.'}</p>
+          {e.files?.length > 0 && <p className="small">Files: {e.files.join(', ')}</p>}
+          <section className="stack-sm judge-scores" aria-labelledby="scores-h">
+            <h3 id="scores-h" className="h-xs">Your scores (1 to 5)</h3>
+            {c.criteria.map((cr) => (
+              <fieldset key={cr} className="score-row">
+                <legend className="small">{cr}</legend>
+                <div className="score-scale">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <label key={n} className="score-opt">
+                      <input type="radio" name={`${e.id}-${cr}`} checked={Number(r.scores?.[cr]) === n} onChange={() => patch({ scores: { ...(r.scores || {}), [cr]: n } })} />
+                      <span>{n}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            ))}
+          </section>
+          <Input label="Comment" textarea rows={3} value={r.comment || ''} onChange={(ev) => patch({ comment: ev.target.value })} hint="Shared with the architect when you announce the winner." />
+          <label className="choice">
+            <input type="radio" name="winner" checked={winner === e.id} onChange={() => setWinner(e.id)} />
+            <span className="bold">Pick this entry as the winner</span>
+          </label>
+          <div className="row between">
+            <div className="row">
+              <Button disabled={c.entries[0].id === e.id} onClick={() => setCurrent(c.entries[c.entries.indexOf(e) - 1].id)}>Previous entry</Button>
+              <Button disabled={c.entries[c.entries.length - 1].id === e.id} onClick={() => setCurrent(c.entries[c.entries.indexOf(e) + 1].id)}>Next entry</Button>
+            </div>
+            <Button variant="primary" disabled={!winner} onClick={() => setConfirm(true)}>Announce winner</Button>
+          </div>
+        </article>
+      </div>
+      {confirm && (
+        <Modal title="Announce the winner?" onClose={() => setConfirm(false)}>
+          <p>{c.entries.find((x) => x.id === winner)?.title} by {get.user(c.entries.find((x) => x.id === winner)?.architectId)?.name} wins the {c.prize} prize. This can’t be undone.</p>
+          <p className="small muted">{c.entries.filter((x) => !review[x.id]?.comment).length ? `${c.entries.filter((x) => !review[x.id]?.comment).length} entries have no comment yet.` : 'Every entry has a comment.'}</p>
+          <FormActions>
+            <Button onClick={() => setConfirm(false)}>Keep judging</Button>
+            <Button variant="primary" onClick={() => { dispatch({ type: 'PICK_WINNER', contestId: c.id, entryId: winner }); setConfirm(false); window.scrollTo(0, 0); }}>Announce winner</Button>
+          </FormActions>
+        </Modal>
       )}
     </Page>
   );

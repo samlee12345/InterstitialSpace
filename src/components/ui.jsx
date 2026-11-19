@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { useEffect, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
@@ -5,6 +6,7 @@ import { fmtPoints } from '../lib/points.js';
 
 // Authored line icons: one stroke weight, drawn on a 20px grid.
 const ICONS = {
+  check: 'M4 10.5l4 4 8-9',
   vote: 'M10 4 4.5 10.5h3.5V16h4v-5.5h3.5Z',
   photo: 'M3 7h3l1.5-2h5L14 7h3v9H3Z M10 14a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
   redesign: 'M4 16l.9-3.6L13 4.3l2.7 2.7-8.1 8.1Z M11.4 5.9l2.7 2.7',
@@ -108,10 +110,13 @@ export function Field({ label, hint, error, children }) {
   );
 }
 
-export function Input({ label, hint, error, textarea, ...p }) {
+// prefix: a fixed symbol inside the field, like "$", that stays while you type.
+export function Input({ label, hint, error, textarea, prefix, ...p }) {
   return (
     <Field label={label} hint={hint} error={error}>
-      {(id) => (textarea ? <textarea id={id} className="input" {...p} /> : <input id={id} className="input" {...p} />)}
+      {(id) => (textarea ? <textarea id={id} className="input" {...p} />
+        : prefix ? <span className="input input-affix"><span className="input-prefix" aria-hidden="true">{prefix}</span><input id={id} {...p} /></span>
+        : <input id={id} className="input" {...p} />)}
     </Field>
   );
 }
@@ -156,13 +161,13 @@ export function FileDrop({ label, files, onChange, samples = ['drawings.pdf', 'm
     <div className="field">
       <span className="label">{label}</span>
       <div className="drop">
+        <DemoOnly><button type="button" className="demo-btn" onClick={() => addNames(samples)}>Use sample files<span className="visually-hidden"> for {typeof label === 'string' ? label : 'this upload'}</span></button></DemoOnly>
         <div className="row">
           <Button onClick={() => ref.current.click()}>Choose files</Button>
-          <Button variant="quiet" onClick={() => addNames(samples)}>Use sample files</Button>
           <input ref={ref} type="file" multiple hidden aria-label={label} accept={accept?.join(',')} onChange={(e) => addNames([...e.target.files].map((f) => f.name))} />
         </div>
         {files.length === 0 ? (
-          <span className="small muted">{accept ? `Accepted: ${accept.join(', ')}. ` : ''}No files yet. Nothing is uploaded anywhere — the prototype only keeps file names.</span>
+          <span className="small muted">{accept ? `Accepted: ${accept.join(', ')}. ` : ''}No files yet.</span>
         ) : (
           <ul className="files">
             {files.map((f) => (
@@ -339,7 +344,15 @@ export function RoleGate({ title, children }) {
   return (
     <Empty title={title}>
       <p>{children}</p>
-      <p>Use the Demo panel (bottom right) to switch role.</p>
+      <DemoOnly><p className="demo-note">Switch role in Demo controls to see this page.</p></DemoOnly>
     </Empty>
   );
+}
+
+// Demo-only help and shortcuts. They render in a tray above the Demo button,
+// styled apart from the product, never inline with the page's content.
+export function DemoOnly({ children }) {
+  const [slot, setSlot] = useState(() => (typeof document !== 'undefined' ? document.getElementById('demo-tray-items') : null));
+  useEffect(() => { if (!slot) setSlot(document.getElementById('demo-tray-items')); }, [slot]);
+  return slot ? createPortal(<div className="demo-only">{children}</div>, slot) : null;
 }

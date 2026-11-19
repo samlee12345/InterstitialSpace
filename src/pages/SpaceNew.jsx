@@ -178,11 +178,11 @@ function PhotoPicker({ photos, setPhotos, geotag, point, error, compact }) {
         ))}
         <button type="button" className="photo-add" onClick={add}>
           <span className="bold"><Icon name="photo" /> Take a photo</span>
-          {!compact && <span className="xs muted">Opens the camera (simulated)</span>}
+          {!compact && <span className="xs muted">Opens the camera</span>}
         </button>
         <button type="button" className="photo-add" onClick={add}>
           <span className="bold">Add photos</span>
-          {!compact && <span className="xs muted">From your library (simulated)</span>}
+          {!compact && <span className="xs muted">From your library</span>}
         </button>
       </div>
       {!compact && photos.length > 0 && (geotag ? (

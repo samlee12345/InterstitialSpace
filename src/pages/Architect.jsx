@@ -327,7 +327,7 @@ export function Earnings() {
               ? 'Payouts open when the financial year ends, on 31 March (placeholder date).'
               : 'Only paid members are paid out. Upgrade to request a payout when the financial year ends, on 31 March (placeholder date).'}
           </span>
-          {!user.paid && <Button to="/points">See the paid tier</Button>}
+          {!user.paid && <Button to="/membership">Compare free and paid</Button>}
         </div>
         <dl className="dl dl-wide small">
           <dt>Who is paid out</dt><dd>Paid members only. That covers your 80% of sales and your year-end surplus share.</dd>

@@ -184,6 +184,26 @@ been added. Use it to click through long forms quickly in the demo.
   timeline), on the contest page and on the space page.
 - **Map pins** are plain: solid for approved spaces, dashed and hollow for
   pending ones. Space cards show votes, redesigns and photos.
+- **Hosting and judging contests (round 15).** "Host a contest" ends at
+  "Send request": pick the space with a search and a small map of the
+  matches, the prize field keeps its "$", and a confirmation says the team
+  will review it. Judging is a separate flow: Contributions › Hosted
+  contests lists your contests (and requests under review) with a "Ready
+  to judge" badge, also shown as "N to judge" in the account menu and on
+  the contest page for the co-host. The judging page lists every entry;
+  open each to see its drawings and description, score it 1–5 per
+  criterion, leave a comment, pick a winner and announce it.
+- **Demo-only help** (sample files, test card, "any 6 digits work",
+  "switch role") lives in a dashed purple "Demo only" tray above the Demo
+  button, never inline with the page. Copy that mentioned the demo or
+  "simulated" is gone from the pages.
+- **Free and paid** (/membership) compares the two tiers; every "See the
+  paid tier" link goes there.
+- **Names open profiles.** A person's name opens their architect portfolio,
+  or a member profile (/member/:id: spaces documented, experiences, photos;
+  points and tier stay private). Experiences show every answer under short
+  labels, the free text as "Comments", and the date before "off site".
+  "Moderate" on a pending space opens its review page.
 - **For architects (round 14).** Choices are whole cards that move you on,
   no radio buttons. Students: "Send code" sits beside the school email
   field, the code checks itself once six digits are in, and Next stays

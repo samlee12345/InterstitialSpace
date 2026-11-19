@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
-import { Button, FileDrop, FormActions, Input, Page, Select, Steps } from '../components/ui.jsx';
+import { Button, DemoOnly, FileDrop, FormActions, Input, Page, Select, Steps } from '../components/ui.jsx';
 
 /* For architects: verification before an architect account is created.
  * Professional: country → national register lookup → ID document matching the
@@ -112,7 +112,7 @@ function Architect({ status, onBack }) {
     return setLookup('checking');
   };
   if (done) {
-    return <div className="alert" role="status"><div className="row"><div className="spinner" aria-hidden="true" /><h2 className="h-sm">Checking your documents…</h2></div><p className="small muted">Simulated. You’ll be signed in as {licensed ? 'a licensed architect' : 'an architect with a licence pending'} in a moment.</p></div>;
+    return <div className="alert" role="status"><div className="row"><div className="spinner" aria-hidden="true" /><h2 className="h-sm">Checking your documents…</h2></div><p className="small muted">You’ll be signed in as {licensed ? 'a licensed architect' : 'an architect with a licence pending'} in a moment.</p></div>;
   }
   return (
     <div className="stack">
@@ -136,7 +136,7 @@ function Architect({ status, onBack }) {
           <Input label="Name as it appears on the register" value={f.name} onChange={set('name')} autoComplete="name" />
           <Input label={reg.field} value={f.number} onChange={set('number')} placeholder={reg.example} hint={reg.example ? `For example ${reg.example}` : undefined} />
           {lookup === 'checking' && <p className="row small" role="status"><span className="spinner" aria-hidden="true" />Looking you up…</p>}
-          {lookup === 'found' && <p className="note small" role="status">Found on the register: {f.name.trim()}, {f.number.trim()}, status active. (Simulated.)</p>}
+          {lookup === 'found' && <p className="note small" role="status">Found on the register: {f.name.trim()}, {f.number.trim()}, status active.</p>}
           {err && <span className="error" role="alert">{err}</span>}
           <Actions>
             <Button onClick={() => go(0)}>Back</Button>
@@ -227,12 +227,13 @@ function Student({ onBack }) {
             </div>
             <span id="school-email-hint" className="small muted">Ends in .edu, .ac.in or .ac.uk, for example.</span>
           </div>
+          {codeState === 'sent' && <DemoOnly><p className="demo-note">Any 6 digits work as the code.</p></DemoOnly>}
           {codeState !== 'none' && (
             <div className="field">
               <label htmlFor="school-code" className="label">6-digit code we emailed you</label>
               <input id="school-code" className="input input-code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={f.code} onChange={onCode} readOnly={codeState === 'verified'} aria-describedby="school-code-status" autoFocus />
               <span id="school-code-status" className="small muted" role="status">
-                {codeState === 'sent' && `Sent to ${f.email.trim()}. Simulated: any 6 digits work.`}
+                {codeState === 'sent' && `Sent to ${f.email.trim()}.`}
                 {codeState === 'checking' && 'Checking the code…'}
                 {codeState === 'verified' && <span className="ok">✓ School email confirmed.</span>}
               </span>
@@ -249,7 +250,7 @@ function Student({ onBack }) {
         <div className="stack">
           <Select label="Your school" value={f.school} onChange={(e) => setF({ ...f, school: e.target.value })} options={SCHOOLS.map((x) => x.name)} />
           {school.programme
-            ? <p className="note small" role="status">Accredited architecture programme found: {school.programme}. (Checked against the accreditation list; simulated.)</p>
+            ? <p className="note small" role="status">Accredited architecture programme found: {school.programme}.</p>
             : <p className="note small">We’ll check your school’s architecture programme by hand.</p>}
           <Select label="Expected graduation year" value={f.year} onChange={(e) => setF({ ...f, year: e.target.value })} options={['2027', '2028', '2029', '2030', '2031']} hint="Student status ends then; you can verify as a licensed architect later." />
           <FileDrop
@@ -300,7 +301,7 @@ export function ForArchitects() {
             <p className="lede">Sell redesigns of real, documented spaces, keep 80% and your copyright, and enter funded contests. We verify every architect first.</p>
           </header>
           {converting && <p className="note">You’re converting your community account. Your points, contributions and purchases stay with you; you get verified as an architect on top.</p>}
-          {isMember && !converting && <p className="note">You’re already signed in for this demo role. Switch to Visitor in the Demo bar to try this from scratch.</p>}
+          {isMember && !converting && <DemoOnly><p className="demo-note">You’re signed in. Switch to Visitor in Demo controls to try sign-up from scratch.</p></DemoOnly>}
           {!path && (
             <section className="stack-sm" aria-labelledby="path-q">
               <h2 id="path-q" className="h-xs">Which describes you?</h2>
@@ -348,7 +349,8 @@ export function Login() {
         }}
       >
         <Input label="Email" type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} autoComplete="email" />
-        <Input label="Password" type="password" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} autoComplete="current-password" error={err} hint="Simulated: any email and password sign you in as Community member 1." />
+        <Input label="Password" type="password" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} autoComplete="current-password" error={err} />
+        <DemoOnly><p className="demo-note">Any email and password sign you in as Community member 1.</p></DemoOnly>
         <label className="check-row">
           <input type="checkbox" checked={f.remember} onChange={(e) => setF({ ...f, remember: e.target.checked })} />
           <span>Remember me</span>

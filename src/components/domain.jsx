@@ -195,6 +195,53 @@ export function MapBox({ spaces, area, hiddenIds = [], activeId, selectedId, onH
   );
 }
 
+// A person's name that opens their public page: an architect's portfolio, or a
+// member's profile. Organisations without a page show as plain text.
+export const profilePath = (u) => (!u ? null : u.role === 'architect' ? `/architect/${u.id}` : `/member/${u.id}`);
+export function UserLink({ id, you, className = '' }) {
+  const { get, user } = useDemo();
+  const u = get.user(id);
+  if (!u) return <span className={className}>Former member</span>;
+  const me = you !== false && user?.id === u.id;
+  return <Link to={profilePath(u)} className={`user-link ${className}`}>{u.name}{me ? ' (you)' : ''}</Link>;
+}
+
+// Pick one space from many: search by name, area or type, with a small map of the
+// matches. Used where a dropdown would be too long (Host a contest).
+export function SpacePicker({ spaces, value, onChange, label = 'Which space?', all }) {
+  const [q, setQ] = useState('');
+  const term = q.trim().toLowerCase();
+  const matches = term ? spaces.filter((s) => `${s.name} ${s.type} ${s.city || ''}`.toLowerCase().includes(term)) : spaces;
+  const shown = [...matches].sort((a, b) => b.votes - a.votes).slice(0, 6);
+  const picked = spaces.find((s) => s.id === value);
+  return (
+    <div className="field space-picker">
+      <label className="label" htmlFor="space-pick-q">{label}</label>
+      {picked && (
+        <p className="space-picked small" role="status">
+          Selected: <span className="bold">{picked.name}</span> ({picked.votes} votes)
+        </p>
+      )}
+      <input id="space-pick-q" className="input" type="search" placeholder="Search by name, area or type" value={q} onChange={(e) => setQ(e.target.value)} aria-controls="space-pick-list" />
+      <div className="space-picker-body">
+        <ul id="space-pick-list" className="space-pick-list" aria-label="Matching spaces">
+          {shown.map((s) => (
+            <li key={s.id}>
+              <button type="button" className="space-pick" aria-pressed={value === s.id} onClick={() => onChange(s.id)}>
+                <span className="bold small">{s.name}</span>
+                <span className="xs muted">{s.type}, {s.votes} votes</span>
+              </button>
+            </li>
+          ))}
+          {matches.length > shown.length && <li className="xs muted">{matches.length - shown.length} more. Keep typing to narrow it down.</li>}
+          {matches.length === 0 && <li className="small muted">No approved spaces match “{q.trim()}”.</li>}
+        </ul>
+        <MapBox spaces={shown} area={all || spaces} selectedId={value} onPinClick={(s) => onChange(s.id)} className="map-small" label="" />
+      </div>
+    </div>
+  );
+}
+
 // "26.9239, 75.8267" → { lat, lng }; anything else → null.
 export function parseLatLng(q) {
   const m = q.trim().match(/^(-?\d{1,3}(?:\.\d+)?)\s*[, ]\s*(-?\d{1,3}(?:\.\d+)?)$/);
@@ -266,7 +313,7 @@ export function ContestCard({ contest }) {
       <p className="small muted">Site: {sp?.name}</p>
       {won ? (
         <div className="stack-sm">
-          <p className="small"><span className="bold">Winner:</span> {won.title} by {get.user(won.architectId)?.name}</p>
+          <p className="small"><span className="bold">Winner:</span> {won.title} by <UserLink id={won.architectId} you={false} /></p>
           {contest.plans?.some((p) => !p.done) && <p className="small muted">Next: {contest.plans.find((p) => !p.done).text} ({contest.plans.find((p) => !p.done).when})</p>}
         </div>
       ) : (

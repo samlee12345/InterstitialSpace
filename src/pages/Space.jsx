@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
 import { Badge, Banner, Button, Choice, Empty, FileDrop, FormActions, Icon, ImageBox, Input, Mine, Modal, Page, Select, StatusBadges, Steps, TabPanel, Tabs } from '../components/ui.jsx';
-import { ContestPlans, RedesignCard, SpaceCard, contestStatus, contestWinner, typeLabel } from '../components/domain.jsx';
+import { ContestPlans, RedesignCard, SpaceCard, UserLink, contestStatus, contestWinner, typeLabel } from '../components/domain.jsx';
 import { Dropdown } from '../components/Shell.jsx';
 import { ReviewForm } from './Moderation.jsx';
 import { timeAgo } from '../lib/time.js';
@@ -45,7 +45,7 @@ function Diagrams({ space }) {
       {aiPending && (
         <div className="card">
           <div className="row"><div className="spinner" aria-hidden="true" /><h3>Processing…</h3></div>
-          <p>This space has {space.photos.length} photos, so the AI is drawing a spatial diagram from them. Simulated: a placeholder diagram appears in a few seconds.</p>
+          <p>This space has {space.photos.length} photos, so the AI is drawing a spatial diagram from them.</p>
         </div>
       )}
       {!aiPending && space.diagrams.length === 0 && (
@@ -142,7 +142,7 @@ function Model3D({ space }) {
         <h3 id="uploads-h" className="h-xs">Uploaded models and scans ({uploads.length})</h3>
         {uploads.length === 0 ? <p className="small muted">None yet.{isArchitect ? ' Upload a measured model or a scan to improve this one.' : ''}</p> : (
           <ul className="list small">
-            {uploads.map((u) => <li key={u.id} className="row between"><span>{u.files.join(', ')}</span><span className="row muted">{get.user(u.by)?.name}, {u.date}<Mine userId={u.by} /></span></li>)}
+            {uploads.map((u) => <li key={u.id} className="row between"><span>{u.files.join(', ')}</span><span className="row muted"><UserLink id={u.by} you={false} />, {u.date}<Mine userId={u.by} /></span></li>)}
           </ul>
         )}
       </section>
@@ -169,7 +169,7 @@ function Archived({ space }) {
             <p className="small muted">{[[r.votes, 'vote to redesign', 'votes to redesign'], [r.photos.length, 'photo', 'photos'], [exps.length, 'experience', 'experiences'], [r.diagrams.length, 'spatial diagram', 'spatial diagrams'], [reds.length, 'redesign', 'redesigns']].map(([n, one, many]) => `${n} ${n === 1 ? one : many}`).join(', ')}.</p>
             {exps.length > 0 && (
               <ul className="list small">
-                {exps.map((c) => <li key={c.id}><span className="bold">{get.user(c.userId)?.name}:</span> {c.text}</li>)}
+                {exps.map((c) => <li key={c.id}><UserLink id={c.userId} you={false} className="bold" />: {c.text}</li>)}
               </ul>
             )}
             {reds.length > 0 && <p className="small">Redesigns: {reds.map((x) => <Link key={x.id} to={`/item/${x.id}`} className="archived-link">{x.title}</Link>)}</p>}
@@ -220,6 +220,8 @@ function Redesigns({ space }) {
 // 2. Comment (required) and photos (optional)
 // 3. Quick questions about what it's like
 // 4. Should it be redesigned? 0–10, and why
+// Short labels for each answer when an experience is shown on the space.
+const ANSWER_LABEL = { feel: 'How it feels', senses: 'Senses', access: 'Arriving and leaving', fix: 'Needs fixing most', keep: 'Should stay as it is' };
 export const EXPERIENCE_QUESTIONS = [
   { id: 'feel', type: 'multi', legend: 'How does it feel to be here?', hint: 'Pick any that fit.', options: ['Calm', 'Welcoming', 'Busy', 'Cramped', 'Exposed', 'Unsafe'] },
   { id: 'senses', type: 'multi', legend: 'Senses: what stands out?', hint: 'Pick any that fit.', options: ['Too hot', 'Good shade', 'Noisy', 'Quiet', 'Bad smell', 'Dark at night'] },
@@ -303,13 +305,13 @@ function ExperienceWizard({ space, mine, onClose, onPosted, initialPhotos = 0 })
             <Button onClick={() => pickLocation(false)}>Share location: I’m somewhere else</Button>
             <Button variant="quiet" onClick={() => pickLocation(false)}>Continue without location</Button>
           </div>
-          <p className="xs muted">Simulated. No real location is read.</p>
+
         </div>
       )}
       {step === 1 && (
         <div className="stack">
           <p className="note small">{onSite ? 'Location confirmed: you’re at this space. Full points.' : 'Not confirmed on site. You’ll earn half points.'}</p>
-          <Input label="How do you use this space? What is it like?" textarea value={text} onChange={(e) => setText(e.target.value)} error={err} />
+          <Input label="Comments" textarea value={text} onChange={(e) => setText(e.target.value)} error={err} hint="How do you use this space? What is it like?" />
           <div className="field">
             <span className="label">Photos (optional)</span>
             <div className="thumbs">{Array.from({ length: photos }, (_, i) => <ImageBox key={i} label={`${i + 1}`} shape="square" />)}</div>
@@ -386,22 +388,25 @@ function Experience({ space }) {
           <li key={c.id} className="experience">
             <div className="stack-sm grow">
               <div className="row">
-                <span className="bold small">{get.user(c.userId).name}</span>
+                <UserLink id={c.userId} you={false} className="bold small" />
                 {get.user(c.userId).verified && <Badge>Verified</Badge>}
                 <Mine userId={c.userId} />
-                {!c.onSite && <span className="xs muted">off site</span>}
                 {c.date && <time className="xs muted" dateTime={c.date} title={c.date}>{timeAgo(c.updatedAt || c.date, now)}{c.updatedAt ? ' (updated)' : ''}</time>}
+                {!c.onSite && <span className="xs muted">off site</span>}
               </div>
-              <p>{c.text}</p>
-              {c.answers && (
+              {c.answers?.need !== undefined && (
                 <div className="row small">
-                  {c.answers.need !== undefined && <Badge kind={c.answers.need >= NEEDS_REDESIGN ? 'solid' : ''}>Redesign need {c.answers.need}/10{c.answers.why?.length ? `: ${c.answers.why.join(', ').toLowerCase()}` : ''}</Badge>}
-                  {c.answers.fix && <Badge>{c.answers.fix === 'Nothing needs fixing' ? 'Nothing needs fixing' : `Needs fixing: ${c.answers.fix}`}</Badge>}
-                  {[...(c.answers.feel || []), ...(c.answers.senses || [])].length > 0 && (
-                    <span className="muted">{[...(c.answers.feel || []), ...(c.answers.senses || [])].join(', ')}</span>
-                  )}
+                  <Badge kind={c.answers.need >= NEEDS_REDESIGN ? 'solid' : ''}>Redesign need {c.answers.need}/10{c.answers.why?.length ? `: ${c.answers.why.join(', ').toLowerCase()}` : ''}</Badge>
                 </div>
               )}
+              <dl className="exp-answers small">
+                {EXPERIENCE_QUESTIONS.map((q) => {
+                  const v = c.answers?.[q.id];
+                  const shown = Array.isArray(v) ? v.join(', ') : v;
+                  return shown ? <div key={q.id}><dt>{ANSWER_LABEL[q.id]}</dt><dd>{shown}</dd></div> : null;
+                })}
+                <div><dt>Comments</dt><dd>{c.text}</dd></div>
+              </dl>
             </div>
             {c.photoIds?.length > 0 && (
               <div className="exp-photos" aria-label={`${c.photoIds.length} photos`}>
@@ -431,7 +436,7 @@ function ContestCard({ contest }) {
         <div className="stack-sm grow">
           <div className="row"><Badge>Contest closed</Badge></div>
           <h2 id={`contest-${contest.id}`}><Link className="stretched" to={`/contest/${contest.id}`}>{contest.title}</Link></h2>
-          <p className="small"><span className="bold">Winner:</span> {won.title} by {get.user(won.architectId)?.name}, {contest.prize} prize from {contest.coHost}.</p>
+          <p className="small"><span className="bold">Winner:</span> {won.title} by <UserLink id={won.architectId} you={false} />, {contest.prize} prize from {contest.coHost}.</p>
           <ContestPlans contest={contest} compact />
         </div>
       </section>
@@ -609,7 +614,7 @@ function Header({ space, onReport, onDesignate, onModerate, onAddExperience, has
         <h1>{space.name}</h1>
         {space.parentId && get.space(space.parentId) && <p className="small">Part of <Link to={`/space/${space.parentId}`}>{get.space(space.parentId).name}</Link></p>}
         <p className="small muted">
-          {space.city || 'Jaipur'}, {space.country || 'India'}. {space.lat.toFixed(4)}, {space.lng.toFixed(4)}. Documented by {get.user(space.uploadedBy)?.name}.
+          {space.city || 'Jaipur'}, {space.country || 'India'}. {space.lat.toFixed(4)}, {space.lng.toFixed(4)}. Documented by <UserLink id={space.uploadedBy} you={false} />.
           {space.updatedAt && ` Updated ${space.updatedAt}.`}
         </p>
         {designer && <p className="small">Designed by <Link to={`/architect/${designer.id}`}>{designer.name}</Link></p>}
@@ -710,14 +715,14 @@ export default function Space() {
     <Page>
       <nav className="small row" aria-label="Breadcrumb"><Link to="/browse">Browse spaces</Link><span className="muted">/</span><span className="muted">{space.name}</span></nav>
       <Banner banner={banner} onClose={() => setBanner(null)} />
-      <Header space={space} onReport={() => setReporting(true)} onDesignate={() => setDesignating(true)} onModerate={() => setModerating(true)} onAddExperience={() => need('comment') && setAdding(true)} hasMine={!!mine} />
+      <Header space={space} onReport={() => setReporting(true)} onDesignate={() => setDesignating(true)} onModerate={() => nav(`/moderation/${space.id}`)} onAddExperience={() => need('comment') && setAdding(true)} hasMine={!!mine} />
       {pendingUpdate && (
         <p className="note">An update was reported on {pendingUpdate.date}: “{pendingUpdate.text}” A moderator is checking it. If it’s confirmed, contributions so far move to Archived.</p>
       )}
       {space.rejections?.length > 0 && (
         <div className="note stack-sm">
           <span className="bold">Reasons given by reviewers (public)</span>
-          {space.rejections.map((r, i) => <span key={i}>{get.user(r.by)?.name}: {r.reason}</span>)}
+          {space.rejections.map((r, i) => <span key={i}><UserLink id={r.by} you={false} />: {r.reason}</span>)}
         </div>
       )}
 

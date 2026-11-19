@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
-import { Badge, Button, Choice, Empty, ImageBox, Input, Mine, Modal, Page, PointsBadge, RoleGate, Select } from '../components/ui.jsx';
+import { Badge, Button, Choice, Empty, ImageBox, Input, Mine, Modal, Page, PointsBadge, RoleGate, Select, DemoOnly } from '../components/ui.jsx';
 import { Crumbs } from '../components/domain.jsx';
 import { fmtPoints } from '../lib/points.js';
 
@@ -267,18 +267,19 @@ export function Checkout() {
             </fieldset>
             {method === 'card' && (
               <div className="stack">
-                <div className="row between">
-                  <span className="small muted">Simulated checkout. No real payment is taken.</span>
-                  <Button
-                    variant="quiet"
+                <DemoOnly>
+                  <p className="demo-note">No real payment is taken.</p>
+                  <button
+                    type="button"
+                    className="demo-btn"
                     onClick={() => {
                       setF({ ...f, number: '4242 4242 4242 4242', exp: '12 / 29', cvc: '123', name: user.name.replace(' (you)', ''), zip: '302002' });
                       setErr({});
                     }}
                   >
                     Fill test card
-                  </Button>
-                </div>
+                  </button>
+                </DemoOnly>
                 <Input label="Card number" value={f.number} onChange={set('number', fmtCard)} error={err.number} inputMode="numeric" placeholder="1234 1234 1234 1234" autoComplete="cc-number" />
                 <div className="field-row">
                   <Input label="Expiry" value={f.exp} onChange={set('exp', fmtExp)} error={err.exp} inputMode="numeric" placeholder="MM / YY" autoComplete="cc-exp" />

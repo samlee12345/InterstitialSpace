@@ -1,15 +1,15 @@
 import { Route, Routes } from 'react-router-dom';
 import Shell from './components/Shell.jsx';
 import { Button, Empty, Page } from './components/ui.jsx';
-import { Landing, Browse, Signup, Terms, About, Contact, Privacy } from './pages/Public.jsx';
+import { Landing, Browse, Signup, Terms, About, Contact, Privacy, MemberProfile } from './pages/Public.jsx';
 import Space from './pages/Space.jsx';
 import { UploadRedesign, UploadDiagram, ContestEntry } from './pages/Uploads.jsx';
 import { Item, Checkout, Purchase, Purchases } from './pages/Buying.jsx';
 import { Portfolio, ArchitectPage, Ranking, SpaceRanking, Earnings, Notifications } from './pages/Architect.jsx';
-import { Contests, Contest, ContestRequest } from './pages/Contests.jsx';
+import { Contests, Contest, ContestRequest, ContestJudge } from './pages/Contests.jsx';
 import SpaceNew from './pages/SpaceNew.jsx';
 import { Moderation, ModerationReview, Flags } from './pages/Moderation.jsx';
-import { Points, Coop, Profile, Removal, Contributions } from './pages/Account.jsx';
+import { Points, Coop, Profile, Removal, Contributions, Membership } from './pages/Account.jsx';
 import { ForArchitects, Login } from './pages/Join.jsx';
 
 function NotFound() {
@@ -40,6 +40,9 @@ export default function App() {
         <Route path="/purchases" element={<Purchases />} />
         <Route path="/portfolio" element={<Portfolio />} />
         <Route path="/architect/:id" element={<ArchitectPage />} />
+        <Route path="/member/:id" element={<MemberProfile />} />
+        <Route path="/membership" element={<Membership />} />
+        <Route path="/contest/:id/judge" element={<ContestJudge />} />
         <Route path="/ranking" element={<Ranking />} />
         <Route path="/spaces/ranking" element={<SpaceRanking />} />
         <Route path="/contests" element={<Contests />} />

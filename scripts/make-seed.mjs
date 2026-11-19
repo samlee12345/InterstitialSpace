@@ -137,13 +137,13 @@ const seed = {
     {
       id: 'c2', spaceId: 's5', status: 'judging', title: 'Stepwell terrace, Nahargarh foothill',
       brief: 'Make the terrace safe and usable after dark without changing the stepwell itself.',
-      prize: '$1,800', deadline: '2026-11-01', coHost: "Ward residents' association (placeholder)", coHostId: null,
+      prize: '$1,800', deadline: '2026-11-01', coHost: 'Heritage Trust (placeholder org)', coHostId: 'u-p1',
       eligibility: 'Licensed architects and accredited architecture students',
       criteria: ['Safety after dark', 'Low maintenance', 'Leaves the stepwell untouched'],
       entries: [
-        { id: 'e3', architectId: 'u-a2', title: 'Lantern terrace', submittedAt: '2026-10-18' },
-        { id: 'e4', architectId: 'u-a3', title: 'Edge and rail', submittedAt: '2026-10-25' },
-        { id: 'e5', architectId: 'u-a4', title: 'Night steps', submittedAt: '2026-10-30' },
+        { id: 'e3', architectId: 'u-a2', title: 'Lantern terrace', submittedAt: '2026-10-18', summary: 'Low solar lanterns set into the terrace edge, so the steps are lit from below and nothing glares at the stepwell.', files: ['lantern-terrace-plan.pdf', 'lantern-terrace-section.pdf', 'lantern-terrace.dwg'] },
+        { id: 'e4', architectId: 'u-a3', title: 'Edge and rail', submittedAt: '2026-10-25', summary: 'A sandstone kerb and a single steel rail along the open edge. The rail carries the lighting and doubles as a lean-on bar.', files: ['edge-and-rail-plan.pdf', 'edge-and-rail.3dm'], collaborators: ['u-a4'] },
+        { id: 'e5', architectId: 'u-a4', title: 'Night steps', submittedAt: '2026-10-30', summary: 'Reflective lime-washed risers and three lamp posts at the landing. The cheapest of the three to maintain.', files: ['night-steps-plan.pdf', 'night-steps-section.pdf'] },
       ],
     },
     {
@@ -252,6 +252,7 @@ const seed = {
     { id: 'l5', userId: 'u-p1', text: 'Paid tier, one month', pts: -50 },
   ],
   payouts: [{ id: 'po1', userId: 'u-a1', amount: 64, date: '2026-10-31' }],
+  contestRequests: [],
   updateReports: [
     { id: 'up1', spaceId: 's6', by: 'u-c2', date: '2026-11-10', text: 'The municipality paved the courtyard and added two benches last month. The old drain is gone.', photos: 3, status: 'pending' },
   ],

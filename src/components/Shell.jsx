@@ -113,11 +113,13 @@ function AccountMenu() {
         {user.paid && <Badge>Paid</Badge>}
         <span className="xs muted">{user.role === 'architect' ? 'Architect account' : user.paid ? 'Paid account' : 'Community account'}</span>
       </div>
-      {!user.paid && <p className="xs muted menu-note">Free tier: your {fmtPoints(user.points)} points are ghost points, shown with a dashed outline. Only paid members collect points. <Link to="/points">How it works</Link></p>}
+      {!user.paid && <p className="xs muted menu-note">Free tier: your {fmtPoints(user.points)} points are ghost points, shown with a dashed outline. Only paid members collect points. <Link to="/membership">Compare free and paid</Link></p>}
       <nav className="menu-links" aria-label="Your account">
-        {roleLinks(d).map(([to, label]) => (
-          <NavLink key={to} to={to} className={link}>{label}</NavLink>
-        ))}
+        {roleLinks(d).map(([to, label]) => {
+          // Contests waiting on your judgement show on Contributions.
+          const toJudge = to === '/contributions' ? d.state.contests.filter((c) => c.coHostId === user.id && c.status === 'judging').length : 0;
+          return <NavLink key={to} to={to} className={link}>{label}{toJudge > 0 && <span className="menu-count">{toJudge} to judge</span>}</NavLink>;
+        })}
       </nav>
     </Dropdown>
   );
@@ -658,7 +660,6 @@ function Footer() {
           </nav>
         ))}
       </div>
-      <p className="xs muted footer-note">Class prototype, Parsons, 2026. All people, places, prices and organisations are placeholders.</p>
     </footer>
   );
 }
@@ -674,6 +675,10 @@ export default function Shell() {
       <Footer />
       <SignupPrompt />
       <Toasts />
+      <div className="demo-tray" role="region" aria-label="Demo only">
+        <span className="demo-tray-label">Demo only</span>
+        <div id="demo-tray-items" className="demo-tray-items" />
+      </div>
       <DemoPanel />
       <NotesBridge />
     </>

@@ -4,7 +4,7 @@ import { useDemo } from '../state/DemoContext.jsx';
 import { Badge, Button, Choice, Empty, FormActions, ImageBox, Input, Page, RoleGate, Select, StatusBadges, Tally } from '../components/ui.jsx';
 import { overlapping } from '../lib/geo.js';
 import { POINTS } from '../lib/points.js';
-import { AreaMap, Crumbs } from '../components/domain.jsx';
+import { AreaMap, Crumbs, UserLink } from '../components/domain.jsx';
 
 function Gate() {
   return (
@@ -85,8 +85,8 @@ export function ReviewForm({ space, onDone }) {
       </div>
       {!editing ? (
         <div className="stack-sm">
-          <p className="bold">You voted {mine.vote === 'yes' ? 'yes, it qualifies' : 'no, it doesn’t qualify'}.</p>
-          {mine.reason && <p className="small">Your reason: {mine.reason}</p>}
+          <p className="bold">{mine ? `You voted ${mine.vote === 'yes' ? 'yes, it qualifies' : 'no, it doesn’t qualify'}.` : 'Your vote is recorded.'}</p>
+          {mine?.reason && <p className="small">Your reason: {mine.reason}</p>}
           <div><Button onClick={() => setEditing(true)}>Edit your vote</Button></div>
         </div>
       ) : (
@@ -140,7 +140,7 @@ function UpdateReports() {
           const sp = get.space(r.spaceId);
           return (
             <li key={r.id} className="stack-sm">
-              <div className="row"><Link className="bold" to={`/space/${r.spaceId}`}>{sp?.name}</Link><span className="small muted">reported by {get.user(r.by)?.name} on {r.date}</span></div>
+              <div className="row"><Link className="bold" to={`/space/${r.spaceId}`}>{sp?.name}</Link><span className="small muted">reported by <UserLink id={r.by} you={false} /> on {r.date}</span></div>
               <p>{r.text}</p>
               <div className="thumbs">{Array.from({ length: r.photos }, (_, i) => <ImageBox key={i} label={`Proof ${i + 1}`} shape="square" />)}</div>
               <div className="row">
@@ -166,7 +166,7 @@ function DesignerClaims() {
       <ul className="list">
         {pending.map((c) => (
           <li key={c.id} className="stack-sm">
-            <span>{c.external ? <span className="bold">{c.external.name} <span className="muted">(not on the platform{c.external.link ? `: ${c.external.link}` : ''})</span></span> : <Link className="bold" to={`/architect/${c.designer}`}>{get.user(c.designer)?.name}</Link>} designed <Link to={`/space/${c.spaceId}`}>{get.space(c.spaceId)?.name}</Link><span className="small muted">, says {get.user(c.by)?.name} on {c.date}</span></span>
+            <span>{c.external ? <span className="bold">{c.external.name} <span className="muted">(not on the platform{c.external.link ? `: ${c.external.link}` : ''})</span></span> : <UserLink id={c.designer} you={false} className="bold" />} designed <Link to={`/space/${c.spaceId}`}>{get.space(c.spaceId)?.name}</Link><span className="small muted">, says <UserLink id={c.by} you={false} /> on {c.date}</span></span>
             {c.note && <p className="small">{c.note}</p>}
             <div className="row">
               <Button variant="primary" onClick={() => dispatch({ type: 'DESIGNER_RESOLVE', id: c.id, ok: true })}>Confirm designer</Button>
@@ -206,7 +206,7 @@ export function Moderation() {
                   return (
                     <tr key={m.spaceId}>
                       <td><span className="bold">{m.space.name}</span><br /><span className="small muted">Added {m.space.addedAt}</span></td>
-                      <td>{get.user(m.space.uploadedBy)?.name}</td>
+                      <td><UserLink id={m.space.uploadedBy} you={false} /></td>
                       <td>{m.space.city || 'Jaipur'}</td>
                       <td><Tally yes={t.yes} no={t.no} /></td>
                       <td>{own ? <span className="small muted">You created this</span> : <Button to={`/moderation/${m.spaceId}`}>{myVote(m, user.id) ? 'Edit vote' : 'Review'}</Button>}</td>
@@ -245,7 +245,7 @@ export function ModerationReview() {
           <header className="stack-sm">
             <div className="row"><StatusBadges space={space} />{space.status === 'approved' && <Badge kind="solid">Approved</Badge>}</div>
             <h1>{space.name}</h1>
-            <p className="small muted">Created by {get.user(space.uploadedBy)?.name} on {space.addedAt}. <Link to={`/space/${space.id}`}>Open the public page</Link></p>
+            <p className="small muted">Created by <UserLink id={space.uploadedBy} you={false} /> on {space.addedAt}. <Link to={`/space/${space.id}`}>View public page</Link></p>
           </header>
 
           <section className="stack-sm" aria-label="Photos">
@@ -287,9 +287,9 @@ export function ModerationReview() {
             <h2 id="notes-h" className="h-sm">Reviewers’ notes ({(m.notes || []).length + Object.values(m.votes || {}).filter((v) => v.reason).length})</h2>
             <p className="small muted">Only reviewers see these. Reasons for no votes are also shown publicly.</p>
             <ul className="list small">
-              {(m.notes || []).map((x, i) => <li key={`n${i}`}><span className="bold">{get.user(x.by)?.name}</span> <span className="muted">{x.date}</span><br />{x.text}</li>)}
+              {(m.notes || []).map((x, i) => <li key={`n${i}`}><UserLink id={x.by} you={false} className="bold" /> <span className="muted">{x.date}</span><br />{x.text}</li>)}
               {Object.entries(m.votes || {}).filter(([, v]) => v.reason).map(([by, v]) => (
-                <li key={by}><span className="bold">{get.user(by)?.name}</span> <Badge>Voted no</Badge> <span className="muted">{v.date}</span><br />{v.reason}{v.moveTo && <> Suggests moving it to <Link to={`/space/${v.moveTo}`}>{get.space(v.moveTo)?.name}</Link>.</>}</li>
+                <li key={by}><UserLink id={by} you={false} className="bold" /> <Badge>Voted no</Badge> <span className="muted">{v.date}</span><br />{v.reason}{v.moveTo && <> Suggests moving it to <Link to={`/space/${v.moveTo}`}>{get.space(v.moveTo)?.name}</Link>.</>}</li>
               ))}
             </ul>
             {space.uploadedBy !== user.id && (

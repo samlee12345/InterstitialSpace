@@ -1,13 +1,67 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
-import { Badge, Button, Choice, Empty, FileDrop, FormActions, ImageBox, Input, Modal, Page, RoleGate, StatusBadges } from '../components/ui.jsx';
+import { Badge, Button, Choice, DemoOnly, Empty, FileDrop, FormActions, Icon, ImageBox, Input, Modal, Page, RoleGate, StatusBadges } from '../components/ui.jsx';
 import { Crumbs } from '../components/domain.jsx';
 import { fmtPoints } from '../lib/points.js';
 
+// Free vs paid, side by side. "See the paid tier" links land here.
+const PLAN_ROWS = [
+  ['Document spaces, add your experience and vote', true, true],
+  ['One vote in the co-op', true, true],
+  ['Points for your contributions', 'Ghost points: see what you would have earned', 'Real points'],
+  ['Share of the year-end surplus', false, true],
+  ['Payouts for redesign sales and your surplus share', false, true],
+  ['Spend points on downloads and renewals', false, true],
+  ['Free 3D-model downloads', 'None', (c) => `${c.paidFreeModels} a month, no rollover`],
+  ['Request to host a contest', false, true],
+];
+export function Membership() {
+  const { user, cfg } = useDemo();
+  const cell = (v) => {
+    const x = typeof v === 'function' ? v(cfg) : v;
+    if (x === true) return <span className="plan-yes"><Icon name="check" /><span className="visually-hidden">Included</span></span>;
+    if (x === false) return <span className="plan-no" aria-label="Not included">—</span>;
+    return x;
+  };
+  return (
+    <Page>
+      <div className="stack-sm">
+        <h1>Free and paid membership</h1>
+        <p className="prose muted">Everyone is a co-op member with one vote. The paid tier is how you collect points that turn into your share of the year-end surplus.</p>
+      </div>
+      <div className="table-wrap">
+        <table className="plan-table">
+          <caption className="visually-hidden">What each membership includes</caption>
+          <thead>
+            <tr>
+              <th scope="col"><span className="visually-hidden">Feature</span></th>
+              <th scope="col"><span className="plan-name">Free</span><span className="small muted">$0</span>{user && !user.paid && <Badge>Your plan</Badge>}</th>
+              <th scope="col"><span className="plan-name">Paid</span><span className="small muted">{cfg.priceLabel} a month, cancel any time</span>{user?.paid && <Badge kind="solid">Your plan</Badge>}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {PLAN_ROWS.map(([label, free, paid]) => (
+              <tr key={label}><th scope="row">{label}</th><td>{cell(free)}</td><td>{cell(paid)}</td></tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td />
+              <td>{!user && <Button to="/signup">Create a free account</Button>}</td>
+              <td>{user && !user.paid ? <Button variant="primary" to="/points?upgrade=1">Upgrade to paid</Button> : !user ? <span className="small muted">Sign up first, then upgrade.</span> : <Button to="/points">Manage membership</Button>}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <p className="small muted">Points count from the day you upgrade. Ghost points from before don’t convert. Payouts open when the financial year closes.</p>
+    </Page>
+  );
+}
+
 export function Points() {
   const { state, dispatch, user, cfg } = useDemo();
-  const [up, setUp] = useState(false);
+  const [up, setUp] = useState(() => new URLSearchParams(window.location.hash.split('?')[1] || '').get('upgrade') === '1');
   const [method, setMethod] = useState('card');
   if (!user) return <Page narrow tag="simulated"><RoleGate title="Sign in to see points">Points are only shown to members.</RoleGate></Page>;
   const ledger = state.ledger.filter((l) => l.userId === user.id);
@@ -99,7 +153,8 @@ export function Points() {
       {up && (
         <Modal title="Upgrade to the paid tier" onClose={() => setUp(false)}>
           <p>Monthly. Cancel any time. You start collecting real points today.</p>
-          <Choice name="up" checked={method === 'card'} onChange={() => setMethod('card')} title={`${cfg.priceLabel} a month by card`}>Simulated. No payment is taken.</Choice>
+          <Choice name="up" checked={method === 'card'} onChange={() => setMethod('card')} title={`${cfg.priceLabel} a month by card`} />
+          <DemoOnly><p className="demo-note">No payment is taken.</p></DemoOnly>
           <p className="small muted">Ghost points can’t pay for the upgrade. Once you’re a paid member, you can renew with the points you collect.</p>
           <div className="row">
             <Button
@@ -235,7 +290,57 @@ export function Contributions() {
           </div>
         )}
       </section>
+      <HostedContests />
     </Page>
+  );
+}
+
+// Contests you host (as co-host), plus requests the team is still reviewing.
+const HOST_STATUS = {
+  review: ['Under team review', ''],
+  live: ['Open for entries', ''],
+  judging: ['Ready to judge', 'solid'],
+  closed: ['Winner announced', ''],
+};
+function HostedContests() {
+  const { state, user, isPaid, get } = useDemo();
+  const hosted = state.contests.filter((c) => c.coHostId === user.id);
+  const requests = (state.contestRequests || []).filter((r) => r.hostId === user.id);
+  if (!isPaid && !hosted.length && !requests.length) return null;
+  const order = { judging: 0, review: 1, live: 2, closed: 3 };
+  const rows = [
+    ...requests.map((r) => ({ id: r.id, title: `Contest for ${get.space(r.spaceId)?.name}`, status: 'review', prize: r.prize, when: `Requested ${new Date(r.date).toLocaleDateString()}`, entries: null })),
+    ...hosted.map((c) => ({ id: c.id, title: c.title, status: c.status, prize: c.prize, when: c.status === 'live' ? `Entries close ${c.deadline}` : `Closed ${c.deadline}`, entries: c.entries.length, link: true })),
+  ].sort((a, b) => order[a.status] - order[b.status]);
+  return (
+    <section className="stack" aria-labelledby="hosted-h" id="hosted">
+      <div className="row between">
+        <h2 id="hosted-h">Hosted contests ({rows.length})</h2>
+        <Button to="/contest/request">Request to host a contest</Button>
+      </div>
+      {rows.length === 0 ? <p className="small muted">You haven’t hosted a contest yet.</p> : (
+        <div className="table-wrap">
+          <table>
+            <thead><tr><th>Contest</th><th>Status</th><th>Entries</th><th>Prize</th><th>Dates</th></tr></thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.id}>
+                  <td>{r.link ? <Link to={`/contest/${r.id}`}>{r.title}</Link> : r.title}</td>
+                  <td>
+                    {r.status === 'judging'
+                      ? <Link to={`/contest/${r.id}/judge`} className="badge badge-solid badge-link">Ready to judge</Link>
+                      : <Badge kind={HOST_STATUS[r.status][1]}>{HOST_STATUS[r.status][0]}</Badge>}
+                  </td>
+                  <td>{r.entries ?? '—'}</td>
+                  <td>{r.prize}</td>
+                  <td className="small">{r.when}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -278,7 +383,7 @@ export function Profile() {
         <h2 id="tier-h" className="h-sm">Account</h2>
         <dl className="dl">
           <dt>Account type</dt><dd>{tier}{!isArchitect && <> <Link to="/architects?convert=1">Convert to an architect account</Link></>}</dd>
-          <dt>Plan</dt><dd>{user.paid ? 'Paid tier, billed monthly' : 'Free'} <Link to="/points">{user.paid ? 'Manage' : 'See the paid tier'}</Link></dd>
+          <dt>Plan</dt><dd>{user.paid ? 'Paid tier, billed monthly' : 'Free'} <Link to={user.paid ? '/points' : '/membership'}>{user.paid ? 'Manage' : 'Compare free and paid'}</Link></dd>
           {isArchitect && <><dt>Verification</dt><dd>{user.licence}</dd><dt>Ranking</dt><dd>No. {rankOf(user.id)}</dd></>}
           <dt>Co-op</dt><dd>Member, one vote</dd>
         </dl>
@@ -292,10 +397,10 @@ export function Profile() {
         <Modal title="Delete your account?" onClose={() => setDel(false)}>
           <p>This can’t be undone. You lose your {fmtPoints(user.points)} points. Type DELETE to confirm.</p>
           <Input label="Confirm" value={confirmText} onChange={(e) => setConfirmText(e.target.value)} />
-          <p className="xs muted">Simulated: in the prototype nothing is deleted.</p>
+          <DemoOnly><p className="demo-note">Nothing is deleted in the demo.</p></DemoOnly>
           <FormActions>
             <Button onClick={() => setDel(false)}>Cancel</Button>
-            <Button variant="primary" disabled={confirmText !== 'DELETE'} onClick={() => { setDel(false); dispatch({ type: 'TOAST', text: 'Account deletion requested (simulated)' }); }}>Delete account</Button>
+            <Button variant="primary" disabled={confirmText !== 'DELETE'} onClick={() => { setDel(false); dispatch({ type: 'TOAST', text: 'Account deletion requested' }); }}>Delete account</Button>
           </FormActions>
         </Modal>
       )}

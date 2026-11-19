@@ -156,6 +156,17 @@ function reducer(s, a) {
       n = notifyCollaborators(n, a.entry.collaborators, a.entry.architectId, `the contest entry “${a.entry.title}”`, `/contest/${a.contestId}`);
       return toast(n, 'Entry submitted');
     }
+    // Host a contest: the request goes to the team; nothing else happens until it's approved.
+    case 'REQUEST_CONTEST': {
+      const r = { id: `cr-${s.seq}`, ...a.request, hostId: a.userId, date: new Date().toISOString(), status: 'review' };
+      return toast({ ...s, seq: s.seq + 1, contestRequests: [r, ...(s.contestRequests || [])] }, 'Request sent to the team');
+    }
+    // The host's scores and comment on one entry while judging.
+    case 'JUDGE_ENTRY':
+      return {
+        ...s,
+        contests: mapById(s.contests, a.contestId, (x) => ({ ...x, review: { ...(x.review || {}), [a.entryId]: { ...(x.review?.[a.entryId] || {}), ...a.patch } } })),
+      };
     case 'PICK_WINNER':
       return toast({
         ...s,
@@ -177,7 +188,7 @@ function reducer(s, a) {
         users: mapById(s.users, a.userId, (u) => ({ ...u, paidOut: (u.paidOut || 0) + a.amount })),
         payouts: [{ id: `po-${s.seq}`, userId: a.userId, amount: a.amount, date: today() }, ...s.payouts],
       };
-      n = notify(n, a.userId, 'sale', 'Payout requested. It will reach your bank in 3–5 working days (simulated).', '/earnings');
+      n = notify(n, a.userId, 'sale', 'Payout requested. It will reach your bank in 3–5 working days.', '/earnings');
       return toast(n, 'Payout requested');
     }
     case 'READ_ONE':

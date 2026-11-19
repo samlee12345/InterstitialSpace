@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
-import { Button, Choice, FormActions, Icon, ImageBox, Input, Modal, Page, Select } from '../components/ui.jsx';
+import { Button, Choice, DemoOnly, Empty, FormActions, Icon, ImageBox, Input, Modal, Page, Select } from '../components/ui.jsx';
 import { MapBox, SpaceCard, distanceM, matchesSearch, parseLatLng, typeLabel } from '../components/domain.jsx';
 import { useChoices } from '../design/choices.js';
 
@@ -451,7 +451,7 @@ export function Signup() {
   return (
     <Page narrow>
       <h1>Create a free account</h1>
-      {isMember && <p className="note">You’re already signed in for this demo role. Switch to Visitor in the Demo bar to try sign-up from scratch.</p>}
+      {isMember && <DemoOnly><p className="demo-note">You’re signed in. Switch to Visitor in Demo controls to try sign-up from scratch.</p></DemoOnly>}
       <p>Document spaces, add your experience, vote, and buy redesigns and models. Every account is a member of the co-op with one vote.</p>
       <form className="stack" onSubmit={submit}>
         <Input label="Name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} autoComplete="name" />
@@ -523,7 +523,7 @@ export function Terms() {
       <article className="stack-lg terms">
         <header className="stack-sm">
           <h1>Terms of Use</h1>
-          <p className="muted">A plain-language summary for the class demo, not legal text. Last updated 18 November 2026.</p>
+          <p className="muted">A plain-language summary. Last updated 18 November 2026.</p>
         </header>
         <nav aria-label="On this page" className="card stack-sm">
           <h2 className="h-xs">On this page</h2>
@@ -540,6 +540,46 @@ export function Terms() {
           </section>
         ))}
       </article>
+    </Page>
+  );
+}
+
+// A member's public profile: what they've documented and shared. Points and tier stay private.
+export function MemberProfile() {
+  const { id } = useParams();
+  const { state, get, user } = useDemo();
+  const u = get.user(id);
+  if (!u) return <Page narrow><Empty title="Member not found"><div><Button to="/browse">Browse spaces</Button></div></Empty></Page>;
+  if (u.role === 'architect') return <Navigate to={`/architect/${u.id}`} replace />;
+  const documented = state.spaces.filter((s) => s.uploadedBy === u.id && !s.removed);
+  const experiences = state.comments.filter((c) => c.userId === u.id && !c.archived);
+  const photos = state.spaces.reduce((n, s) => n + s.photos.filter((p) => p.credit === u.id).length, 0);
+  return (
+    <Page narrow>
+      <div className="stack-sm">
+        <h1>{u.name}{user?.id === u.id ? ' (you)' : ''}</h1>
+        <p className="muted">{u.role === 'paid' ? 'Organisation' : 'Community member'}{u.city ? `, ${u.city}` : ''}</p>
+        {user?.id === u.id && <div><Button to="/profile">Edit your profile</Button></div>}
+      </div>
+      <dl className="dl">
+        <dt>Spaces documented</dt><dd>{documented.length}</dd>
+        <dt>Experiences shared</dt><dd>{experiences.length}</dd>
+        <dt>Photos</dt><dd>{photos}</dd>
+      </dl>
+      <section className="stack-sm" aria-labelledby="member-spaces">
+        <h2 id="member-spaces" className="h-sm">Spaces documented</h2>
+        {documented.length ? (
+          <div className="related-list">{documented.map((s) => <SpaceCard key={s.id} space={s} variant="row" headingLevel={3} />)}</div>
+        ) : <p className="small muted">None yet.</p>}
+      </section>
+      <section className="stack-sm" aria-labelledby="member-exp">
+        <h2 id="member-exp" className="h-sm">Experiences</h2>
+        {experiences.length ? (
+          <ul className="stack-sm plain-list">
+            {experiences.map((c) => <li key={c.id} className="small"><Link to={`/space/${c.spaceId}?tab=experience`}>{get.space(c.spaceId)?.name}</Link>: “{c.text}”</li>)}
+          </ul>
+        ) : <p className="small muted">None yet.</p>}
+      </section>
     </Page>
   );
 }
