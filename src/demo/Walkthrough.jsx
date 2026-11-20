@@ -34,62 +34,72 @@ export function Walkthrough({ close }) {
   const cid = contest?.id;
   const others = space ? state.comments.filter((c) => c.spaceId === sid && c.userId !== space.uploadedBy) : [];
 
-  const roleLabel = (r) => ROLES.find((x) => x.id === r)?.label.toLowerCase();
-  // Each step: who, what, when it's done, and its buttons. `open` is the plain "Open as …"
-  // button; `actions` are extra buttons ({ label, run, demo } — demo ones stand in for
+  const roleLabel = (r) => ({ community: 'community member', architect: 'architect', moderator: 'moderator', paid: 'local authority' }[r] || ROLES.find((x) => x.id === r)?.label.toLowerCase());
+  // Each step: who, what, when it's done, and its buttons. `as` is the role the
+  // "Switch to … user" button signs in as (it lands on the map); `actions` are extra buttons ({ label, run, demo } — demo ones stand in for
   // people who aren't in the room).
   // Fast forward: approved, diagram + 3D model in, experiences and votes in.
   const fastForward = sid && { label: 'Fast forward', run: () => { dispatch({ type: 'JKK_FAST_FORWARD', spaceId: sid }); go('community', `/space/${sid}?tab=diagram`); }, demo: true };
   const steps = [
-    { id: 'document', who: 'Community member', title: 'Documents the kund', done: !!space, open: ['community', '/space/new'], tip: 'You’re signed in as Community member 1. Photos: “Demo · Use the Jawahar Kala Kendra photo”. Questionnaire: “Demo · Fill with Jawahar Kala Kendra details”.' },
+    { id: 'document', who: 'Community member', title: 'Documents the kund', done: !!space, as: 'community' },
     {
-      id: 'approve', who: 'Moderator', title: 'Approves it (3 yes votes)', done: space?.status === 'approved', open: sid && ['moderator', `/moderation/${sid}`],
+      id: 'approve', who: 'Moderator', title: 'Approves it (3 yes votes)', done: space?.status === 'approved', as: 'moderator',
       actions: [sid && space.status === 'pending' && (mod?.yes || 0) < 2 && { label: 'Two other architects vote yes', run: () => dispatch({ type: 'DEMO_REVIEWERS_YES', spaceId: sid }), demo: true }, sid && fastForward],
     },
     {
       id: 'grow', who: 'Architects and other members', title: 'Add the spatial diagram and 3D model, post experiences and vote to redesign',
-      done: !!space?.diagrams.some((d) => d.src) && others.length >= 2 && space.votes >= 10, open: sid && ['architect', `/space/${sid}/upload-diagram`],
-      tip: 'To do it live: the diagram form’s “Demo · Add sample files” adds the real drawing. Or fast forward to the space with it all in place.',
+      done: !!space?.diagrams.some((d) => d.src) && others.length >= 2 && space.votes >= 10, as: 'architect',
       actions: [sid && fastForward],
     },
     {
-      id: 'request', who: 'Local authority (paid account)', title: 'Asks to host a contest', done: !!request || !!contest,
-      tip: 'The form opens with the kund picked. Fill it, or use Fill fields.',
-      actions: [sid && { label: role === 'paid' ? 'Open the request form' : 'Switch to local authority user', run: () => go('paid', `/contest/request?space=${sid}`) }],
+      id: 'request', who: 'Local authority (paid account)', title: 'Asks to host a contest', done: !!request || !!contest, as: 'paid',
     },
     {
-      id: 'team', who: 'Platform team', title: 'Approves the request; the contest opens', done: !!contest, open: request && ['paid', '/contributions#hosted'],
-      tip: request ? null : 'No request yet: skipping opens the contest with the demo brief.',
+      id: 'team', who: 'Platform team', title: 'Approves the request; the contest opens', done: !!contest, as: 'paid',
       actions: [sid && !contest && { label: 'Skip past approval', run: () => { dispatch({ type: 'JKK_SKIP_APPROVAL', spaceId: sid }); go('paid', '/contributions#hosted'); }, demo: true }],
     },
     {
-      id: 'enter', who: 'Architects', title: 'Send round 1 concepts', done: !!mine && (contest?.entries.length || 0) >= 3, open: cid && ['architect', `/contest/${cid}/enter`],
+      id: 'enter', who: 'Architects', title: 'Send round 1 concepts', done: !!mine && (contest?.entries.length || 0) >= 3, as: 'architect',
       actions: [cid && contest.phase === 1 && { label: 'Skip to the entries (as the host)', run: () => { dispatch({ type: 'JKK_SKIP_TO_ENTRIES', contestId: cid }); go('paid', `/contest/${cid}/judge`); }, demo: true }],
     },
     {
-      id: 'shortlist', who: 'Local authority', title: 'Round 1 closes; picks the shortlist', done: contest?.phase === 2, open: cid && ['paid', `/contest/${cid}/judge`],
+      id: 'shortlist', who: 'Local authority', title: 'Round 1 closes; picks the shortlist', done: contest?.phase === 2, as: 'paid',
       actions: [cid && contest.phase === 1 && contest.status === 'live' && { label: 'Skip to the round 1 deadline', run: () => dispatch({ type: 'END_ROUND_1', contestId: cid }), demo: true }],
     },
     {
-      id: 'proposal', who: 'Shortlisted architects', title: 'Hand in full proposals', done: contest?.phase === 2 && contest.status !== 'live', open: cid && ['architect', `/contest/${cid}/enter`],
-      tip: 'Architect A’s concept has to be on the shortlist to submit.',
+      id: 'proposal', who: 'Shortlisted architects', title: 'Hand in full proposals', done: contest?.phase === 2 && contest.status !== 'live', as: 'architect',
       actions: [cid && contest.phase === 2 && contest.status === 'live' && (contest.entries.some((e) => contest.shortlist.includes(e.id) && !e.proposal)
         ? { label: 'The rest of the shortlist hands in', run: () => dispatch({ type: 'DEMO_PROPOSALS', contestId: cid }), demo: true }
         : { label: 'Skip to the round 2 deadline', run: () => dispatch({ type: 'END_ROUND_2', contestId: cid }), demo: true })],
     },
-    { id: 'winner', who: 'Local authority', title: 'Scores the proposals and picks a winner', done: contest?.status === 'closed', open: cid && ['paid', `/contest/${cid}/judge`] },
+    { id: 'winner', who: 'Local authority', title: 'Scores the proposals and picks a winner', done: contest?.status === 'closed', as: 'paid' },
     {
-      id: 'built', who: 'Local authority', title: 'Builds it', done: !!contest?.built || !!report, open: cid && ['paid', `/contest/${cid}`],
-      tip: 'On the contest page: “Mark as built”.',
+      id: 'built', who: 'Local authority', title: 'Builds it', done: !!contest?.built || !!report, as: 'paid',
       actions: [cid && contest.status === 'closed' && { label: 'It’s built', run: () => dispatch({ type: 'CONTEST_BUILT', contestId: cid }), demo: true }],
     },
     {
-      id: 'report', who: 'Community member', title: 'Visits and reports the build', done: !!report, open: sid && ['community', `/space/${sid}`],
-      tip: 'On the space page: Options › Report an update. “This is the build of …” is already ticked.',
-    },
-    { id: 'confirm', who: 'Moderator', title: 'Confirms: space marked Redesigned, old round archived', done: !!space?.redesigned, open: ['moderator', '/moderation'] },
-    { id: 'new', who: 'Community member', title: 'Adds the first experience of the new round', done: !!space?.redesigned && live.length > 0, open: sid && ['community', `/space/${sid}`] },
+      id: 'report', who: 'Community member', title: 'Visits and reports the build', done: !!report, as: 'community' },
+    { id: 'confirm', who: 'Moderator', title: 'Confirms: space marked Redesigned, old round archived', done: !!space?.redesigned, as: 'moderator' },
+    { id: 'new', who: 'Community member', title: 'Adds the first experience of the new round', done: !!space?.redesigned && live.length > 0, as: 'community' },
   ];
+  // Round 26: "Switch to … user" changes role and goes to the landing page; the tip says
+  // where to go from there, so the demo is clicked through like a real visit.
+  const TIPS = {
+    document: 'From the map: search “Jawahar”, then “Document a new space”. Photos: “Demo · Use the Jawahar Kala Kendra photo”. Questionnaire: “Demo · Fill with Jawahar Kala Kendra details”.',
+    approve: 'Header › Approvals, then Review on the kund’s row.',
+    grow: 'Open the kund (search “Jawahar” on the map), then Spatial diagrams › Upload spatial diagram; “Demo · Add sample files” adds the real drawing. Or fast forward to the space with it all in place.',
+    request: 'Account menu › Host a contest. Pick the kund, then fill the form or use Fill fields.',
+    team: 'Account menu › Contributions › Hosted contests shows the request under team review.',
+    enter: 'Contests › Redesign the Kund… › Submit an entry.',
+    shortlist: 'Account menu › Contributions (“to judge”) › Hosted contests › Ready to judge.',
+    proposal: 'Contests › the kund’s contest › Submit your full proposal. Architect A’s concept has to be on the shortlist.',
+    winner: 'Account menu › Contributions › Hosted contests › Ready to judge.',
+    built: 'Account menu › Contributions › Hosted contests › the contest, then “Mark as built”.',
+    report: 'Open the kund (search “Jawahar” on the map), then Options › Report an update. “This is the build of …” is already ticked.',
+    confirm: 'Account menu › Spaces pending approval › Reported updates, then Confirm update and archive.',
+    new: 'Open the kund, then Add your experience.',
+  };
+  steps.forEach((x) => { x.tip = TIPS[x.id]; });
   // Confirming the build archives the old round, so earlier steps stay ticked once it's redesigned.
   if (space?.redesigned) steps.forEach((x) => { if (x.id !== 'new') x.done = true; });
   const next = steps.find((x) => !x.done);
@@ -111,7 +121,7 @@ export function Walkthrough({ close }) {
                 {next === x && x.tip && <span className="xs muted">{x.tip}</span>}
                 {next === x && (
                   <div className="row">
-                    {x.open && <button type="button" className="btn btn-sm" onClick={() => go(...x.open)}>Open as {roleLabel(x.open[0])}</button>}
+                    {x.as && <button type="button" className="btn btn-sm" onClick={() => go(x.as, '/')}>Switch to {roleLabel(x.as)} user</button>}
                     {(x.actions || []).filter(Boolean).map((b) => (b.demo ? (
                       <button key={b.label} type="button" className="demo-btn demo-btn-inline" onClick={b.run}>
                         <span className="demo-btn-tag" aria-hidden="true">Demo</span> {b.label}

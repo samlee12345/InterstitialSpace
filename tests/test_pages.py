@@ -1590,9 +1590,14 @@ def run():
             if pg.locator(".demo-pill").count(): pg.locator(".demo-pill").click()
             drawer.get_by_role("tab", name="Walkthrough").click()
         def shot(n): pg.screenshot(path=f"/home/claude/r24_{n}.png", full_page=True)
+        def switch(who):  # round 26: switching lands on the map as that user
+            nxt.get_by_role("button", name=f"Switch to {who} user").click()
+            expect(pg).to_have_url(re.compile(r"#/$"))
         def document():
             expect(nxt).to_contain_text(re.compile("Documents the kund", re.I))
-            nxt.get_by_role("button", name=re.compile("^Open as")).click()
+            switch("community member")
+            pg.locator("#map-q").fill("Jawahar")
+            pg.locator(".map-search").get_by_role("button", name="Document a new space").click()
             expect(pg).to_have_url(re.compile("#/space/new"))
             pg.get_by_role("button", name=re.compile("Use the Jawahar Kala Kendra photo")).click()
             expect(pg.locator(".photo-tile img")).to_have_attribute("src", re.compile("jkk-kund-steps"))
@@ -1634,7 +1639,9 @@ def run():
         expect(nxt).to_contain_text(re.compile("Approves it", re.I))
         expect(nxt.get_by_role("button", name=re.compile("Fast forward"))).to_be_visible()
         nxt.get_by_role("button", name=re.compile("Two other architects vote yes")).click()
-        nxt.get_by_role("button", name=re.compile("^Open as")).click()
+        switch("moderator")
+        pg.locator(".header").get_by_role("link", name=re.compile("^Approvals")).click()
+        pg.locator("tr", has_text="Kund (Madhyavarti)").get_by_role("link", name="Review").click()
         aside = pg.locator(".review-aside")
         aside.get_by_text("Yes, approve it").click()
         for c in aside.locator("fieldset").first.get_by_role("checkbox").all(): c.check()
@@ -1654,8 +1661,8 @@ def run():
 
         # 4 request: switch to the local authority; the kund is already picked
         expect(nxt).to_contain_text(re.compile("Asks to host a contest", re.I))
-        nxt.get_by_role("button", name="Switch to local authority user").click()
-        expect(pg).to_have_url(re.compile("#/contest/request\\?space="))
+        switch("local authority")
+        pg.goto(BASE + f"/contest/request?space={sid}")
         expect(pg.locator(".space-picker")).to_contain_text("Jawahar")
         pg.get_by_label("Brief").fill("Make the kund usable every day: shade, air and seating.")
         pg.get_by_label("Total you will fund").fill("6000")
@@ -1675,6 +1682,7 @@ def run():
         expect(nxt).to_contain_text(re.compile("Send round 1 concepts", re.I))
         nxt.get_by_role("button", name=re.compile("Skip to the entries")).click()
         expect(pg).to_have_url(re.compile("/judge"))
+        cid = re.search(r"#/contest/([^/]+)/judge", pg.url).group(1)
         expect(pg.get_by_role("heading", name=re.compile("^Pick the shortlist"))).to_be_visible()
         for t in ["Jaali canopy", "Shade sails", "cooling channel"]:
             expect(pg.get_by_role("button", name=re.compile(t))).to_be_visible()
@@ -1691,7 +1699,8 @@ def run():
 
         # 8 proposals
         expect(nxt).to_contain_text(re.compile("Hand in full proposals", re.I))
-        nxt.get_by_role("button", name=re.compile("^Open as")).click()
+        switch("architect")
+        pg.goto(BASE + f"/contest/{cid}/enter")
         pg.get_by_role("button", name=re.compile("Add sample file")).last.click()
         cb = pg.get_by_role("checkbox")
         if cb.count(): cb.last.check()
@@ -1701,7 +1710,8 @@ def run():
 
         # 9 winner
         expect(nxt).to_contain_text(re.compile("picks a winner", re.I))
-        nxt.get_by_role("button", name=re.compile("^Open as")).click()
+        switch("local authority")
+        pg.goto(BASE + f"/contest/{cid}/judge")
         expect(pg.get_by_role("heading", name=re.compile("^Pick the winner"))).to_be_visible()
         pg.get_by_role("button", name=re.compile("Jaali canopy")).click()
         for row in pg.locator(".score-row").all(): row.locator("input").nth(4).check()
@@ -1712,14 +1722,16 @@ def run():
 
         # 10 the local authority builds it
         expect(nxt).to_contain_text(re.compile("Local authority builds it", re.I))
-        nxt.get_by_role("button", name=re.compile("^Open as")).click()
+        switch("local authority")
+        pg.goto(BASE + f"/contest/{cid}")
         pg.get_by_role("button", name="Mark as built").click()
         expect(pg.locator("main .note", has_text="You marked this as built")).to_be_visible()
         shot("06_marked_built")
 
         # 11 a community member reports the build
         expect(nxt).to_contain_text(re.compile("reports the build", re.I))
-        nxt.get_by_role("button", name=re.compile("^Open as community")).click()
+        switch("community member")
+        pg.goto(BASE + f"/space/{sid}")
         pg.get_by_role("button", name=re.compile("^Options")).click()
         pg.get_by_role("button", name="Report an update").click()
         dlg = pg.get_by_role("dialog")
@@ -1732,7 +1744,8 @@ def run():
 
         # 12 confirm
         expect(nxt).to_contain_text(re.compile("Confirms", re.I))
-        nxt.get_by_role("button", name=re.compile("^Open as")).click()
+        switch("moderator")
+        pg.goto(BASE + "/moderation")
         li = pg.locator("li", has_text="jaali canopy is up")
         expect(li.get_by_text("Build of a winning design")).to_be_visible()
         li.get_by_role("button", name="Confirm update and archive").click()
@@ -1744,7 +1757,8 @@ def run():
 
         # 13 new experience
         expect(nxt).to_contain_text(re.compile("first experience of the new round", re.I))
-        nxt.get_by_role("button", name=re.compile("^Open as")).click()
+        switch("community member")
+        pg.goto(BASE + f"/space/{sid}")
         pg.get_by_role("button", name=re.compile("Add your experience")).first.click()
         dlg = pg.get_by_role("dialog")
         dlg.get_by_role("button", name="Share location: I’m here").click()

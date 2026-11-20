@@ -200,6 +200,13 @@ been added. Use it to click through long forms quickly in the demo.
   timeline), on the contest page and on the space page.
 - **Map pins** are plain: solid for approved spaces, dashed and hollow for
   pending ones. Space cards show votes, redesigns and photos.
+- **Round 26: walkthrough role switches.** Each step's button is now
+  "Switch to … user": it changes role and lands on the map, and the step's
+  tip says where to click from there (e.g. Header › Approvals, then Review).
+  Demo shortcuts (Fast forward, Skip past approval, Skip to the entries)
+  still take you to their page. Map search results end with "Document a new
+  space", so the kund can be documented from the landing page even though
+  its gallery already matches "Jawahar".
 - **Round 25.** One product accent colour (`--color-accent`, blue) for
   things that need attention now: "Ready to judge" badges and the
   confirmation banner, which is now light blue with a blue border instead

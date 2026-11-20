@@ -257,6 +257,7 @@ function MapLanding() {
               })}
             </ul>
             {results.length > 5 && <Link className="small" to="/browse">See all {results.length} in Browse</Link>}
+            <span className="small">Not the one you’re looking for? <button type="button" className="link-btn" onClick={() => addPlace('')}>Document a new space</button></span>
           </>
         ) : (
           <div className="stack-sm">
