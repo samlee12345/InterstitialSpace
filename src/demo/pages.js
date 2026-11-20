@@ -45,7 +45,7 @@ export const PAGE_GROUPS = [
       { id: 'ranking', label: 'Architect ranking', to: '/ranking', kind: 'clickable', match: exact('/ranking') },
       { id: 'space-ranking', label: 'Space ranking', to: '/spaces/ranking', kind: 'clickable', match: exact('/spaces/ranking') },
       { id: 'contests', label: 'Contests', to: '/contests', kind: 'clickable', match: exact('/contests') },
-      { id: 'contest', label: 'Contest details', to: '/contest/c3', kind: 'clickable', match: re(/^\/contest\/(?!request$)[^/]+$/), controls: 'architect-kind', views: [{ id: '', label: 'Open to licensed architects and students', choice: ['contestEligibility', 'both'] }, { id: 'licensed', label: 'Licensed architects only', choice: ['contestEligibility', 'licensed'] }, { id: 'students', label: 'Students only, paired with a licensed architect', choice: ['contestEligibility', 'students'] }] },
+      { id: 'contest', label: 'Contest details', to: '/contest/c3', kind: 'clickable', match: re(/^\/contest\/(?!request$)[^/]+$/) },
       { id: 'contest-enter', label: 'Submit a contest entry', to: '/contest/c1/enter', kind: 'clickable', role: 'architect', match: re(/^\/contest\/[^/]+\/enter$/) },
       { id: 'earnings', label: 'Earnings and payout', to: '/earnings', kind: 'clickable', role: 'architect', match: exact('/earnings') },
       { id: 'notifications', label: 'Notifications', to: '/notifications', kind: 'clickable', match: exact('/notifications') },

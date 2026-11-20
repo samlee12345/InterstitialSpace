@@ -18,7 +18,9 @@ export const typeLabel = (t) => t.charAt(0).toUpperCase() + t.slice(1);
 
 // Who may enter contests: three versions to compare (Demo bar, Contest details).
 export const ELIGIBILITY = {
-  both: { text: 'Licensed architects and accredited architecture students', can: () => true },
+  // Round 35: every contest is open to any architect on reSpace; the other rules are kept
+  // only for reference and no longer selectable.
+  both: { text: 'Any architect on reSpace: licensed, licence pending or student', can: () => true },
   licensed: { text: 'Licensed architects only', can: (kind) => kind === 'licensed', no: 'This contest is for licensed architects only.' },
   students: {
     text: 'Architecture students only. It’s a concept contest: the brief pairs the winner with a licensed architect to develop and sign off the design.',

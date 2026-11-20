@@ -200,6 +200,11 @@ been added. Use it to click through long forms quickly in the demo.
   timeline), on the contest page and on the space page.
 - **Map pins** are plain: solid for approved spaces, dashed and hollow for
   pending ones. Space cards show votes, redesigns and photos.
+- **Round 35.** Every contest is open to any architect on reSpace
+  (licensed, licence pending or student). The Demo controls eligibility
+  versions (licensed only, students only) and the "signed-in architect is"
+  switch on the contest page are gone, so a setting left in the browser can
+  no longer block entries.
 - **Round 34.** The Redesigns tab has its own "Upload redesign" button again
   (same rules as the header's). Walkthrough: "Skip past approval" opens the
   new contest's page as the local authority.

@@ -356,12 +356,11 @@ export const UploadRedesign = () => <Guard>{(space) => <RedesignForm space={spac
 export function ContestEntry() {
   const { id } = useParams();
   const { state, get, isArchitect, user } = useDemo();
-  const { contestEligibility } = useChoices();
   const contest = get.contest(id);
   const space = contest && get.space(contest.spaceId);
   if (!contest || !space) return <Page narrow><Empty title="Contest not found"><div><Button to="/contests">All contests</Button></div></Empty></Page>;
-  const rule = ELIGIBILITY[contestEligibility] || ELIGIBILITY.both;
-  if (!isArchitect || !rule.can(state.architectKind)) {
+  const rule = ELIGIBILITY.both;   // round 35: open to any architect
+  if (!isArchitect) {
     return (
       <Page narrow tag="clickable">
         <RoleGate title={isArchitect ? 'You can’t enter this contest' : 'Architects only'}>{isArchitect ? `${rule.no} You’re signed in as ${state.architectKind === 'student' ? 'a student' : 'a licensed architect'}.` : `Who can enter: ${rule.text}`}</RoleGate>

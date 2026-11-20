@@ -42,8 +42,7 @@ export function Contests() {
 export function Contest() {
   const { id } = useParams();
   const { state, get, dispatch, user, isArchitect, isMember, cfg } = useDemo();
-  const { contestEligibility } = useChoices();
-  const rule = ELIGIBILITY[contestEligibility] || ELIGIBILITY.both;
+  const rule = ELIGIBILITY.both;   // round 35: open to any architect
   const nav = useNavigate();
   const [params] = useSearchParams();
   const c = get.contest(id);

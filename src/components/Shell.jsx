@@ -188,7 +188,6 @@ export function viewFor(pageId, choices) {
   if (pageId === 'space') return { portrait: 'tabs', strip: 'strip', compact: 'compact' }[choices.spaceHeader] || 'tabs';
   if (pageId === 'landing') return 'map';
   if (pageId === 'space-new') return ['overlay', 'confirm', 'popover'].includes(choices.createFlow) ? choices.createFlow : '';
-  if (pageId === 'contest') return choices.contestEligibility === 'both' ? '' : choices.contestEligibility;
   return '';
 }
 
