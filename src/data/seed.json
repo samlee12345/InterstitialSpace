@@ -1432,6 +1432,55 @@
         "name": "Charles Correa (architect), for the Government of Rajasthan",
         "link": ""
       }
+    },
+    {
+      "id": "s17",
+      "name": "Shaded gallery on the north side of the kund, Jawahar Kala Kendra",
+      "type": "threshold",
+      "lat": 26.87646,
+      "lng": 75.80914,
+      "status": "approved",
+      "uploadedBy": "u-c2",
+      "votes": 6,
+      "photos": [
+        {
+          "id": "s17-ph1",
+          "credit": "u-c1",
+          "onSite": true
+        },
+        {
+          "id": "s17-ph2",
+          "credit": "u-c2",
+          "onSite": true
+        },
+        {
+          "id": "s17-ph3",
+          "credit": "u-c3",
+          "onSite": true
+        }
+      ],
+      "questionnaire": {
+        "feelings": "Shaded and quiet; a place to wait before stepping out into the sun",
+        "transition": "From the gallery shade out onto the top step of the kund",
+        "materiality": "Red sandstone",
+        "sensory": "Cooler than the open kund; voices from the steps carry in"
+      },
+      "properties": {
+        "activity": "Waiting, watching performances from the shade",
+        "materials": "Red sandstone",
+        "climate": "Shaded most of the day",
+        "authorship": "Charles Correa for the Government of Rajasthan, 1986–92"
+      },
+      "diagrams": [],
+      "archive": [],
+      "areaM": 6,
+      "city": "Jaipur",
+      "country": "India",
+      "addedAt": "2026-10-21",
+      "removed": false,
+      "removal": null,
+      "private": false,
+      "parentId": null
     }
   ],
   "redesigns": [
@@ -2864,6 +2913,39 @@
         "s15-ph5"
       ],
       "date": "2026-06-17"
+    },
+    {
+      "id": "cm-s17-u-c1",
+      "spaceId": "s17",
+      "userId": "u-c1",
+      "text": "Busiest in the late afternoon; these show it then.",
+      "onSite": true,
+      "photoIds": [
+        "s17-ph1"
+      ],
+      "date": "2026-03-27"
+    },
+    {
+      "id": "cm-s17-u-c2",
+      "spaceId": "s17",
+      "userId": "u-c2",
+      "text": "Shared these so the AI has enough to draw a diagram.",
+      "onSite": true,
+      "photoIds": [
+        "s17-ph2"
+      ],
+      "date": "2026-02-14"
+    },
+    {
+      "id": "cm-s17-u-c3",
+      "spaceId": "s17",
+      "userId": "u-c3",
+      "text": "There is always someone sitting here. Photos from today.",
+      "onSite": true,
+      "photoIds": [
+        "s17-ph3"
+      ],
+      "date": "2026-01-04"
     },
     {
       "id": "cm14",

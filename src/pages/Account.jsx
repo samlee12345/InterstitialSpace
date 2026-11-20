@@ -296,7 +296,7 @@ export function Contributions() {
 const HOST_STATUS = {
   review: ['Under team review', ''],
   live: ['Open for entries', ''],
-  judging: ['Ready to judge', 'solid'],
+  judging: ['Ready to judge', 'accent'],
   closed: ['Winner announced', ''],
 };
 function HostedContests() {
@@ -325,7 +325,7 @@ function HostedContests() {
                   <td>{r.link ? <Link to={`/contest/${r.id}`}>{r.title}</Link> : r.title}</td>
                   <td>
                     {r.status === 'judging'
-                      ? <Link to={`/contest/${r.id}/judge`} className="badge badge-solid badge-link">Ready to judge</Link>
+                      ? <Link to={`/contest/${r.id}/judge`} className="badge badge-accent badge-link">Ready to judge</Link>
                       : <Badge kind={HOST_STATUS[r.status][1]}>{HOST_STATUS[r.status][0]}</Badge>}
                     {r.status === 'review' && (
                       <button type="button" className="demo-btn demo-btn-inline" onClick={() => dispatch({ type: 'APPROVE_CONTEST_REQUEST', id: r.id })}>

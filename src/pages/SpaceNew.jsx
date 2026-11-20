@@ -7,6 +7,7 @@ import { typeLabel } from '../components/domain.jsx';
 import { useChoices } from '../design/choices.js';
 import { POINTS, fmtPoints, uploadPoints } from '../lib/points.js';
 import { radiusOf, shapeOf } from '../lib/geo.js';
+import { AreaBaseMap } from '../components/RealMap.jsx';
 
 /* Create new interstitial space, in three versions (Demo bar: Create new space):
  *  A "inline":  Photos → Area → Questionnaire (opens with "Is it one of these
@@ -282,8 +283,9 @@ function AreaEditor({ center, shape, setShape, candidates, popover, relations = 
           <Button onClick={() => setZoom(Math.min(ZOOMS.length - 1, zoom + 1))} disabled={zoom === ZOOMS.length - 1} aria-label="Zoom in">+</Button>
         </div>
       </div>
-      <div ref={box} className="map area-map" style={{ '--map-zoom': ZOOMS[2] / spanX }}>
-        <span className="map-label">{popover ? 'Map placeholder: Jaipur. Only spaces that overlap your area are shown.' : 'Map placeholder: Jaipur. Dashed pins are pending.'}</span>
+      <div ref={box} className="map map-real area-map">
+        <AreaBaseMap center={center} metresAcross={spanX} />
+        <span className="map-label">{popover ? 'Only spaces that overlap your area are shown.' : 'Dashed pins are pending.'}</span>
         <svg className="area-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
           {others.map(({ s, p, r }) => {
             const at = pct(p);

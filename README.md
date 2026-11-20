@@ -200,6 +200,16 @@ been added. Use it to click through long forms quickly in the demo.
   timeline), on the contest page and on the space page.
 - **Map pins** are plain: solid for approved spaces, dashed and hollow for
   pending ones. Space cards show votes, redesigns and photos.
+- **Round 25.** One product accent colour (`--color-accent`, blue) for
+  things that need attention now: "Ready to judge" badges and the
+  confirmation banner, which is now light blue with a blue border instead
+  of black. The purple stays for demo and review tools. Documenting a space
+  draws its area over a real OpenStreetMap map (fixed at the photo point,
+  scaled to the editor's metres). A new seed space, s17 "Shaded gallery on
+  the north side of the kund", overlaps the kund, so documenting Jawahar
+  Kala Kendra live has an overlap to answer. Review a space shows the real
+  photos. Signing up from /signup lands on the landing page (from a
+  sign-up prompt it still returns to where you were).
 - **Round 24: walkthrough changes.** Start signs you in as Community
   member 1 (an existing user; no sign-up step), so there are 13 steps.
   The diagram and community steps are one step with a "Fast forward"

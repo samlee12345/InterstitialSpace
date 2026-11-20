@@ -123,7 +123,7 @@ export function Contest() {
           </dl>
           {user && c.coHostId === user.id && c.status === 'judging' ? (
             <div className="stack-sm">
-              <Badge kind="solid">Ready to judge</Badge>
+              <Badge kind="accent">Ready to judge</Badge>
               <Button variant="primary" to={`/contest/${c.id}/judge`}>{c.phase === 2 ? 'Judge final proposals' : 'Pick the shortlist'}</Button>
               <span className="xs muted">You’re the co-host. Round {c.phase} closed on {fmtDate(c.phase === 2 ? c.deadline2 : c.deadline)}.</span>
             </div>
@@ -379,7 +379,7 @@ export function ContestJudge() {
               : `Read each concept and leave a comment. Shortlist up to ${c.shortlistSize}; each is paid ${c.shortlistPay} to develop a full proposal by ${fmtDate(c.deadline2)}. The rest keep their rights and can publish in the Redesign Library.`}
           </p>
         </div>
-        <Badge kind="solid">Ready to judge</Badge>
+        <Badge kind="accent">Ready to judge</Badge>
       </div>
       <div className="judge">
         <nav className="judge-list" aria-label={final ? 'Shortlisted proposals' : 'Concepts'}>

@@ -251,7 +251,7 @@ export function ModerationReview() {
 
           <section className="stack-sm" aria-label="Photos">
             <div className="review-photos">
-              {space.photos.slice(0, 4).map((p, i) => <ImageBox key={p.id} label={i === 3 && extra > 0 ? `+${extra} more` : `Photo ${i + 1}`} />)}
+              {space.photos.slice(0, 4).map((p, i) => <ImageBox key={p.id} src={p.src} alt={p.alt} label={i === 3 && extra > 0 ? `+${extra} more` : `Photo ${i + 1}`} />)}
             </div>
             <p className="small muted">{space.photos.length} photos. <Link to={`/space/${space.id}`}>See all on the space page</Link></p>
           </section>

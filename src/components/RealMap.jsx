@@ -102,3 +102,39 @@ export function MapBox({ spaces, area, hiddenIds = [], activeId, selectedId, onH
     </div>
   );
 }
+
+// Round 25: a real map under the area editor on Document a space. It can't be moved:
+// the photo point stays at the centre and the scale matches the editor's own metres,
+// so the drawn area and the other spaces' areas sit on the real ground.
+export function AreaBaseMap({ center, metresAcross }) {
+  const el = useRef(null);
+  const map = useRef(null);
+  const fit = () => {
+    const m = map.current;
+    if (!m || !el.current) return;
+    const w = el.current.clientWidth || 1;
+    // Web Mercator: metres per pixel at zoom z = 156543.03 × cos(lat) / 2^z.
+    const z = Math.log2((156543.03 * Math.cos((center.lat * Math.PI) / 180) * w) / metresAcross);
+    m.setView([center.lat, center.lng], z, { animate: false });
+  };
+  useLayoutEffect(() => {
+    const m = L.map(el.current, {
+      zoomControl: false, attributionControl: true, dragging: false, scrollWheelZoom: false, doubleClickZoom: false,
+      boxZoom: false, keyboard: false, touchZoom: false, zoomSnap: 0, inertia: false,
+    });
+    L.tileLayer(TILES, { attribution: ATTRIBUTION, maxZoom: 19, maxNativeZoom: 19 }).addTo(m);
+    m.attributionControl.setPrefix(false);
+    map.current = m;
+    fit();
+    const ro = new ResizeObserver(() => { m.invalidateSize(); fit(); });
+    ro.observe(el.current);
+    return () => {
+      ro.disconnect();
+      map.current = null;
+      m.stop();
+      setTimeout(() => { try { m.remove(); } catch { /* already gone */ } }, 400);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(fit, [center.lat, center.lng, metresAcross]); // eslint-disable-line react-hooks/exhaustive-deps
+  return <div ref={el} className="map-canvas area-base" aria-hidden="true" />;
+}

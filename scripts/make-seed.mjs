@@ -48,6 +48,10 @@ const spaceRows = [
   ['s15', 'Water tap niche, Chandpole haveli courtyard', 'threshold', 26.92684, 75.80944, 'approved', 5, null, 'u-c2', 3, { parentId: 's2' }],
   // Round 22: a real place with real images, for the demo. Details are filled in below.
   ['s16', 'Kund (Madhyavarti), Jawahar Kala Kendra', 'courtyard', 26.87632, 75.80914, 'approved', 1, null, 'u-c1', 18],
+  // Round 25: an already documented space at the kund's north edge, so documenting the
+  // kund live has an overlap to answer (they share part of the area). 16 m north of the
+  // kund's centre, about 12 m across. Demo persona; not one of Sam's images.
+  ['s17', 'Shaded gallery on the north side of the kund, Jawahar Kala Kendra', 'threshold', 26.87646, 75.80914, 'approved', 3, null, 'u-c2', 6, { areaM: 6 }],
 ];
 
 const qa = [
@@ -390,6 +394,15 @@ seed.contests.find((c) => c.id === 'c2').entries.push({ id: 'e14', architectId: 
       text: 'During Lokrang the steps fill completely. With that many people the 8 m walls trap the heat and sound; most of the year it sits empty. It needs shade and air, not a new plan.',
       answers: { use: 'Became a gathering spot', feel: ['Busy'], senses: ['Noisy', 'Too hot'], access: 'Some difficulty', fix: 'Shade', keep: 'The stepped seating facing the centre', need: 6, why: ['Underutilized'] } },
   );
+}
+// Round 25: the gallery next to the kund (demo persona).
+{
+  const g = seed.spaces.find((x) => x.id === 's17');
+  Object.assign(g, {
+    addedAt: '2026-10-21',
+    questionnaire: q('Shaded and quiet; a place to wait before stepping out into the sun', 'From the gallery shade out onto the top step of the kund', 'Red sandstone', 'Cooler than the open kund; voices from the steps carry in'),
+    properties: props('Waiting, watching performances from the shade', 'Red sandstone', 'Shaded most of the day', 'Charles Correa for the Government of Rajasthan, 1986–92'),
+  });
 }
 // Every pending space is on the approvals list, diagram or not.
 seed.spaces.filter((x) => x.status === 'pending' && !seed.moderation.some((m) => m.spaceId === x.id))

@@ -86,6 +86,7 @@ h3 { font-size: var(--text-lg); line-height: var(--leading-tight); font-weight: 
 /* Badges */
 .badge { display: inline-flex; align-items: center; gap: var(--space-1); padding: 0 var(--space-2); border: var(--border-thin) solid var(--color-border-strong); border-radius: var(--radius-pill); font-size: var(--text-xs); font-weight: var(--weight-medium); white-space: nowrap; background: var(--color-surface); }
 .badge-solid { background: var(--color-action); color: var(--color-text-inverse); }
+.badge-accent { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-text-inverse); }
 .badge-dashed { border-style: dashed; }
 /* Ghost points: a tally free members can see but not collect. */
 .card-ghost { border-style: dashed; background: transparent; }
@@ -243,9 +244,10 @@ h1, h2, h3 { text-wrap: balance; }
 main:focus { outline: none; }
 
 /* Alerts: each kind looks different. Confirmation = inverted band; problem = heavy outline; info = .note fill. */
-.banner { background: var(--color-action); color: var(--color-text-inverse); border-color: var(--color-action); }
-.banner a, .banner .btn-quiet { color: var(--color-text-inverse); }
-.banner .btn-quiet:hover { background: var(--gray-800); }
+.banner { background: var(--color-accent-soft); color: var(--color-text); border-color: var(--color-accent); }
+.banner h2 { color: var(--color-accent-strong); }
+.banner a, .banner .btn-quiet { color: var(--color-accent-strong); }
+.banner .btn-quiet:hover { background: var(--color-surface); }
 .alert[role="alert"] { border-width: var(--border-thick); border-style: solid; background: var(--color-surface); }
 
 /* Space hero: text over the photo */

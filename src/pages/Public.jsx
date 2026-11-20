@@ -441,7 +441,7 @@ export function Browse() {
 export function Signup() {
   const { dispatch, isMember, state } = useDemo();
   const nav = useNavigate();
-  const back = state.returnTo || '/browse';
+  const back = state.returnTo || '/';
   const [f, setF] = useState({ name: '', email: '' });
   const [err, setErr] = useState('');
   const submit = (e) => {

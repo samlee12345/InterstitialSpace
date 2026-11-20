@@ -28,6 +28,12 @@
   --color-text-inverse: var(--gray-0);
   --color-action: var(--gray-900);
   --color-action-hover: var(--gray-700);
+  /* One product accent (round 25): things that need attention now, like
+     "Ready to judge" and the confirmation banner. Not the purple, which is
+     reserved for demo and review tools. */
+  --color-accent: #1a56db;
+  --color-accent-strong: #1440a8;
+  --color-accent-soft: #e8effd;
   --color-placeholder: var(--gray-200);
   --color-placeholder-line: var(--gray-400);
   --color-overlay: rgb(21 21 21 / 0.45);

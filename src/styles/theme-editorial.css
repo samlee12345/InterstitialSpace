@@ -101,6 +101,8 @@
 /* Badges and chips: pills, regular weight */
 [data-theme="editorial"] .badge { padding: 0 var(--space-3); font-weight: var(--weight-regular); border-color: var(--ed-input-border); }
 [data-theme="editorial"] .badge-solid { border-color: var(--color-action); }
+[data-theme="editorial"] .badge-accent { border-color: var(--color-accent); }
+[data-theme="editorial"] .banner { border: var(--border-thick) solid var(--color-accent); }
 [data-theme="editorial"] .chip span { border-color: var(--ed-input-border); }
 [data-theme="editorial"] .chip input:checked + span { border-color: var(--color-action); }
 
