@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
 import { Badge, Button, Choice, Empty, FormActions, ImageBox, Input, Page, RoleGate, Select, StatusBadges, Tally } from '../components/ui.jsx';
 import { overlapping } from '../lib/geo.js';
@@ -126,33 +126,41 @@ export function ReviewForm({ space, onDone }) {
   );
 }
 
-// Reported updates wait here for a moderator.
-function UpdateReports() {
-  const { state, dispatch, get } = useDemo();
-  const pending = state.updateReports.filter((r) => r.status === 'pending');
+// Round 31: a reported update is reviewed on its own page, like a new space, but one
+// moderator's decision is enough (it's a check of the proof, not a vote).
+export function UpdateReview() {
+  const { id } = useParams();
+  const { state, dispatch, get, isModerator } = useDemo();
+  const nav = useNavigate();
+  const r = state.updateReports.find((x) => x.id === id);
+  if (!isModerator) return <Gate />;
+  if (!r) return <Page><p className="note">This report isn’t waiting any more. <Link to="/moderation">Back to Waiting for review</Link></p></Page>;
+  const sp = get.space(r.spaceId);
+  const contest = r.contestId && state.contests.find((c) => c.id === r.contestId);
+  const won = contest && contest.entries.find((e) => e.id === contest.winner);
+  const decide = (ok) => { dispatch({ type: 'RESOLVE_UPDATE', id: r.id, ok }); nav(ok ? `/space/${r.spaceId}` : '/moderation'); };
   return (
-    <section className="stack" aria-labelledby="updates-h">
-      <h2 id="updates-h" className="h-sm">Reported updates ({pending.length})</h2>
-      <p className="small muted">Someone says the space changed on the ground. Check the proof. Confirming moves all past contributions to the space’s Archived tab.</p>
-      {pending.length === 0 && <p className="note">No reported updates waiting.</p>}
-      <ul className="list">
-        {pending.map((r) => {
-          const sp = get.space(r.spaceId);
-          return (
-            <li key={r.id} className="stack-sm">
-              <div className="row"><Link className="bold" to={`/space/${r.spaceId}`}>{sp?.name}</Link><span className="small muted">reported by <UserLink id={r.by} you={false} /> on {r.date}</span></div>
-              <p>{r.text}</p>
-              {r.contestId && <p className="small"><Badge>Build of a winning design</Badge> Confirming marks the space Redesigned and links it to <Link to={`/contest/${r.contestId}`}>the contest</Link>.</p>}
-              <div className="thumbs">{Array.from({ length: r.photos }, (_, i) => <ImageBox key={i} label={`Proof ${i + 1}`} shape="square" />)}</div>
-              <div className="row">
-                <Button variant="primary" onClick={() => dispatch({ type: 'RESOLVE_UPDATE', id: r.id, ok: true })}>Confirm update and archive</Button>
-                <Button onClick={() => dispatch({ type: 'RESOLVE_UPDATE', id: r.id, ok: false })}>Not an update</Button>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
+    <Page tag="simulated">
+      <Crumbs items={[['/moderation', 'Waiting for review'], [null, `Reported update: ${sp?.name}`]]} />
+      <div className="stack">
+        <h1>Reported update</h1>
+        <p><Link className="bold" to={`/space/${r.spaceId}`}>{sp?.name}</Link> <span className="muted">· reported by <UserLink id={r.by} you={false} /> on {r.date}</span></p>
+        {contest && <p><Badge>Build of a winning design</Badge> This is the build of {won ? `“${won.title}”` : 'the winning design'} from <Link to={`/contest/${contest.id}`}>{contest.title}</Link>{contest.built ? `, which the host marked built on ${contest.built}` : ''}.</p>}
+        <section className="stack-sm" aria-labelledby="what-h">
+          <h2 id="what-h" className="h-sm">What changed</h2>
+          <p className="prose">{r.text}</p>
+          {r.photos > 0 && <div className="thumbs">{Array.from({ length: r.photos }, (_, i) => <ImageBox key={i} label={`Proof ${i + 1}`} shape="square" />)}</div>}
+        </section>
+        <section className="card stack-sm" aria-labelledby="decide-h">
+          <h2 id="decide-h" className="h-sm">Your decision</h2>
+          <p className="small muted">One moderator decides. Confirming moves every past contribution to the space’s Archived tab and resets its votes{contest ? ', and marks the space Redesigned' : ''}.</p>
+          <div className="row">
+            <Button variant="primary" onClick={() => decide(true)}>Confirm update and archive</Button>
+            <Button onClick={() => decide(false)}>Not an update</Button>
+          </div>
+        </section>
+      </div>
+    </Page>
   );
 }
 
@@ -190,36 +198,50 @@ export function Moderation() {
   const rows = pending
     .filter((s) => city === 'all' || (s.city || 'Jaipur') === city)
     .map((space) => ({ ...(state.moderation.find((m) => m.spaceId === space.id) || emptyRow(space.id)), space }));
+  // Reported updates sit in the same list, for moderators only (round 31).
+  const updates = isModerator ? state.updateReports.filter((r) => r.status === 'pending' && (city === 'all' || (get.space(r.spaceId)?.city || 'Jaipur') === city)) : [];
   return (
     <Page tag="simulated">
       <div className="split">
         <div className="stack">
-          <h1>Spaces pending approval</h1>
-          <p className="prose muted">Every new space waits here until architects confirm it is an interstitial space. Pick any. Nothing is assigned. Three yes votes approve a space; community votes then decide which spaces get redesigned.</p>
+          <h1>Waiting for review</h1>
+          <p className="prose muted">New spaces wait here until architects confirm they are interstitial spaces: pick any, nothing is assigned, and three yes votes approve one. {isModerator ? 'Reported updates are here too; one moderator confirms those.' : ''}</p>
           <Select label="City" value={city} onChange={(e) => setCity(e.target.value)} options={[{ value: 'all', label: 'All cities' }, ...cities.map((c) => ({ value: c, label: c }))]} />
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Space</th><th>Contributor</th><th>City</th><th>Votes so far</th><th><span className="visually-hidden">Action</span></th></tr></thead>
+              <thead><tr><th>Space</th><th>Type</th><th>Contributor</th><th>Votes so far</th><th><span className="visually-hidden">Action</span></th></tr></thead>
               <tbody>
+                {updates.map((r) => {
+                  const sp = get.space(r.spaceId);
+                  return (
+                    <tr key={r.id}>
+                      <td><span className="bold">{sp?.name}</span><br /><span className="small muted">Reported {r.date}</span></td>
+                      <td>{r.contestId ? <Badge kind="accent">Build of a winning design</Badge> : <Badge>Reported update</Badge>}</td>
+                      <td><UserLink id={r.by} you={false} /></td>
+                      <td className="small muted">One moderator decides</td>
+                      <td className="nowrap"><Button to={`/moderation/update/${r.id}`}>Review</Button></td>
+                    </tr>
+                  );
+                })}
                 {rows.map((m) => {
                   const t = tally(m);
                   const own = m.space.uploadedBy === user.id;
                   return (
                     <tr key={m.spaceId}>
                       <td><span className="bold">{m.space.name}</span><br /><span className="small muted">Added {m.space.addedAt}</span></td>
+                      <td><Badge>New space</Badge></td>
                       <td><UserLink id={m.space.uploadedBy} you={false} /></td>
-                      <td>{m.space.city || 'Jaipur'}</td>
                       <td><Tally yes={t.yes} no={t.no} /></td>
-                      <td>{own ? <span className="small muted">You created this</span> : <Button to={`/moderation/${m.spaceId}`}>{myVote(m, user.id) ? 'Edit vote' : 'Review'}</Button>}</td>
+                      <td className={own ? undefined : 'nowrap'}>{own ? <span className="small muted">You created this</span> : <Button to={`/moderation/${m.spaceId}`}>{myVote(m, user.id) ? 'Edit vote' : 'Review'}</Button>}</td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
           </div>
-          {rows.length === 0 && <p className="note">Nothing waiting{city !== 'all' ? ` in ${city}` : ''}.</p>}
+          {rows.length + updates.length === 0 && <p className="note">Nothing waiting{city !== 'all' ? ` in ${city}` : ''}.</p>}
           <p className="small muted">You can’t review spaces you created.</p>
-          {isModerator && <><hr className="rule" /><UpdateReports /><DesignerClaims /><div><Button to="/flags">Open the flag queue</Button></div></>}
+          {isModerator && <><hr className="rule" /><DesignerClaims /><div><Button to="/flags">Open the flag queue</Button></div></>}
         </div>
         <StatusCard />
       </div>
@@ -240,7 +262,7 @@ export function ModerationReview() {
 
   return (
     <Page tag="simulated">
-      <Crumbs items={[['/moderation', 'Spaces pending approval'], [null, space.name]]} />
+      <Crumbs items={[['/moderation', 'Waiting for review'], [null, space.name]]} />
       <div className="split">
         <div className="stack-lg">
           <header className="stack-sm">

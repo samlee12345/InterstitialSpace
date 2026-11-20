@@ -77,8 +77,8 @@ export function Walkthrough({ close }) {
     {
       id: 'proposal', who: 'Shortlisted architects', title: 'Hand in full proposals', done: contest?.phase === 2 && contest.status !== 'live', as: 'architect',
       actions: [cid && contest.phase === 2 && contest.status === 'live' && (contest.entries.some((e) => contest.shortlist.includes(e.id) && !e.proposal)
-        ? { label: 'The rest of the shortlist hands in', run: () => dispatch({ type: 'DEMO_PROPOSALS', contestId: cid }), demo: true }
-        : { label: 'Skip to the round 2 deadline', run: () => dispatch({ type: 'END_ROUND_2', contestId: cid }), demo: true })],
+        ? { label: 'The rest of the shortlist hands in (as the host)', run: () => { dispatch({ type: 'DEMO_PROPOSALS', contestId: cid }); go('paid', `/contest/${cid}/judge`); }, demo: true }
+        : { label: 'Skip to the round 2 deadline (as the host)', run: () => { dispatch({ type: 'END_ROUND_2', contestId: cid }); go('paid', `/contest/${cid}/judge`); }, demo: true })],
     },
     { id: 'winner', who: 'Local authority', title: 'Scores the proposals and picks a winner', done: contest?.status === 'closed', as: 'paid' },
     {
@@ -104,7 +104,7 @@ export function Walkthrough({ close }) {
     winner: 'Account menu › Contributions › Hosted contests › Ready to judge.',
     built: 'Account menu › Contributions › Hosted contests › the contest, then “Mark as built”.',
     report: 'Open the kund (search “Jawahar” on the map), then Options › Report an update. “This is the build of …” is already ticked.',
-    confirm: 'Account menu › Spaces pending approval › Reported updates, then Confirm update and archive.',
+    confirm: 'Header › Approvals, then Review on the kund’s “Build of a winning design” row. One moderator decides.',
     new: 'Open the kund, then Add your experience.',
   };
   steps.forEach((x) => { x.tip = TIPS[x.id]; });

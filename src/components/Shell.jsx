@@ -15,7 +15,7 @@ function roleLinks({ isMember, isArchitect, isModerator, isPaid }) {
   const l = [];
   if (isArchitect) l.push(['/portfolio', 'Portfolio'], ['/earnings', 'Earnings']);
   l.push(['/contributions', 'Contributions'], ['/purchases', 'My purchases'], ['/points', 'Points & membership']);
-  if (isModerator) l.push(['/moderation', 'Spaces pending approval'], ['/flags', 'Flag queue']);
+  if (isModerator) l.push(['/moderation', 'Waiting for review'], ['/flags', 'Flag queue']);
   if (isPaid) l.push(['/contest/request', 'Host a contest']);
   l.push(['/profile', 'Profile']);
   return l;

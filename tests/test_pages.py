@@ -19,7 +19,7 @@ def run():
         pg.add_locator_handler(pg.get_by_role("dialog", name="What is an interstitial space?"),
                                lambda d: d.get_by_role("button", name="Explore the map").click())
 
-        ACCOUNT = {"Portfolio", "Earnings", "My purchases", "Contributions", "Points & membership", "Profile", "Spaces pending approval", "Flag queue", "Host a contest"}
+        ACCOUNT = {"Portfolio", "Earnings", "My purchases", "Contributions", "Points & membership", "Profile", "Waiting for review", "Flag queue", "Host a contest"}
         def nav(name):
             if name in ACCOUNT:
                 pg.locator(".header .menu-wrap").last.get_by_role("button").click()
@@ -473,7 +473,7 @@ def run():
         step("community: create space, experience with photo, vote, points, co-op")
 
         role("Moderator")
-        nav("Spaces pending approval")
+        nav("Waiting for review")
         expect(pg.locator("table").get_by_text("Shopfront otla")).to_have_count(1)      # listed without a diagram
         expect(pg.locator("table").get_by_text("Steps beside the tea stall")).to_have_count(1)   # new spaces go straight onto the list
         pg.get_by_label("City").select_option("Jaipur")
@@ -503,7 +503,7 @@ def run():
         expect(pg.locator("li", has_text="On a second look")).to_be_visible()      # other reviewers see it
         pg.screenshot(path="/home/claude/r11_review.png", full_page=True)
         # overlapping spaces; decline and move contributions to the existing space
-        nav("Spaces pending approval")
+        nav("Waiting for review")
         pg.locator("tr", has_text="Stepwell side steps").get_by_role("link", name="Review").click()
         expect(pg.locator("section", has_text="Overlapping spaces").get_by_role("link", name=re.compile("Stepwell terrace"))).to_be_visible()
         aside.get_by_text("No, decline it").click()
@@ -525,10 +525,12 @@ def run():
         pg.get_by_role("button", name="Verify report").first.click()
         pg.get_by_role("button", name="Report is correct: take down").click()
         # reported update: confirm -> everything archived, counts reset
-        nav("Spaces pending approval")
-        upd = pg.locator("li", has_text="The municipality paved the courtyard")
+        nav("Waiting for review")
+        upd = pg.locator("tr", has_text="Reported update").first   # round 31: in the main list
         expect(upd).to_be_visible()
-        upd.get_by_role("button", name="Confirm update and archive").click()
+        upd.get_by_role("link", name="Review").click()
+        expect(pg.get_by_text("The municipality paved the courtyard")).to_be_visible()
+        pg.get_by_role("button", name="Confirm update and archive").click()
         expect(pg.locator(".toast", has_text="past contributions archived")).to_be_visible()
         pg.goto(BASE + "/space/s6")
         expect(pg.locator(".vote-line")).to_contain_text("0 votes to redesign")
@@ -801,8 +803,8 @@ def run():
         expect(row.locator(".demo-view", has_text="portrait").locator(".demo-notes")).to_have_text("1")
         expect(row.locator(".demo-view", has_text="photo strip").locator(".demo-notes")).to_have_count(0)
         pg.screenshot(path="/home/claude/r4_drawer.png")
-        pg.locator(".demo-drawer .demo-page", has_text="Spaces pending approval").click()
-        expect(pg.get_by_role("heading", name="Spaces pending approval")).to_be_visible()   # switched role to moderator
+        pg.locator(".demo-drawer .demo-page", has_text="Waiting for review").click()
+        expect(pg.get_by_role("heading", name="Waiting for review")).to_be_visible()   # switched role to moderator
         panel(False)
         pg.get_by_role("button", name="Turn off").click()
         step("demo drawer: notes per page and view; opening a page switches role")
@@ -1117,7 +1119,7 @@ def run():
         chip = pg.locator(".approvals-chip")
         expect(chip).to_contain_text("3/10")
         chip.click()
-        expect(pg.get_by_role("heading", name="Spaces pending approval")).to_be_visible()
+        expect(pg.get_by_role("heading", name="Waiting for review")).to_be_visible()
         expect(pg.get_by_text("3 of 10 approvals in the last 6 months")).to_be_visible()
         nav("Profile")
         pg.get_by_label("LinkedIn").fill("linkedin.com/in/arch-a")
@@ -1199,7 +1201,7 @@ def run():
         md.get_by_role("button", name="Submit vote").click()
         expect(pg.get_by_role("dialog")).to_have_count(0)
         role("Moderator")
-        nav("Spaces pending approval")
+        nav("Waiting for review")
         claim = pg.locator("li", has_text="designed Chowk steps, Badi Chaupar corner")
         claim.get_by_role("button", name="Confirm designer").click()
         pg.goto(BASE + "/space/s3")
@@ -1313,7 +1315,7 @@ def run():
         pg.goto(BASE + "/contest/c3/enter")
         expect(pg.get_by_role("button", name="Add collaborator")).to_be_visible()
         role("Moderator")
-        nav("Spaces pending approval")
+        nav("Waiting for review")
         expect(pg.locator("li", has_text="Studio Sangath")).to_contain_text("not on the platform")
         step("header on one line; designer not on the platform; collaborators on redesign, diagram, entry")
 
@@ -1725,7 +1727,11 @@ def run():
         if cb.count(): cb.last.check()
         pg.locator("main").get_by_role("button", name=re.compile("submit", re.I)).last.click()
         nxt.get_by_role("button", name=re.compile("rest of the shortlist")).click()
+        expect(pg).to_have_url(re.compile(f"#/contest/{cid}/judge$"))   # round 31: lands on judging as the host
+        expect(pg.get_by_role("heading", name="Round 2 is under way")).to_be_visible()
         nxt.get_by_role("button", name=re.compile("Skip to the round 2 deadline")).click()
+        expect(pg).to_have_url(re.compile(f"#/contest/{cid}/judge$"))
+        expect(pg.get_by_role("heading", name=re.compile("^Pick the winner"))).to_be_visible()
 
         # 9 winner
         expect(nxt).to_contain_text(re.compile("picks a winner", re.I))
@@ -1765,9 +1771,12 @@ def run():
         expect(nxt).to_contain_text(re.compile("Confirms", re.I))
         switch("moderator")
         pg.goto(BASE + "/moderation")
-        li = pg.locator("li", has_text="jaali canopy is up")
-        expect(li.get_by_text("Build of a winning design")).to_be_visible()
-        li.get_by_role("button", name="Confirm update and archive").click()
+        pg.locator(".header").get_by_role("link", name=re.compile("^Approvals")).click()
+        row = pg.locator("tr", has_text="Build of a winning design")
+        expect(row).to_contain_text("One moderator decides")
+        row.get_by_role("link", name="Review").click()
+        expect(pg.get_by_text("jaali canopy is up")).to_be_visible()
+        pg.get_by_role("button", name="Confirm update and archive").click()
         pg.goto(BASE + f"/space/{sid}")
         expect(pg.locator(".space-head .badge", has_text="Redesigned")).to_be_visible()
         expect(pg.get_by_text(re.compile("built from “Jaali canopy"))).to_be_visible()

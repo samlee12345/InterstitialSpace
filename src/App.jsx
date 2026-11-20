@@ -8,7 +8,7 @@ import { Item, Checkout, Purchase, Purchases } from './pages/Buying.jsx';
 import { Portfolio, ArchitectPage, Ranking, SpaceRanking, Earnings, Notifications } from './pages/Architect.jsx';
 import { Contests, Contest, ContestRequest, ContestJudge } from './pages/Contests.jsx';
 import SpaceNew from './pages/SpaceNew.jsx';
-import { Moderation, ModerationReview, Flags } from './pages/Moderation.jsx';
+import { Moderation, ModerationReview, UpdateReview, Flags } from './pages/Moderation.jsx';
 import { Points, Coop, Profile, Removal, Contributions, Membership } from './pages/Account.jsx';
 import { ForArchitects, Login } from './pages/Join.jsx';
 
@@ -49,6 +49,7 @@ export default function App() {
         <Route path="/contest/request" element={<ContestRequest />} />
         <Route path="/contest/:id" element={<Contest />} />
         <Route path="/moderation" element={<Moderation />} />
+        <Route path="/moderation/update/:id" element={<UpdateReview />} />
         <Route path="/moderation/:id" element={<ModerationReview />} />
         <Route path="/flags" element={<Flags />} />
         <Route path="/points" element={<Points />} />

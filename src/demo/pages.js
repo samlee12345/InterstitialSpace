@@ -54,7 +54,7 @@ export const PAGE_GROUPS = [
   {
     group: 'Moderator, co-host, owner',
     pages: [
-      { id: 'moderation', label: 'Spaces pending approval', to: '/moderation', kind: 'simulated', role: 'moderator', match: exact('/moderation') },
+      { id: 'moderation', label: 'Waiting for review', to: '/moderation', kind: 'simulated', role: 'moderator', match: exact('/moderation') },
       { id: 'moderation-review', label: 'Review a space', to: '/moderation/s7', kind: 'simulated', role: 'moderator', match: re(/^\/moderation\//) },
       { id: 'flags', label: 'Flag queue', to: '/flags', kind: 'simulated', role: 'moderator', match: exact('/flags') },
       { id: 'contest-request', label: 'Host a contest', to: '/contest/request', kind: 'simulated', role: 'paid', match: exact('/contest/request') },

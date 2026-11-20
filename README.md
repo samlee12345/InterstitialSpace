@@ -200,6 +200,13 @@ been added. Use it to click through long forms quickly in the demo.
   timeline), on the contest page and on the space page.
 - **Map pins** are plain: solid for approved spaces, dashed and hollow for
   pending ones. Space cards show votes, redesigns and photos.
+- **Round 31.** Spaces pending approval is now "Waiting for review": reported
+  updates sit in the same table as new spaces, with a Type column (New space,
+  Reported update, Build of a winning design). An update opens its own review
+  page (/moderation/update/:id) where one moderator decides; no vote count.
+  The City column is gone (the filter stays). Walkthrough: "The rest of the
+  shortlist hands in" and "Skip to the round 2 deadline" now land on the
+  contest's judging page as the host (round 2 progress, then final judging).
 - **Round 30.** A space's Archived tab only appears once it has an earlier
   round (after a moderator confirms an update or a build). /space/s2 has one
   in the seed; the kund gets one when its redesign is confirmed.

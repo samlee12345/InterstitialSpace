@@ -742,3 +742,4 @@ body.demo-open .demo-tray { right: calc(var(--width-demo-drawer) + var(--space-3
 .wt-done .wt-num { background: var(--color-action); color: var(--color-text-inverse); border-color: var(--color-action); }
 .wt-next { background: var(--color-sunken); }
 .wt-next .wt-num { border-width: var(--border-thick); font-weight: var(--weight-bold); }
+.nowrap { white-space: nowrap; }
