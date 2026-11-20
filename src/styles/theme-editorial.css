@@ -115,6 +115,8 @@
 [data-theme="editorial"] .nav { gap: 0; }
 [data-theme="editorial"] .nav a { border-radius: var(--radius-pill); padding: var(--space-1) var(--space-2); border-bottom: 0; white-space: nowrap; font-size: 0.875rem; }
 [data-theme="editorial"] .header .btn { padding-inline: var(--space-3); }
+[data-theme="editorial"] .header-link { border-bottom: 0; border-radius: var(--radius-pill); padding-inline: var(--space-2); font-size: 0.875rem; }
+[data-theme="editorial"] .header-link:hover, [data-theme="editorial"] .header-link[aria-expanded="true"] { background: var(--color-sunken); }
 [data-theme="editorial"] .nav a:hover { background: var(--color-sunken); }
 [data-theme="editorial"] .nav a.active, [data-theme="editorial"] .nav a[aria-current="page"] { background: var(--color-action); color: var(--color-text-inverse); }
 [data-theme="editorial"] .brand { border-radius: var(--radius-pill); padding: var(--space-1) var(--space-3); }

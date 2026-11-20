@@ -1,4 +1,4 @@
-# Interstitial Spaces Platform — grayscale prototype
+# ReSpace (Interstitial Spaces) Platform — grayscale prototype
 
 Clickable wireframe for the Dec 4 class demo. No backend: all data comes from
 `src/data/seed.json` and lives in memory. Reloading the page (or "Reset demo
@@ -200,6 +200,18 @@ been added. Use it to click through long forms quickly in the demo.
   timeline), on the contest page and on the space page.
 - **Map pins** are plain: solid for approved spaces, dashed and hollow for
   pending ones. Space cards show votes, redesigns and photos.
+- **Round 21: real map, ReSpace.** The map on the landing page, Browse and
+  the contest space picker is a real map: Leaflet with light grey CARTO tiles
+  on OpenStreetMap data (src/components/RealMap.jsx; `MapBox` keeps its old
+  props). Pins are still our own buttons and links placed at each space's
+  coordinates; pins only metres apart are nudged so each stays clickable.
+  Scroll-wheel zoom is off so the page scrolls; use the +/- buttons or drag.
+  The search radius around a "lat, lon" search is drawn to scale. The area
+  map when documenting a space and the map on Review a space are still
+  placeholders. The product is now called ReSpace (header, footer, page
+  titles). Approvals, notifications and the account menu in the header are
+  styled like the nav links instead of buttons. Tests serve a blank tile for
+  CARTO requests, so they run offline.
 - **Round 20: Editorial theme (optional).** Demo controls › Controls ›
   Theme switches between "Grayscale (default)" and "Editorial": a serif type
   stack, black pill buttons, 24px rounded cards with a soft shadow, pill tabs

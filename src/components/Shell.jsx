@@ -42,7 +42,7 @@ export function Dropdown({ label, children }) {
   }, [open]);
   return (
     <div className="menu-wrap" ref={ref}>
-      <button ref={btn} type="button" className="btn btn-default" onClick={() => setOpen(!open)} aria-expanded={open}>{label}</button>
+      <button ref={btn} type="button" className="header-link" onClick={() => setOpen(!open)} aria-expanded={open}>{label}</button>
       {open && <div className="menu stack-sm">{children}</div>}
     </div>
   );
@@ -129,7 +129,7 @@ function Header() {
   return (
     <header className="header">
       <div className="header-in">
-        <Link to="/" className="brand">Interstitial Spaces</Link>
+        <Link to="/" className="brand">ReSpace</Link>
         <nav className="nav" aria-label="Main">
           <NavLink to="/browse" className={link}>Browse spaces</NavLink>
           <NavLink to="/spaces/ranking" className={link}>Space ranking</NavLink>
@@ -141,7 +141,7 @@ function Header() {
         {isMember ? (
           <div className="row">
             {isArchitect && (
-              <Link to="/moderation" className="btn btn-default approvals-chip" title="Approve 10 spaces every 6 months to keep your architect status">
+              <Link to="/moderation" className="header-link approvals-chip" title="Approve 10 spaces every 6 months to keep your architect status">
                 Approvals <span className="approvals-count">{Math.min(user.reviewsThisYear || 0, 10)}/10</span>
                 <span className="visually-hidden"> in the last 6 months</span>
               </Link>
@@ -654,7 +654,7 @@ function Footer() {
     <footer className="footer">
       <div className="footer-inner">
         <div className="stack-sm footer-brand">
-          <span className="bold">Interstitial Spaces</span>
+          <span className="bold">ReSpace</span>
           <span className="small muted">A co-operative for documenting and redesigning the in-between places of a city.</span>
         </div>
         {cols.map(([h, links]) => (

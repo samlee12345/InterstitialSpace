@@ -9,7 +9,10 @@ def run():
     with sync_playwright() as p:
         b = p.chromium.launch(channel="chrome", headless=True)
         pg = b.new_page(viewport={"width": 1280, "height": 900})
-        pg.on("pageerror", lambda e: errors.append(f"pageerror: {e}"))
+        # Map tiles come from CARTO; serve a blank tile so tests run offline and stay deterministic.
+        blank_png = bytes.fromhex("89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d4944415478da63f8ffff3f0005fe02fea7d6a4c50000000049454e44ae426082")
+        pg.route("**/*.basemaps.cartocdn.com/**", lambda route: route.fulfill(status=200, content_type="image/png", body=blank_png))
+        pg.on("pageerror", lambda e: errors.append(f"pageerror: {e} @ {pg.url} :: {(e.stack or '')[:300]}"))
         pg.on("console", lambda m: errors.append(f"console: {m.text}") if m.type == "error" else None)
         pg.set_default_timeout(6000)
         # Visitors see "What is an interstitial space?" on the landing page; close it whenever it shows.
@@ -1534,6 +1537,26 @@ def run():
         assert pg.locator("main .btn-primary").first.evaluate("e => getComputedStyle(e).borderRadius") == radius_off
         pg.locator(".demo-drawer").get_by_role("button", name="Close", exact=True).click()
         step("Editorial theme switches on from Demo controls, persists, and reverts to grayscale")
+
+        # round 21: real map, ReSpace name, link-style header items
+        role("Architect")
+        pg.goto(BASE + "/")
+        expect(pg.locator(".map-hero .leaflet-container")).to_be_visible()
+        expect(pg.locator(".map-hero .leaflet-control-attribution")).to_contain_text("OpenStreetMap")
+        expect(pg.get_by_text("Map placeholder")).to_have_count(0)
+        boxes = [b for b in (pg.locator(".map-hero .pin").nth(i).bounding_box() for i in range(pg.locator(".map-hero .pin").count())) if b]
+        assert len(boxes) >= 8 and len({(round(b["x"]), round(b["y"])) for b in boxes}) == len(boxes), boxes
+        expect(pg.locator(".header .brand")).to_have_text("ReSpace")
+        assert "ReSpace" in pg.title()
+        for loc in [pg.locator(".header .approvals-chip"), pg.locator(".header .menu-wrap > button").first, pg.locator(".header .menu-wrap > button").last]:
+            cls = loc.get_attribute("class")
+            assert "header-link" in cls and "btn" not in cls.split(), cls
+            assert loc.evaluate("e => getComputedStyle(e).borderTopWidth") == "0px"
+        pg.locator(".header .menu-wrap > button").last.click()
+        expect(pg.locator(".header .menu")).to_be_visible()
+        pg.keyboard.press("Escape")
+        pg.screenshot(path="/home/claude/r21_landing.png")
+        step("real Leaflet map with attribution and separated pins; ReSpace name; header items look like links")
 
         # every route loads for every role without errors
         routes = ["/", "/browse", "/space/s1", "/space/s1?tab=diagram", "/space/new", "/item/r1", "/item/m1", "/checkout?item=r4&rights=licence",

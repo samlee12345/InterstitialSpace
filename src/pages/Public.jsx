@@ -296,7 +296,7 @@ function MapLanding() {
       >
         <div className="map-search" role="region" aria-label="Search and details" ref={panel}>{content}</div>
         {focus && <button type="button" className="btn map-zoom-out" onClick={back}>Show all of Jaipur</button>}
-        <span className="map-label map-label-br">Map placeholder: Jaipur. Dashed pins are pending.</span>
+        <span className="map-label map-label-bl">Dashed pins are pending.</span>
       </MapBox>
       <div className="page stack-lg">
         {(LANDING_VARIANTS[landing] || LANDING_VARIANTS.steps).render()}

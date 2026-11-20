@@ -8,6 +8,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { MemoryRouter } from 'react-router-dom';
+import 'leaflet/dist/leaflet.css';
 import './styles/tokens.css';
 import './styles/app.css';
 import './styles/theme-editorial.css';
@@ -96,7 +97,7 @@ function Sandbox() {
     <>
       <header className="header">
         <div className="header-in">
-          <a className="brand" href={appUrl('/')}>Interstitial Spaces</a>
+          <a className="brand" href={appUrl('/')}>ReSpace</a>
           <span className="small muted grow">Component sandbox</span>
           <a className="btn" href={appUrl('/browse')}>Back to the prototype</a>
         </div>

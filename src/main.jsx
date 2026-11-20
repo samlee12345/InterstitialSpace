@@ -5,6 +5,7 @@ import { BrowserRouter, HashRouter } from 'react-router-dom';
 // The built site (GitHub Pages) uses #/ links so every page can be opened or
 // shared directly. Local development keeps normal paths.
 const Router = import.meta.env.PROD ? HashRouter : BrowserRouter;
+import 'leaflet/dist/leaflet.css';
 import './styles/tokens.css';
 import './styles/app.css';
 import './styles/theme-editorial.css';

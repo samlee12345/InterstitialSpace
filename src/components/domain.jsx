@@ -139,7 +139,6 @@ export function distanceM(a, b) {
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
-const ZOOM_SPAN = 0.0016; // degrees shown either side of a focused point (about 170 m)
 
 // Map placeholder. Pins are plain markers: solid for approved, dashed and hollow for pending.
 // `area` sets the extent when nothing is focused, so an empty filter keeps the same map.
@@ -147,59 +146,10 @@ const ZOOM_SPAN = 0.0016; // degrees shown either side of a focused point (about
 // that select a space (map landing); without it they link to the space page (Browse).
 // `me` draws a "you are here" marker.
 // `areaM` draws the area being defined around `me` (metres from the centre); `onMapClick` gets { lat, lng }.
-export function MapBox({ spaces, area, hiddenIds = [], activeId, selectedId, onHover, onPinClick, focus, me, areaM, onMapClick, meLabel = 'Your location', sticky, className = '', label = 'Map placeholder: Jaipur. Dashed pins are pending.', children }) {
-  const extent = area?.length ? area : spaces;
-  let [minLat, maxLat, minLng, maxLng] = [Math.min(...extent.map((s) => s.lat)), Math.max(...extent.map((s) => s.lat)), Math.min(...extent.map((s) => s.lng)), Math.max(...extent.map((s) => s.lng))];
-  if (focus) [minLat, maxLat, minLng, maxLng] = [focus.lat - ZOOM_SPAN, focus.lat + ZOOM_SPAN, focus.lng - ZOOM_SPAN * 1.6, focus.lng + ZOOM_SPAN * 1.6];
-  // Grid scale while zoomed: a hint of magnification, capped so cells stay readable.
-  const zoom = focus ? 2.5 : 1;
-  const xy = (p) => ({
-    x: 8 + ((p.lng - minLng) / (maxLng - minLng || 1)) * 84,
-    y: 90 - ((p.lat - minLat) / (maxLat - minLat || 1)) * 72,
-  });
-  const placed = [];
-  const pos = spaces.map((s) => {
-    let { x, y } = xy(s);
-    // Nudge apart pins that would overlap (in % of the map).
-    for (let i = 0; i < 6 && placed.some((p) => Math.abs(p.x - x) < 2.5 && Math.abs(p.y - y) < 3.5); i += 1) { x += 2; y += 2.5; }
-    placed.push({ x, y });
-    return { left: `${x}%`, top: `${y}%` };
-  });
-  const status = (s) => (s.status === 'approved' ? 'approved' : 'pending');
-  const meXY = me && xy(me);
-  // Size of the area ellipse, as % of the map (approximate: a placeholder map).
-  const latSpanM = (maxLat - minLat) * 110540;
-  const lngSpanM = (maxLng - minLng) * 111320 * Math.cos((((minLat + maxLat) / 2) * Math.PI) / 180);
-  const click = (e) => {
-    if (!onMapClick || e.target.closest('.pin, button, a, .map-search, input, label')) return;
-    const r = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - r.left) / r.width) * 100;
-    const y = ((e.clientY - r.top) / r.height) * 100;
-    onMapClick({ lat: minLat + ((90 - y) / 72) * (maxLat - minLat), lng: minLng + ((x - 8) / 84) * (maxLng - minLng) });
-  };
-  return (
-    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-    <div className={`map ${sticky ? 'map-sticky' : ''} ${onMapClick ? 'map-clickable' : ''} ${className}`} style={{ '--map-zoom': zoom }} onClick={click}>
-      {label && <span className="map-label">{label}</span>}
-      {spaces.map((s, i) => {
-        if (hiddenIds.includes(s.id)) return <span key={s.id} className="pin faded" style={pos[i]} aria-hidden="true" />;
-        const cls = `pin pin-${status(s)} ${activeId === s.id ? 'pin-active' : ''} ${selectedId === s.id ? 'pin-selected' : ''}`;
-        const name = `${s.name}, ${status(s)}, ${s.votes} votes`;
-        const hover = { onMouseEnter: () => onHover?.(s.id), onMouseLeave: () => onHover?.(null), onFocus: () => onHover?.(s.id), onBlur: () => onHover?.(null) };
-        return onPinClick ? (
-          <button key={s.id} type="button" className={cls} style={pos[i]} title={s.name} aria-label={name} aria-pressed={selectedId === s.id} onClick={() => onPinClick(s)} {...hover} />
-        ) : (
-          <Link key={s.id} to={`/space/${s.id}`} className={cls} style={pos[i]} title={s.name} aria-label={name} {...hover} />
-        );
-      })}
-      {meXY && areaM && (
-        <span className="map-area" style={{ left: `${meXY.x}%`, top: `${meXY.y}%`, width: `${((2 * areaM) / lngSpanM) * 84}%`, height: `${((2 * areaM) / latSpanM) * 72}%` }} aria-hidden="true" />
-      )}
-      {meXY && <span className="pin-me" style={{ left: `${meXY.x}%`, top: `${meXY.y}%` }} role="img" aria-label={meLabel} />}
-      {children}
-    </div>
-  );
-}
+// The map itself lives in RealMap.jsx (Leaflet); re-exported here so imports stay the same.
+import { MapBox } from './RealMap.jsx';
+
+export { MapBox };
 
 // A person's name that opens their public page: an architect's portfolio, or a
 // member's profile. Organisations without a page show as plain text.
