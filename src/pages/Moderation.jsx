@@ -142,6 +142,7 @@ function UpdateReports() {
             <li key={r.id} className="stack-sm">
               <div className="row"><Link className="bold" to={`/space/${r.spaceId}`}>{sp?.name}</Link><span className="small muted">reported by <UserLink id={r.by} you={false} /> on {r.date}</span></div>
               <p>{r.text}</p>
+              {r.contestId && <p className="small"><Badge>Build of a winning design</Badge> Confirming marks the space Redesigned and links it to <Link to={`/contest/${r.contestId}`}>the contest</Link>.</p>}
               <div className="thumbs">{Array.from({ length: r.photos }, (_, i) => <ImageBox key={i} label={`Proof ${i + 1}`} shape="square" />)}</div>
               <div className="row">
                 <Button variant="primary" onClick={() => dispatch({ type: 'RESOLVE_UPDATE', id: r.id, ok: true })}>Confirm update and archive</Button>

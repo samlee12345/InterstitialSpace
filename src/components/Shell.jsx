@@ -6,6 +6,7 @@ import { fmtPoints } from '../lib/points.js';
 import { activateNotes, addReply, allDiscussions, notesActive, notesCounts, revealNote, setNotesPage, startNotesTool } from '../review/notes-tool.js';
 import { ALL_PAGES, PAGE_GROUPS, pageFor } from '../demo/pages.js';
 import { THEMES, setChoice, useChoices } from '../design/choices.js';
+import { Walkthrough } from '../demo/Walkthrough.jsx';
 
 const link = ({ isActive }) => (isActive ? 'active' : '');
 
@@ -496,7 +497,9 @@ function DemoPanel() {
   const onTabKey = (e) => {
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
     e.preventDefault();
-    const next = tab === 'pages' ? 'discussions' : 'pages';
+    const order = ['pages', 'walkthrough', 'discussions'];
+    const i = order.indexOf(tab);
+    const next = e.key === 'Home' ? order[0] : e.key === 'End' ? order[order.length - 1] : order[(i + (e.key === 'ArrowLeft' ? -1 : 1) + order.length) % order.length];
     setTab(next);
     document.getElementById(`demo-tab-${next}`)?.focus();
   };
@@ -523,10 +526,16 @@ function DemoPanel() {
       </div>
       <div className="demo-tabs" role="tablist" aria-label="Demo controls">
         <button type="button" role="tab" id="demo-tab-pages" aria-selected={tab === 'pages'} aria-controls="demo-panel-pages" tabIndex={tab === 'pages' ? 0 : -1} onClick={() => setTab('pages')} onKeyDown={onTabKey}>Pages</button>
+        <button type="button" role="tab" id="demo-tab-walkthrough" aria-selected={tab === 'walkthrough'} aria-controls="demo-panel-walkthrough" tabIndex={tab === 'walkthrough' ? 0 : -1} onClick={() => setTab('walkthrough')} onKeyDown={onTabKey}>Walkthrough</button>
         <button type="button" role="tab" id="demo-tab-discussions" aria-selected={tab === 'discussions'} aria-controls="demo-panel-discussions" tabIndex={tab === 'discussions' ? 0 : -1} onClick={() => setTab('discussions')} onKeyDown={onTabKey}>
           Discussions <span className="demo-tab-count">{totals.discussed}/{totals.discussion}</span>
         </button>
       </div>
+      {tab === 'walkthrough' && (
+        <div className="demo-drawer-body" role="tabpanel" id="demo-panel-walkthrough" aria-labelledby="demo-tab-walkthrough">
+          <Walkthrough close={() => setOpen(false)} />
+        </div>
+      )}
       {tab === 'discussions' && (
         <div className="demo-drawer-body" role="tabpanel" id="demo-panel-discussions" aria-labelledby="demo-tab-discussions">
           <DiscussionsTab close={() => setOpen(false)} />

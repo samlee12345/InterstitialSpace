@@ -265,7 +265,7 @@ function ChipGroup({ q, value, onChange }) {
 function Scale({ value, onChange }) {
   return (
     <fieldset className="scale">
-      <legend>Is this space working well, or should it be redesigned?<span className="muted"> (required)</span></legend>
+      <legend>Is this space working well, or should it be redesigned?<Opt>Required</Opt></legend>
       <div className="scale-track">
         {Array.from({ length: 11 }, (_, i) => (
           <label key={i} className="scale-step">
@@ -631,6 +631,11 @@ function Header({ space, onReport, onDesignate, onModerate, onAddExperience, has
         </p>
         {designer && <p className="small">Designed by <Link to={`/architect/${designer.id}`}>{designer.name}</Link></p>}
         {!designer && ext && <p className="small">Designed by {ext.name} <span className="muted">(not on the platform)</span></p>}
+        {space.redesigned && (
+          <p className="small">
+            <span className="bold">Redesigned {space.redesigned.date}:</span> built from “{space.redesigned.title}” by <UserLink id={space.redesigned.architectId} />, winner of <Link to={`/contest/${space.redesigned.contestId}`}>the contest</Link>. Earlier experiences are in Archived.
+          </p>
+        )}
       </div>
       {space.status === 'pending' && (
         <div className="note row between pending-note">

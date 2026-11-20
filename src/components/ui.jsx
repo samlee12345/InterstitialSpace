@@ -100,6 +100,7 @@ export function Banner({ banner, onClose }) {
 export function StatusBadges({ space }) {
   return (
     <>
+      {space.redesigned && <Badge kind="solid">Redesigned</Badge>}
       {space.status === 'pending' && <Badge kind="dashed">Pending</Badge>}
       {space.status === 'rejected' && <Badge kind="dashed">Did not qualify</Badge>}
       {space.removal === 'review' && <Badge kind="dashed">Removal under review</Badge>}

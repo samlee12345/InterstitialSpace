@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
 import { Badge, Button, Choice, Empty, FileDrop, FormActions, ImageBox, Input, Modal, Page, RoleGate, Select } from '../components/ui.jsx';
-import { ContestCard, ContestMoney, ContestPlans, ContestRounds, Crumbs, ELIGIBILITY, SpacePicker, UserLink, contestStatus, contestWinner } from '../components/domain.jsx';
+import { ContestCard, ContestMoney, ContestPlans, ContestRounds, Crumbs, ELIGIBILITY, SpacePicker, UserLink, contestStatus, contestWinner, coverPhoto } from '../components/domain.jsx';
 import { useChoices } from '../design/choices.js';
 
 // "2026-11-12" → "Nov 12, 2026"
@@ -74,13 +74,14 @@ export function Contest() {
                   <ContestPlans contest={c} />
                 </>
               )}
+              <BuildReport contest={c} space={space} />
             </section>
           )}
           <section className="stack-sm"><h2>Brief</h2><p className="prose">{c.brief}</p></section>
           <section className="stack-sm">
             <h2>Site</h2>
             <Link to={`/space/${space.id}`} className="card card-link">
-              <ImageBox label="Site photo" shape="wide" />
+              <ImageBox label="Site photo" shape="wide" src={(coverPhoto(space) || space.archive?.flatMap((r) => r.photos || []).find((p) => p.src))?.src} alt={coverPhoto(space)?.alt} />
               <span className="bold">{space.name}</span>
               <span className="small muted">{space.votes} community votes, {space.photos.length} photos. Open the space for the experience entries and spatial diagram.</span>
             </Link>
@@ -151,6 +152,30 @@ export function Contest() {
         </aside>
       </div>
     </Page>
+  );
+}
+
+// Round 23: once the winning design is built, the co-host reports it. A moderator
+// confirms it, which archives the space's old round and marks it Redesigned.
+function BuildReport({ contest: c, space }) {
+  const { state, user, dispatch } = useDemo();
+  const won = c.entries.find((e) => e.id === c.winner);
+  if (!won || !space) return null;
+  const report = state.updateReports.find((r) => r.contestId === c.id);
+  if (space.redesigned?.contestId === c.id) {
+    return <p className="note small">Built. <Link to={`/space/${space.id}`}>{space.name}</Link> is marked Redesigned, its earlier contributions are archived, and a new round of experiences has started.</p>;
+  }
+  if (report?.status === 'pending') return <p className="note small">Build reported on {report.date}. A moderator will confirm it and mark the space Redesigned.</p>;
+  if (!user || user.id !== c.coHostId) return null;
+  const send = () => dispatch({
+    type: 'REPORT_UPDATE', spaceId: space.id, userId: user.id, photos: 2, contestId: c.id,
+    text: `The winning design “${won.title}” has been built on site.`,
+  });
+  return (
+    <div className="stack-sm">
+      <p className="small">Once “{won.title}” is built, report it. A moderator checks it, the space is marked Redesigned, and its earlier experiences and votes move to Archived so a new round can start.</p>
+      <div><Button onClick={send}>Report that it’s been built</Button></div>
+    </div>
   );
 }
 
@@ -307,9 +332,13 @@ export function ContestJudge() {
         <ContestRounds contest={c} />
         <div className="row">
           <Button to={`/contest/${c.id}`}>View the contest page</Button>
-          {c.phase === 2 && (
+          {c.phase === 2 ? (
             <button type="button" className="demo-btn demo-btn-inline" onClick={() => dispatch({ type: 'END_ROUND_2', contestId: c.id })}>
               <span className="demo-btn-tag" aria-hidden="true">Demo</span> Skip to the round 2 deadline
+            </button>
+          ) : (
+            <button type="button" className="demo-btn demo-btn-inline" onClick={() => dispatch({ type: 'END_ROUND_1', contestId: c.id })}>
+              <span className="demo-btn-tag" aria-hidden="true">Demo</span> Skip to the round 1 deadline
             </button>
           )}
         </div>

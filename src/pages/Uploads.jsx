@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
+import { JKK_DIAGRAM, JKK_DIAGRAM_FILE, isJkk } from '../demo/jkk.js';
 import { Button, Choice, Empty, FileDrop, FormActions, ImageBox, Input, Page, RoleGate, Select, Steps } from '../components/ui.jsx';
 import { Collaborators, Crumbs, ELIGIBILITY } from '../components/domain.jsx';
 import { useChoices } from '../design/choices.js';
@@ -288,7 +289,8 @@ function DiagramForm({ space }) {
   };
   const submit = () => {
     if (!agree) { setErr({ agree: 'Agree to the Base Library licence to add your diagram.' }); return; }
-    dispatch({ type: 'UPLOAD_DIAGRAM', spaceId: space.id, userId: user.id, files, notes, collaborators, modelId: `m-${Date.now()}` });
+    const real = files.includes(JKK_DIAGRAM_FILE) ? { src: JKK_DIAGRAM.src, alt: JKK_DIAGRAM.alt, label: JKK_DIAGRAM.label } : {};
+    dispatch({ type: 'UPLOAD_DIAGRAM', spaceId: space.id, userId: user.id, files, notes, collaborators, modelId: `m-${Date.now()}`, ...real });
     nav(`/space/${space.id}?tab=diagram`, {
       replace: true,
       state: { banner: { title: 'Spatial diagram added to the Base Library', text: `Your diagram is on this space, marked “Yours”. You earned ${POINTS.diagram} points. The platform keeps the download fee for spatial diagrams. The space’s 3D model will be regenerated with it.`, links: [['/portfolio', 'Open your portfolio']] } },
@@ -305,12 +307,12 @@ function DiagramForm({ space }) {
       {step === 0 && (
         <div className="stack">
           <p className="prose">A measured plan and section with correct proportions, plus a simple 3D model if you have one. You earn {POINTS.diagram} points.</p>
-          <FileDrop label={<>Diagram files<Req /></>} files={files} onChange={(v) => { setFiles(v); setErr({ ...err, files: undefined }); }} samples={['plan.dwg', 'section.dwg', 'model.obj']} error={err.files} />
+          <FileDrop label={<>Diagram files<Req /></>} files={files} onChange={(v) => { setFiles(v); setErr({ ...err, files: undefined }); }} samples={isJkk(space) ? [JKK_DIAGRAM_FILE, 'section.dwg', 'model.obj'] : ['plan.dwg', 'section.dwg', 'model.obj']} error={err.files} />
           {drawings.length > 0 && (
             <ul className="halves preview-list" aria-label="Preview of your drawings">
               {drawings.map((f) => (
                 <li key={f} className="stack-sm">
-                  <ImageBox label={`${drawingLabel(f)}: ${f}`} />
+                  <ImageBox label={`${drawingLabel(f)}: ${f}`} src={f === JKK_DIAGRAM_FILE ? JKK_DIAGRAM.src : undefined} alt={f === JKK_DIAGRAM_FILE ? JKK_DIAGRAM.alt : undefined} fit="contain" />
                 </li>
               ))}
             </ul>

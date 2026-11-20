@@ -2,6 +2,7 @@ import { createContext, useContext, useMemo, useReducer } from 'react';
 import { useLocation } from 'react-router-dom';
 import seed from '../data/seed.json';
 import { POINTS, interactPoints, uploadPoints, fmtPoints } from '../lib/points.js';
+import { JKK_COMMUNITY, JKK_ENTRIES, JKK_EXTRA_VOTES, isJkk } from '../demo/jkk.js';
 
 export const ROLES = [
   { id: 'visitor', label: 'Visitor', userId: null },
@@ -58,6 +59,47 @@ function reducer(s, a) {
       return { ...s, role: a.role, signupPrompt: null };
     case 'RESET':
       return toast(fresh(s.role), 'Demo data reset');
+    // ── Jawahar Kala Kendra walkthrough (round 23) ──────────
+    // Fresh demo data without the kund, so it can be documented live; starts as a visitor.
+    case 'JKK_START': {
+      const f = fresh('visitor');
+      const gone = f.spaces.filter(isJkk).map((x) => x.id);
+      return toast({
+        ...f,
+        jkkWalkthrough: true,
+        spaces: f.spaces.filter((x) => !gone.includes(x.id)),
+        comments: f.comments.filter((c) => !gone.includes(c.spaceId)),
+        moderation: f.moderation.filter((m) => !gone.includes(m.spaceId)),
+      }, 'Walkthrough started: Jawahar Kala Kendra isn’t on the platform yet');
+    }
+    // Two other reviewers have voted yes, so the moderator's vote is the third.
+    case 'DEMO_REVIEWERS_YES':
+      return toast({ ...s, moderation: s.moderation.map((m) => (m.spaceId === a.spaceId ? { ...m, yes: (m.yes || 0) + 2 } : m)) }, 'Two other architects voted yes');
+    // Other members post experiences and vote, so the space ranks high.
+    case 'DEMO_COMMUNITY': {
+      const fresh2 = JKK_COMMUNITY.filter((x) => !s.comments.some((c) => c.spaceId === a.spaceId && c.userId === x.userId && !c.archived));
+      const votes = fresh2.filter((x) => x.answers.need >= 6).length + JKK_EXTRA_VOTES;
+      const n = {
+        ...s,
+        seq: s.seq + fresh2.length + 1,
+        comments: [...s.comments, ...fresh2.map((x, i) => ({ id: `cm-${s.seq + i}`, spaceId: a.spaceId, ...x, photoIds: [], date: today() }))],
+        spaces: mapById(s.spaces, a.spaceId, (x) => ({ ...x, votes: x.votes + votes })),
+      };
+      return toast(n, `${fresh2.length} more experiences and ${votes} votes to redesign`);
+    }
+    // Other architects send concepts, so the host has entries to shortlist.
+    case 'DEMO_ENTRIES': {
+      const c = s.contests.find((x) => x.id === a.contestId);
+      const add = JKK_ENTRIES.filter((x) => !c.entries.some((e) => e.architectId === x.architectId));
+      const entries = add.map((x, i) => ({ id: `e-${s.seq + i}`, ...x, submittedAt: today(), files: ['concept-sheet.pdf'] }));
+      return toast({ ...s, seq: s.seq + add.length + 1, contests: mapById(s.contests, a.contestId, (x) => ({ ...x, entries: [...x.entries, ...entries] })) }, `${add.length} more concepts submitted`);
+    }
+    // The other shortlisted architects hand in their full proposals.
+    case 'DEMO_PROPOSALS':
+      return toast({
+        ...s,
+        contests: mapById(s.contests, a.contestId, (x) => ({ ...x, entries: x.entries.map((e) => (x.shortlist.includes(e.id) && !e.proposal ? { ...e, proposal: { files: ['plan.pdf', 'section.pdf', 'view.jpg'], date: today() } } : e)) })),
+      }, 'Full proposals received from the rest of the shortlist');
     case 'TOAST':
       return toast(s, a.text);
     case 'TOAST_DONE':
@@ -110,7 +152,7 @@ function reducer(s, a) {
       const hasModel = s.models.some((m) => m.spaceId === a.spaceId && !m.takenDown && !m.archived);
       let n = {
         ...s,
-        spaces: mapById(s.spaces, a.spaceId, (x) => ({ ...x, diagrams: [...x.diagrams, { id: `dg-${a.modelId}`, source: 'architect', by: a.userId, collaborators: a.collaborators || [], credits: [], date: today(), label: a.label || null }] })),
+        spaces: mapById(s.spaces, a.spaceId, (x) => ({ ...x, diagrams: [...x.diagrams, { id: `dg-${a.modelId}`, source: 'architect', by: a.userId, collaborators: a.collaborators || [], credits: [], date: today(), label: a.label || null, ...(a.src ? { src: a.src, alt: a.alt } : {}) }] })),
         models: hasModel ? s.models : [...s.models, { id: a.modelId, spaceId: a.spaceId, title: `3D model — ${sp.name}`, files: ['model.obj'], takenDown: false }],
         diagramUploads: [{ id: a.modelId, spaceId: a.spaceId, userId: a.userId, date: today(), files: a.files, notes: a.notes }, ...s.diagramUploads],
       };
@@ -160,6 +202,30 @@ function reducer(s, a) {
       const r = { id: `cr-${s.seq}`, ...a.request, hostId: a.userId, date: new Date().toISOString(), status: 'review' };
       return toast({ ...s, seq: s.seq + 1, contestRequests: [r, ...(s.contestRequests || [])] }, 'Request sent to the team');
     }
+    // The platform team approves a contest request: the contest opens for round 1 (round 23;
+    // the team has no screen yet, so this is a Demo shortcut).
+    case 'APPROVE_CONTEST_REQUEST': {
+      const r = (s.contestRequests || []).find((x) => x.id === a.id);
+      if (!r) return s;
+      const sp = s.spaces.find((x) => x.id === r.spaceId);
+      const host = s.users.find((u) => u.id === r.hostId);
+      const criteria = (r.criteria || '').split('\n').map((x) => x.trim()).filter(Boolean);
+      const c = {
+        id: `c-${s.seq}`, spaceId: r.spaceId, status: 'live', phase: 1,
+        title: `Redesign the ${sp?.name || 'space'}`,
+        brief: r.brief, prize: r.prize, budget: r.budget, deadline: r.deadline, deadline2: r.deadline2,
+        coHost: host?.name, coHostId: r.hostId,
+        eligibility: 'Licensed architects and accredited architecture students',
+        criteria: criteria.length ? criteria : ['Responds to what residents asked for', 'Buildable within the stated budget', 'Respects the existing structure'],
+        entries: [], entryFee: '$25', shortlistSize: r.shortlistSize, shortlistPay: r.shortlistPay, shortlist: [],
+      };
+      let n = { ...s, seq: s.seq + 1, contests: [c, ...s.contests], contestRequests: s.contestRequests.filter((x) => x.id !== a.id) };
+      n = notify(n, r.hostId, 'contest', `The team approved your contest for “${sp?.name}”. It’s open for round 1 concepts; ${r.budget} is held in escrow.`, `/contest/${c.id}`);
+      return toast(n, 'Contest approved and open for entries');
+    }
+    // Demo shortcut: round 1's deadline passes, so the co-host can pick the shortlist (round 23).
+    case 'END_ROUND_1':
+      return { ...s, contests: mapById(s.contests, a.contestId, (x) => (x.phase === 1 ? { ...x, status: 'judging' } : x)) };
     // Round 1 closes: the co-host's shortlist moves on to round 2 and is paid to develop it.
     case 'SET_SHORTLIST': {
       const c = s.contests.find((x) => x.id === a.contestId);
@@ -265,7 +331,7 @@ function reducer(s, a) {
         parentId: Object.entries(a.relations || {}).find(([, r]) => r === 'parent')?.[0] || null,
         overlaps: Object.entries(a.relations || {}).filter(([, r]) => r === 'overlap').map(([id]) => id),
         status: 'pending', uploadedBy: a.userId, votes: 0,
-        photos: Array.from({ length: a.photos }, (_, i) => ({ id: `${a.id}-ph${i + 1}`, credit: a.userId, onSite: a.full })),
+        photos: Array.from({ length: a.photos }, (_, i) => ({ id: `${a.id}-ph${i + 1}`, credit: a.userId, onSite: a.full, ...(a.photoMeta?.[i] || {}) })),
         questionnaire: a.questionnaire, properties: a.properties, diagrams: [], archive: [], removed: false, removal: null, private: false,
         pendingPoints: uploadPoints({ photos: a.photos, scans: a.scans, fields: a.fields || 0, full: a.full }),
       };
@@ -385,8 +451,8 @@ function reducer(s, a) {
       return toast({ ...s, coopDecisions: mapById(s.coopDecisions, a.id, (d) => ({ ...d, votes: { ...d.votes, [a.userId]: a.vote } })) }, 'Vote recorded');
     // ── Reported updates: the space changed on the ground ───
     case 'REPORT_UPDATE': {
-      const n = { ...s, seq: s.seq + 1, updateReports: [{ id: `up-${s.seq}`, spaceId: a.spaceId, by: a.userId, date: today(), text: a.text, photos: a.photos, status: 'pending' }, ...s.updateReports] };
-      return toast(n, 'Update reported — a moderator will check it');
+      const n = { ...s, seq: s.seq + 1, updateReports: [{ id: `up-${s.seq}`, spaceId: a.spaceId, by: a.userId, date: today(), text: a.text, photos: a.photos, status: 'pending', contestId: a.contestId || null }, ...s.updateReports] };
+      return toast(n, a.contestId ? 'Build reported — a moderator will confirm it and mark the space redesigned' : 'Update reported — a moderator will check it');
     }
     case 'RESOLVE_UPDATE': {
       const r = s.updateReports.find((x) => x.id === a.id);
@@ -402,6 +468,17 @@ function reducer(s, a) {
           redesigns: n.redesigns.map((x) => (x.spaceId === sp.id && !x.archived ? { ...x, archived: round.date } : x)),
           models: n.models.map((m) => (m.spaceId === sp.id && !m.archived ? { ...m, archived: round.date } : m)),
         };
+        // Round 23: a build of a contest's winning design marks the space Redesigned.
+        const c = r.contestId && s.contests.find((x) => x.id === r.contestId);
+        const won = c && c.entries.find((e) => e.id === c.winner);
+        if (won) {
+          n = {
+            ...n,
+            spaces: mapById(n.spaces, sp.id, (x) => ({ ...x, redesigned: { date: round.date, contestId: c.id, entryId: won.id, title: won.title, architectId: won.architectId } })),
+            contests: mapById(n.contests, c.id, (x) => ({ ...x, plans: [...(x.plans || []).map((p) => ({ ...p, done: true })), { when: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }), text: 'Built on site. The space is marked Redesigned and a new round of experiences has started.', done: true }] })),
+          };
+          n = notify(n, won.architectId, 'contest', `Your winning design “${won.title}” has been built. “${sp.name}” is now marked Redesigned.`, `/space/${sp.id}`);
+        }
       }
       n = notify(n, r.by, 'points', a.ok ? `Your update to “${sp.name}” was confirmed. Past contributions are now archived.` : `Your update to “${sp.name}” wasn’t confirmed.`, `/space/${sp.id}`);
       return toast(n, a.ok ? 'Update confirmed — past contributions archived' : 'Update not confirmed');

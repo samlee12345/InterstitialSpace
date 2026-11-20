@@ -200,6 +200,28 @@ been added. Use it to click through long forms quickly in the demo.
   timeline), on the contest page and on the space page.
 - **Map pins** are plain: solid for approved spaces, dashed and hollow for
   pending ones. Space cards show votes, redesigns and photos.
+- **Round 23: Jawahar Kala Kendra walkthrough.** Demo controls has a
+  Walkthrough tab. "Start the walkthrough" resets the demo data without the
+  kund and puts you on the map as a visitor; 15 steps then take it through
+  sign-up, documenting it, approval, the spatial diagram, experiences and
+  votes, a contest request, team approval, round 1 entries, the shortlist,
+  full proposals, the winner, the build, Redesigned plus archive, and the
+  first experience of the new round. Each step names who does it, has an
+  "Open as …" button (switches role and page) and ticks itself off from the
+  demo state. Demo shortcuts stand in for people not in the room: two other
+  reviewers, other members' experiences and votes, the platform team, other
+  architects' concepts and proposals, and the round deadlines.
+  Demo uploads: Document a space has "Use the Jawahar Kala Kendra photo"
+  (real photo and location, 31 m area) and "Fill with Jawahar Kala Kendra
+  details"; Upload a spatial diagram on the kund adds the real drawing. Data
+  in src/demo/jkk.js; panel in src/demo/Walkthrough.jsx.
+  Three flow gaps are closed for any contest: Hosted contests has
+  "Demo · Team approves" for a request under review (it becomes a live
+  contest); judging has "Demo · Skip to the round 1 deadline"; and once a
+  winner is picked, the co-host can "Report that it's been built". When a
+  moderator confirms that report, the space is marked Redesigned (badge,
+  plus "built from … by …, winner of the contest"), its old round moves to
+  Archived and votes reset.
 - **Round 22: Jawahar Kala Kendra kund (/space/s16).** A real place, set up
   accurately for the demo: the open-to-sky central square (the Sun square,
   used as the open-air theatre, Madhyavarti) of Charles Correa's nine-square

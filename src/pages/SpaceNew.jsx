@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
+import { JKK_FIELDS, JKK_PHOTO, JKK_POINT, JKK_SHAPE } from '../demo/jkk.js';
 import { Badge, Button, FormActions, Icon, ImageBox, Input, Modal, Page, RoleGate, Select, Steps } from '../components/ui.jsx';
 import { typeLabel } from '../components/domain.jsx';
 import { useChoices } from '../design/choices.js';
@@ -164,15 +165,16 @@ export function areaM2(shape) {
 const Req = () => (<><span className="req" aria-hidden="true"> *</span><span className="visually-hidden"> (required)</span></>);
 
 // ── Photos, with hover-to-delete and the location check ──
-function PhotoPicker({ photos, setPhotos, geotag, point, error, compact }) {
+function PhotoPicker({ photos, setPhotos, geotag, point, error, compact, onJkk }) {
   const add = () => setPhotos([...photos, `ph-${Date.now()}-${photos.length}`]);
+  const addJkk = () => { if (!photos.includes(JKK_PHOTO.id)) setPhotos([JKK_PHOTO.id, ...photos]); onJkk?.(); };
   return (
     <div className="stack">
       {!compact && <p className="note small">Tip: include a person in the frame. It gives the AI a sense of scale for the spatial diagram. 3D scans: in the mobile app you’ll be able to scan the space with your phone and add it here.</p>}
       <div className={`photo-grid ${compact ? 'photo-grid-compact' : ''}`}>
         {photos.map((id, i) => (
           <div key={id} className="photo-tile">
-            <ImageBox label={`Photo ${i + 1}`} />
+            <ImageBox label={`Photo ${i + 1}`} src={id === JKK_PHOTO.id ? JKK_PHOTO.src : undefined} alt={id === JKK_PHOTO.id ? JKK_PHOTO.alt : undefined} />
             <button type="button" className="photo-del" onClick={() => setPhotos(photos.filter((p) => p !== id))} aria-label={`Delete photo ${i + 1}`}>Delete</button>
           </div>
         ))}
@@ -185,6 +187,13 @@ function PhotoPicker({ photos, setPhotos, geotag, point, error, compact }) {
           {!compact && <span className="xs muted">From your library</span>}
         </button>
       </div>
+      {!compact && !photos.includes(JKK_PHOTO.id) && (
+        <div>
+          <button type="button" className="demo-btn demo-btn-inline" onClick={addJkk}>
+            <span className="demo-btn-tag" aria-hidden="true">Demo</span> Use the Jawahar Kala Kendra photo
+          </button>
+        </div>
+      )}
       {!compact && photos.length > 0 && (geotag ? (
         <p className="small" role="status">Location found in your photos: taken {point.label} ({point.lat.toFixed(4)}, {point.lng.toFixed(4)}).</p>
       ) : (
@@ -410,8 +419,10 @@ export default function SpaceNew() {
   const searchName = new URLSearchParams(useLocation().search).get('name') || '';
   const flow = ['inline', 'overlay', 'confirm', 'popover'].includes(createFlow) ? createFlow : 'popover';
   const [sameAsk, setSameAsk] = useState(null); // version D: "Same space" confirmation
-  const point = state.createNearby ? PHOTO_POINT.nearby : PHOTO_POINT.alone;
   const [photos, setPhotos] = useState([]);
+  // The Jawahar Kala Kendra demo photo carries its real location.
+  const jkk = photos.includes(JKK_PHOTO.id);
+  const point = jkk ? JKK_POINT : state.createNearby ? PHOTO_POINT.nearby : PHOTO_POINT.alone;
   const [photosDone, setPhotosDone] = useState(false); // version B: overlay finished
   const [overlayOpen, setOverlayOpen] = useState(flow === 'overlay');
   const [confirmOpen, setConfirmOpen] = useState(false); // version C
@@ -438,7 +449,7 @@ export default function SpaceNew() {
 
   const checkPhotos = () => {
     if (!photos.length) return 'Add at least one photo.';
-    if (!state.createGeotag) return 'These photos have no location data. Add photos taken with location on to continue.';
+    if (!state.createGeotag && !jkk) return 'These photos have no location data. Add photos taken with location on to continue.';
     return '';
   };
   const go = (n, check) => () => {
@@ -462,6 +473,7 @@ export default function SpaceNew() {
     const id = `s-${Date.now()}`;
     dispatch({
       type: 'CREATE_SPACE', id, userId: user.id, name: f.name.trim(), spaceType: f.type === 'other' ? f.customType.trim().toLowerCase() : f.type, photos: photos.length, scans: 0, fields: detailsDone(f), full: true,
+      photoMeta: photos.map((ph) => (ph === JKK_PHOTO.id ? { src: JKK_PHOTO.src, alt: JKK_PHOTO.alt } : null)),
       lat: point.lat, lng: point.lng, area: shape, areaM: Math.round(Math.sqrt(areaM2(shape) / Math.PI)), relations: liveRelations,
       questionnaire: { feelings: f.feelings, transition: f.transition || 'Not given', materiality: f.materiality.length ? f.materiality.join(', ') : 'Not given', sensory: f.sensory || 'Not given' },
       properties: { activity: f.activity || 'Not given', materials: f.materiality.length ? f.materiality.join(', ') : 'Not given', setting: f.materials || 'Not given', climate: 'Not given', authorship: 'Not given' },
@@ -490,7 +502,18 @@ export default function SpaceNew() {
       <p className="note small">You said this is the same space as <span className="bold">{merge.name}</span>. Your photos will be added to it as an experience, so the questionnaire is skipped.</p>
       <Input label={<>What is it like?<Req /></>} textarea value={f.mergeText} onChange={set('mergeText')} />
     </div>
-  ) : <Questionnaire f={f} set={set} />;
+  ) : (
+    <div className="stack">
+      {jkk && (
+        <div>
+          <button type="button" className="demo-btn demo-btn-inline" onClick={() => setF({ ...f, ...JKK_FIELDS })}>
+            <span className="demo-btn-tag" aria-hidden="true">Demo</span> Fill with Jawahar Kala Kendra details
+          </button>
+        </div>
+      )}
+      <Questionnaire f={f} set={set} />
+    </div>
+  );
   const review = (
     <div className="stack">
       <div className="card">
@@ -506,7 +529,7 @@ export default function SpaceNew() {
     </div>
   );
   const finalButton = <Button variant="primary" onClick={submit}>{merge ? 'Add to this space' : 'Submit space'}</Button>;
-  const photoStep = <PhotoPicker photos={photos} setPhotos={(p) => { setPhotos(p); setErr(''); }} geotag={state.createGeotag} point={point} error={err} />;
+  const photoStep = <PhotoPicker photos={photos} setPhotos={(p) => { setPhotos(p); setErr(''); }} geotag={state.createGeotag || jkk} point={point} error={err} onJkk={() => setShape(JKK_SHAPE)} />;
 
   let steps; let body; let actions;
   if (flow === 'overlay') {

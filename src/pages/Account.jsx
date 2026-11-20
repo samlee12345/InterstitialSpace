@@ -300,7 +300,7 @@ const HOST_STATUS = {
   closed: ['Winner announced', ''],
 };
 function HostedContests() {
-  const { state, user, isPaid, get } = useDemo();
+  const { state, user, isPaid, get, dispatch } = useDemo();
   const hosted = state.contests.filter((c) => c.coHostId === user.id);
   const requests = (state.contestRequests || []).filter((r) => r.hostId === user.id);
   if (!isPaid && !hosted.length && !requests.length) return null;
@@ -327,6 +327,11 @@ function HostedContests() {
                     {r.status === 'judging'
                       ? <Link to={`/contest/${r.id}/judge`} className="badge badge-solid badge-link">Ready to judge</Link>
                       : <Badge kind={HOST_STATUS[r.status][1]}>{HOST_STATUS[r.status][0]}</Badge>}
+                    {r.status === 'review' && (
+                      <button type="button" className="demo-btn demo-btn-inline" onClick={() => dispatch({ type: 'APPROVE_CONTEST_REQUEST', id: r.id })}>
+                        <span className="demo-btn-tag" aria-hidden="true">Demo</span> Team approves
+                      </button>
+                    )}
                   </td>
                   <td>{r.entries ?? '—'}</td>
                   <td>{r.prize}</td>
