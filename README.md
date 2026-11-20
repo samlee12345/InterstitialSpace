@@ -200,6 +200,14 @@ been added. Use it to click through long forms quickly in the demo.
   timeline), on the contest page and on the space page.
 - **Map pins** are plain: solid for approved spaces, dashed and hollow for
   pending ones. Space cards show votes, redesigns and photos.
+- **Round 29: Jawahar Kala Kendra photos.** 18 of Sam's photos of Jawahar
+  Kala Kendra (public/demo/jkk/, resized to 1000 px, location data removed)
+  are attached to the other members' experiences of the kund (Community
+  members 2 and 3, Architect B). They only appear once the kund exists: in
+  the seed, and in the walkthrough when the community step (or Fast forward)
+  adds those experiences. Experience thumbnails open a viewer with every
+  photo, Previous and Next; the third thumbnail shows "+N" over the photo.
+  Originals: 03 - Design Project/Demo assets/Jawahar Kala Kendra.
 - **Round 28.** The product name is written "reSpace". Select any step in
   Demo controls › Walkthrough to jump there: it starts over and plays every
   earlier step with the same actions the pages use, then lands you on the

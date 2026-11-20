@@ -1393,6 +1393,132 @@
           "onSite": true,
           "src": "demo/jkk-kund-steps.jpg",
           "alt": "A person reading on the red sandstone steps of the kund at Jawahar Kala Kendra, with the high sandstone wall behind"
+        },
+        {
+          "id": "s16-u-c2-ph1",
+          "credit": "u-c2",
+          "onSite": true,
+          "src": "demo/jkk/open-square-lawn.jpg",
+          "alt": "The open square at dusk: tiers of red sandstone steps on three sides, a lawn with a round patterned stone platform in the middle, people sitting on the steps"
+        },
+        {
+          "id": "s16-u-c2-ph2",
+          "credit": "u-c2",
+          "onSite": true,
+          "src": "demo/jkk/lane-to-court.jpg",
+          "alt": "A narrow lane between tall red walls opening onto a sunlit court where people sit on the ground"
+        },
+        {
+          "id": "s16-u-c2-ph3",
+          "credit": "u-c2",
+          "onSite": true,
+          "src": "demo/jkk/wall-at-sunset.jpg",
+          "alt": "The top of a red sandstone wall against a sunset sky, trees beyond"
+        },
+        {
+          "id": "s16-u-c3-ph1",
+          "credit": "u-c3",
+          "onSite": true,
+          "src": "demo/jkk/stair-court-shade.jpg",
+          "alt": "A narrow court with a stair along one wall, two people standing in the strip of shade at midday"
+        },
+        {
+          "id": "s16-u-c3-ph2",
+          "credit": "u-c3",
+          "onSite": true,
+          "src": "demo/jkk/stepped-walls.jpg",
+          "alt": "Stepped stair forms climbing the red walls of a court against a pale sky"
+        },
+        {
+          "id": "s16-u-c3-ph3",
+          "credit": "u-c3",
+          "onSite": true,
+          "src": "demo/jkk/stepped-parapet-window-grid.jpg",
+          "alt": "Stepped parapets and a small grid of square windows, a tall red pier in front"
+        },
+        {
+          "id": "s16-u-c3-ph4",
+          "credit": "u-c3",
+          "onSite": true,
+          "src": "demo/jkk/pier-round-box.jpg",
+          "alt": "A tall red pier with a round box projecting from it against the sky"
+        },
+        {
+          "id": "s16-u-c3-ph5",
+          "credit": "u-c3",
+          "onSite": true,
+          "src": "demo/jkk/wall-edge-sky.jpg",
+          "alt": "The edge of a high red wall cutting across the sky over a lower block"
+        },
+        {
+          "id": "s16-u-c3-ph6",
+          "credit": "u-c3",
+          "onSite": true,
+          "src": "demo/jkk/court-jaali-window.jpg",
+          "alt": "A small red court with a stone jaali window and a low step"
+        },
+        {
+          "id": "s16-u-a2-ph1",
+          "credit": "u-a2",
+          "onSite": true,
+          "src": "demo/jkk/court-from-above.jpg",
+          "alt": "Looking down into a court: stepped walls, a sunken opening and an external stair, the city and hills beyond"
+        },
+        {
+          "id": "s16-u-a2-ph2",
+          "credit": "u-a2",
+          "onSite": true,
+          "src": "demo/jkk/stair-beside-tower.jpg",
+          "alt": "An external stair rising beside a tall tower, louvred windows in the wall"
+        },
+        {
+          "id": "s16-u-a2-ph3",
+          "credit": "u-a2",
+          "onSite": true,
+          "src": "demo/jkk/zigzag-stairs.jpg",
+          "alt": "Stairs zigzagging up the walls of a small court"
+        },
+        {
+          "id": "s16-u-a2-ph4",
+          "credit": "u-a2",
+          "onSite": true,
+          "src": "demo/jkk/tower-round-projection.jpg",
+          "alt": "Looking up at a tower with a round projection, between two red walls"
+        },
+        {
+          "id": "s16-u-a2-ph5",
+          "credit": "u-a2",
+          "onSite": true,
+          "src": "demo/jkk/enclosed-court-doorway.jpg",
+          "alt": "An enclosed court with a doorway, small windows and a raised stone step"
+        },
+        {
+          "id": "s16-u-a2-ph6",
+          "credit": "u-a2",
+          "onSite": true,
+          "src": "demo/jkk/passage-into-court.jpg",
+          "alt": "A paved passage opening into a courtyard, with a wooden door and small windows"
+        },
+        {
+          "id": "s16-u-a2-ph7",
+          "credit": "u-a2",
+          "onSite": true,
+          "src": "demo/jkk/outer-wall-balcony.jpg",
+          "alt": "The outer sandstone wall with a projecting balcony box, a bare tree beside it"
+        },
+        {
+          "id": "s16-u-a2-ph8",
+          "credit": "u-a2",
+          "onSite": true,
+          "src": "demo/jkk/path-along-outer-wall.jpg",
+          "alt": "A stone-paved path along the tall outer wall, planting on the other side"
+        },
+        {
+          "id": "s16-u-a2-ph9",
+          "credit": "u-a2",
+          "onSite": true,
+          "src": "demo/jkk/gap-between-walls.jpg",
+          "alt": "Two tall red walls frame a gap, with steps up to a white building beyond"
         }
       ],
       "questionnaire": {
@@ -2996,7 +3122,78 @@
         "why": [
           "Underutilized"
         ]
-      }
+      },
+      "photoIds": [
+        "s16-u-a2-ph1",
+        "s16-u-a2-ph2",
+        "s16-u-a2-ph3",
+        "s16-u-a2-ph4",
+        "s16-u-a2-ph5",
+        "s16-u-a2-ph6",
+        "s16-u-a2-ph7",
+        "s16-u-a2-ph8",
+        "s16-u-a2-ph9"
+      ]
+    },
+    {
+      "id": "cm16",
+      "spaceId": "s16",
+      "userId": "u-c2",
+      "onSite": true,
+      "text": "Came for an evening performance. Every step was taken and people stood along the top edge.",
+      "answers": {
+        "use": "Became a gathering spot",
+        "feel": [
+          "Busy",
+          "Welcoming"
+        ],
+        "senses": [
+          "Noisy"
+        ],
+        "access": "Some difficulty",
+        "fix": "Shade",
+        "need": 7,
+        "why": [
+          "Underutilized"
+        ]
+      },
+      "photoIds": [
+        "s16-u-c2-ph1",
+        "s16-u-c2-ph2",
+        "s16-u-c2-ph3"
+      ],
+      "date": "2026-11-12"
+    },
+    {
+      "id": "cm17",
+      "spaceId": "s16",
+      "userId": "u-c3",
+      "onSite": true,
+      "text": "At midday it is empty and the stone is too hot to sit on. It needs shade if it is going to be used outside events.",
+      "answers": {
+        "use": "Just passed through",
+        "feel": [
+          "Exposed"
+        ],
+        "senses": [
+          "Too hot"
+        ],
+        "access": "Easy",
+        "fix": "Shade",
+        "need": 8,
+        "why": [
+          "Unused"
+        ]
+      },
+      "photoIds": [
+        "s16-u-c3-ph1",
+        "s16-u-c3-ph2",
+        "s16-u-c3-ph3",
+        "s16-u-c3-ph4",
+        "s16-u-c3-ph5",
+        "s16-u-c3-ph6"
+      ],
+      "date": "2026-11-13"
     }
   ],
   "coopDecisions": [

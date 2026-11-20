@@ -420,15 +420,7 @@ function Experience({ space }) {
                 <div><dt>Comments</dt><dd>{c.text}</dd></div>
               </dl>
             </div>
-            {c.photoIds?.length > 0 && (
-              <div className="exp-photos" aria-label={`${c.photoIds.length} photos`}>
-                {c.photoIds.slice(0, 3).map((id, i) => (
-                  <div key={id} className="exp-photo">
-                    {(() => { const ph = space.photos.find((p) => p.id === id); return <ImageBox label={i === 2 && c.photoIds.length > 3 ? `+${c.photoIds.length - 2}` : 'Photo'} shape="square" src={i === 2 && c.photoIds.length > 3 ? undefined : ph?.src} alt={ph?.alt} />; })()}
-                  </div>
-                ))}
-              </div>
-            )}
+            {c.photoIds?.length > 0 && <ExpPhotos photos={c.photoIds.map((id) => space.photos.find((p) => p.id === id) || { id })} by={c.userId} />}
           </li>
         ))}
         {posts.length === 0 && <li className="muted">No experiences yet. Be the first to add one.</li>}
@@ -505,6 +497,40 @@ function RelatedSpaces({ space }) {
         </div>
       )}
     </section>
+  );
+}
+
+// An experience's photos: three thumbnails (the third shows "+N" over it when there are
+// more); selecting one opens them full size, one at a time (round 29).
+function ExpPhotos({ photos, by }) {
+  const { get } = useDemo();
+  const [open, setOpen] = useState(null);
+  const more = photos.length > 3 ? photos.length - 2 : 0;
+  const ph = open === null ? null : photos[open];
+  const step = (d) => setOpen((open + d + photos.length) % photos.length);
+  return (
+    <>
+      <div className="exp-photos" aria-label={`${photos.length} photos`}>
+        {photos.slice(0, 3).map((p, i) => (
+          <button key={p.id} type="button" className="exp-photo" onClick={() => setOpen(i)} aria-label={i === 2 && more ? `See all ${photos.length} photos` : `Open photo ${i + 1}${p.alt ? `: ${p.alt}` : ''}`}>
+            <ImageBox label="Photo" shape="square" src={p.src} alt="" />
+            {i === 2 && more > 0 && <span className="exp-photo-more" aria-hidden="true">+{more}</span>}
+          </button>
+        ))}
+      </div>
+      {ph && (
+        <Modal title={`Photo ${open + 1} of ${photos.length}`} onClose={() => setOpen(null)} wide>
+          <div className="photo-view"><ImageBox label={`Photo ${open + 1}`} src={ph.src} alt={ph.alt} fit="contain" /></div>
+          <p className="small muted">{ph.alt ? `${ph.alt}. ` : ''}By {get.user(by)?.name || 'a member'}.</p>
+          {photos.length > 1 && (
+            <FormActions>
+              <Button onClick={() => step(-1)}>Previous</Button>
+              <Button onClick={() => step(1)}>Next</Button>
+            </FormActions>
+          )}
+        </Modal>
+      )}
+    </>
   );
 }
 

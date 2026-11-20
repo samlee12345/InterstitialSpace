@@ -269,7 +269,11 @@ main:focus { outline: none; }
 .summary-grid dd { margin: 0; }
 .experience { display: flex; gap: var(--space-4); align-items: flex-start; }
 .exp-photos { display: flex; gap: var(--space-1); flex: 0 0 auto; }
-.exp-photo { width: var(--width-thumb); }
+.exp-photo { width: var(--width-thumb); position: relative; padding: 0; border: 0; background: none; cursor: zoom-in; }
+.exp-photo:focus-visible { outline: var(--border-thick) solid var(--color-action); outline-offset: 2px; }
+.exp-photo-more { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--color-overlay); color: var(--color-text-inverse); font-weight: var(--weight-bold); font-size: var(--text-lg); }
+.photo-view { height: min(70vh, 40rem); }
+.photo-view .imgbox { height: 100%; }
 .exp-photo .imgbox span { border: 0; background: transparent; padding: 0; }
 
 /* Contest card: the whole card opens the contest */

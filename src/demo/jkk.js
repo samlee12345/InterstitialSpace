@@ -37,6 +37,38 @@ export const JKK_FIELDS = {
 };
 
 // Experiences from other members (the "lots of votes" step).
+// Round 29: Sam's own photos of Jawahar Kala Kendra (public/demo/jkk/, resized, location
+// data removed), attached to the other members' experiences. They only appear once the
+// kund exists: with its seeded experiences, or in the walkthrough when the community
+// step adds them.
+const P = (file, alt) => ({ src: `demo/jkk/${file}.jpg`, alt });
+export const JKK_EXPERIENCE_PHOTOS = {
+  'u-c2': [
+    P('open-square-lawn', 'The open square at dusk: tiers of red sandstone steps on three sides, a lawn with a round patterned stone platform in the middle, people sitting on the steps'),
+    P('lane-to-court', 'A narrow lane between tall red walls opening onto a sunlit court where people sit on the ground'),
+    P('wall-at-sunset', 'The top of a red sandstone wall against a sunset sky, trees beyond'),
+  ],
+  'u-c3': [
+    P('stair-court-shade', 'A narrow court with a stair along one wall, two people standing in the strip of shade at midday'),
+    P('stepped-walls', 'Stepped stair forms climbing the red walls of a court against a pale sky'),
+    P('stepped-parapet-window-grid', 'Stepped parapets and a small grid of square windows, a tall red pier in front'),
+    P('pier-round-box', 'A tall red pier with a round box projecting from it against the sky'),
+    P('wall-edge-sky', 'The edge of a high red wall cutting across the sky over a lower block'),
+    P('court-jaali-window', 'A small red court with a stone jaali window and a low step'),
+  ],
+  'u-a2': [
+    P('court-from-above', 'Looking down into a court: stepped walls, a sunken opening and an external stair, the city and hills beyond'),
+    P('stair-beside-tower', 'An external stair rising beside a tall tower, louvred windows in the wall'),
+    P('zigzag-stairs', 'Stairs zigzagging up the walls of a small court'),
+    P('tower-round-projection', 'Looking up at a tower with a round projection, between two red walls'),
+    P('enclosed-court-doorway', 'An enclosed court with a doorway, small windows and a raised stone step'),
+    P('passage-into-court', 'A paved passage opening into a courtyard, with a wooden door and small windows'),
+    P('outer-wall-balcony', 'The outer sandstone wall with a projecting balcony box, a bare tree beside it'),
+    P('path-along-outer-wall', 'A stone-paved path along the tall outer wall, planting on the other side'),
+    P('gap-between-walls', 'Two tall red walls frame a gap, with steps up to a white building beyond'),
+  ],
+};
+
 export const JKK_COMMUNITY = [
   { userId: 'u-c2', onSite: true, text: 'Came for an evening performance. Every step was taken and people stood along the top edge.', answers: { use: 'Became a gathering spot', feel: ['Busy', 'Welcoming'], senses: ['Noisy'], access: 'Some difficulty', fix: 'Shade', need: 7, why: ['Underutilized'] } },
   { userId: 'u-c3', onSite: true, text: 'At midday it is empty and the stone is too hot to sit on. It needs shade if it is going to be used outside events.', answers: { use: 'Just passed through', feel: ['Exposed'], senses: ['Too hot'], access: 'Easy', fix: 'Shade', need: 8, why: ['Unused'] } },

@@ -2,6 +2,7 @@
 // Everything here is PLACEHOLDER content for the class demo.
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { JKK_COMMUNITY, JKK_EXPERIENCE_PHOTOS } from '../src/demo/jkk.js';
 
 const out = fileURLToPath(new URL('../src/data/seed.json', import.meta.url));
 
@@ -396,6 +397,17 @@ seed.contests.find((c) => c.id === 'c2').entries.push({ id: 'e14', architectId: 
       text: 'During Lokrang the steps fill completely. With that many people the 8 m walls trap the heat and sound; most of the year it sits empty. It needs shade and air, not a new plan.',
       answers: { use: 'Became a gathering spot', feel: ['Busy'], senses: ['Noisy', 'Too hot'], access: 'Some difficulty', fix: 'Shade', keep: 'The stepped seating facing the centre', need: 6, why: ['Underutilized'] } },
   );
+}
+// Round 29: the other members' experiences of the kund come with Sam's photos of
+// Jawahar Kala Kendra (the same ones the walkthrough adds after the kund is documented).
+{
+  const k = seed.spaces.find((x) => x.id === 's16');
+  const photosOf = (userId) => (JKK_EXPERIENCE_PHOTOS[userId] || []).map((p, j) => ({ id: `s16-${userId}-ph${j + 1}`, credit: userId, onSite: true, ...p }));
+  ['u-c2', 'u-c3', 'u-a2'].forEach((u) => { k.photos.push(...photosOf(u)); });
+  seed.comments.find((c) => c.id === 'cm15').photoIds = photosOf('u-a2').map((p) => p.id);
+  JKK_COMMUNITY.filter((x) => x.userId !== 'u-a2').forEach((x, i) => {
+    seed.comments.push({ id: `cm${16 + i}`, spaceId: 's16', ...x, photoIds: photosOf(x.userId).map((p) => p.id), date: '2026-11-1' + (i + 2) });
+  });
 }
 // Round 25: the gallery next to the kund (demo persona).
 {

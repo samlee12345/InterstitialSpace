@@ -1565,7 +1565,16 @@ def run():
         expect(pg.locator(".space-head-photo img")).to_have_attribute("src", re.compile("demo/jkk-kund-steps.jpg$"))
         pg.wait_for_function("() => { const i = document.querySelector('.space-head-photo img'); return i && i.complete && i.naturalWidth > 0; }")
         expect(pg.get_by_text("Charles Correa (architect)")).to_be_visible()
-        expect(pg.locator(".exp-photo img").first).to_have_attribute("src", re.compile("jkk-kund-steps"))
+        expect(pg.locator(".exp-photo img[src*='jkk-kund-steps']")).to_have_count(1)
+        # round 29: the other members' experiences carry Sam's photos of the place
+        expect(pg.locator(".exp-photo img[src*='demo/jkk/']").first).to_be_visible()
+        assert pg.locator(".exp-photo img[src*='demo/jkk/']").count() >= 6
+        pg.get_by_role("button", name="See all 9 photos").click()
+        expect(pg.get_by_role("dialog")).to_contain_text("Photo 3 of 9")
+        pg.get_by_role("dialog").get_by_role("button", name="Next").click()
+        expect(pg.get_by_role("dialog")).to_contain_text("Photo 4 of 9")
+        expect(pg.get_by_role("dialog").locator("img")).to_have_attribute("src", re.compile("demo/jkk/"))
+        pg.keyboard.press("Escape")
         expect(pg.get_by_text("Red sandstone steps and walls, white marble coping")).to_be_visible()
         pg.screenshot(path="/home/claude/r22_space.png", full_page=True)
         pg.get_by_role("tab", name=re.compile("^Spatial diagrams")).click()
@@ -1634,6 +1643,7 @@ def run():
         # 1 document
         sid = document()
         expect(pg.locator(".space-head-photo img")).to_have_attribute("src", re.compile("jkk-kund-steps"))
+        expect(pg.locator("img[src*='demo/jkk/']")).to_have_count(0)   # round 29: not before others add experiences
         shot("01_pending")
 
         # 2 approve
@@ -1655,6 +1665,14 @@ def run():
         expect(pg).to_have_url(re.compile(f"#/space/{sid}\\?tab=diagram"))
         expect(pg.locator(".diagram-real img")).to_have_attribute("src", re.compile("jkk-spatial-diagram"))
         shot("02_fast_forward")
+        pg.get_by_role("tab", name=re.compile("^Experiences")).click()
+        assert pg.locator(".exp-photo img[src*='demo/jkk/']").count() >= 6
+        pg.get_by_role("button", name="See all 9 photos").click()
+        expect(pg.get_by_role("dialog")).to_contain_text("Photo 3 of 9")
+        pg.get_by_role("dialog").get_by_role("button", name="Next").click()
+        expect(pg.get_by_role("dialog")).to_contain_text("Photo 4 of 9")
+        expect(pg.get_by_role("dialog").locator("img")).to_have_attribute("src", re.compile("demo/jkk/"))
+        pg.keyboard.press("Escape")   # round 29: others' photos arrive with their experiences
         pg.get_by_role("tab", name=re.compile("^3D model")).click()
         expect(pg.locator("main")).not_to_contain_text("No 3D model yet")
         pg.get_by_role("tab", name=re.compile("^Experiences")).click()

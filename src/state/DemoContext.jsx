@@ -2,7 +2,7 @@ import { createContext, useContext, useMemo, useReducer } from 'react';
 import { useLocation } from 'react-router-dom';
 import seed from '../data/seed.json';
 import { POINTS, interactPoints, uploadPoints, fmtPoints } from '../lib/points.js';
-import { JKK_COMMUNITY, JKK_CONTEST, JKK_DIAGRAM, JKK_DIAGRAM_FILE, JKK_ENTRIES, JKK_EXTRA_VOTES, JKK_FIELDS, JKK_NAME, JKK_PHOTO, JKK_POINT, JKK_SHAPE, isJkk } from '../demo/jkk.js';
+import { JKK_COMMUNITY, JKK_CONTEST, JKK_DIAGRAM, JKK_DIAGRAM_FILE, JKK_ENTRIES, JKK_EXPERIENCE_PHOTOS, JKK_EXTRA_VOTES, JKK_FIELDS, JKK_NAME, JKK_PHOTO, JKK_POINT, JKK_SHAPE, isJkk } from '../demo/jkk.js';
 
 const plusDays = (d) => new Date(Date.now() + d * 86400000).toISOString().slice(0, 10);
 const money = (v) => `$${Number(v).toLocaleString('en-US')}`;
@@ -88,11 +88,13 @@ function reducer(s, a) {
     case 'DEMO_COMMUNITY': {
       const fresh2 = JKK_COMMUNITY.filter((x) => !s.comments.some((c) => c.spaceId === a.spaceId && c.userId === x.userId && !c.archived));
       const votes = fresh2.filter((x) => x.answers.need >= 6).length + JKK_EXTRA_VOTES;
+      // Round 29: each member's experience comes with their photos of the place.
+      const photosOf = (x) => (JKK_EXPERIENCE_PHOTOS[x.userId] || []).map((p, j) => ({ id: `${a.spaceId}-${x.userId}-ph${j + 1}`, credit: x.userId, onSite: true, ...p }));
       const n = {
         ...s,
         seq: s.seq + fresh2.length + 1,
-        comments: [...s.comments, ...fresh2.map((x, i) => ({ id: `cm-${s.seq + i}`, spaceId: a.spaceId, ...x, photoIds: [], date: today() }))],
-        spaces: mapById(s.spaces, a.spaceId, (x) => ({ ...x, votes: x.votes + votes })),
+        comments: [...s.comments, ...fresh2.map((x, i) => ({ id: `cm-${s.seq + i}`, spaceId: a.spaceId, ...x, photoIds: photosOf(x).map((p) => p.id), date: today() }))],
+        spaces: mapById(s.spaces, a.spaceId, (x) => ({ ...x, votes: x.votes + votes, photos: [...x.photos, ...fresh2.flatMap(photosOf).filter((p) => !x.photos.some((q) => q.id === p.id))] })),
       };
       return toast(n, `${fresh2.length} more experiences and ${votes} votes to redesign`);
     }
