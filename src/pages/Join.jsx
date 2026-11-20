@@ -66,8 +66,8 @@ function AccountDetails({ id, initial, emailLocked, onDone, onBack, submitLabel 
       <Input label={<>Create password<Req /></>} type="password" value={f.password} onChange={set('password')} autoComplete="new-password" hint="At least 8 characters." error={err.password} />
       <Input label={<>Confirm password<Req /></>} type="password" value={f.confirm} onChange={set('confirm')} autoComplete="new-password" error={err.confirm} />
       <div className="field-row">
-        <Input label="Website (optional)" inputMode="url" value={f.website} onChange={set('website')} placeholder="yourstudio.com" autoComplete="url" />
-        <Input label="LinkedIn (optional)" inputMode="url" value={f.linkedin} onChange={set('linkedin')} placeholder="linkedin.com/in/your-name" />
+        <Input label="Website" optional inputMode="url" value={f.website} onChange={set('website')} placeholder="yourstudio.com" autoComplete="url" />
+        <Input label="LinkedIn" optional inputMode="url" value={f.linkedin} onChange={set('linkedin')} placeholder="linkedin.com/in/your-name" />
       </div>
       <Actions>
         <Button onClick={onBack}>Back</Button>
@@ -90,7 +90,7 @@ function Architect({ status, onBack }) {
   const [err, setErr] = useState('');
   const [done, setDone] = useState(false);
   const reg = REGISTERS[f.country];
-  const steps = licensed ? ['Diploma', 'Licence', 'Identity document', 'Your account'] : ['Diploma', 'Licence (optional)', 'Your account'];
+  const steps = licensed ? ['Diploma', 'Licence', 'Identity document', 'Your account'] : ['Diploma', 'Licence', 'Your account'];
   const account = steps.length - 1;
   const set = (k) => (e) => { setF({ ...f, [k]: e.target.value }); if (['country', 'name', 'number'].includes(k)) setLookup('idle'); };
   const go = (n) => { setErr(''); setStep(n); window.scrollTo(0, 0); };
@@ -148,7 +148,7 @@ function Architect({ status, onBack }) {
         <div className="stack">
           <p>If you’ve applied for your licence or are sitting the exam, add the number and we’ll check it when your licence comes through. You can skip this and add it later from your profile.</p>
           <Select label="Country you’re getting licensed in" value={f.country} onChange={set('country')} options={Object.keys(REGISTERS)} />
-          <Input label="Application or exam number (optional)" value={f.number} onChange={set('number')} />
+          <Input label="Application or exam number" optional value={f.number} onChange={set('number')} />
           <p className="small muted">Until your licence is confirmed your profile shows “Licence pending”. You can publish redesigns and enter contests open to students.</p>
           <Actions>
             <Button onClick={() => go(0)}>Back</Button>

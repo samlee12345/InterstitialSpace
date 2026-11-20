@@ -694,3 +694,7 @@ body.demo-open .demo-tray { right: calc(var(--width-demo-drawer) + var(--space-3
 .page.narrow.form-full .field, .page.narrow.form-full .drop, .page.narrow.form-full fieldset, .page.narrow.form-full .card p, .page.narrow.form-full .card dd { max-width: none; }
 .form-full .space-picker-body { grid-template-columns: minmax(16rem, 2fr) minmax(0, 3fr); }
 .form-full .map.map-small { min-height: 26rem; }
+
+/* Inline "Optional" / "Required" marker after a question, in the hint style (round 19). */
+.opt { font-size: var(--text-xs); font-weight: normal; color: var(--color-text-muted); margin-left: var(--space-1); }
+.check-inline { display: inline-flex; align-items: center; gap: var(--space-2); align-self: end; padding-bottom: var(--space-2); }

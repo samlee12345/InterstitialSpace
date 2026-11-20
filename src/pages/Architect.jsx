@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
-import { Badge, Button, Empty, FileDrop, ImageBox, Input, Modal, Page, RoleGate, Select } from '../components/ui.jsx';
-import { RedesignCard, typeLabel } from '../components/domain.jsx';
+import { Badge, Button, Empty, FileDrop, ImageBox, Input, Modal, Page, RoleGate, Select, TabPanel, Tabs } from '../components/ui.jsx';
+import { Contributions, RedesignCard, contributionCounts, typeLabel } from '../components/domain.jsx';
 import { POINTS, fmtPoints, surplusShare } from '../lib/points.js';
 
 function EditModal({ redesign, onClose }) {
@@ -168,10 +168,14 @@ export function Portfolio() {
 
 export function ArchitectPage() {
   const { id } = useParams();
+  const [params, setParams] = useSearchParams();
+  const tab = params.get('tab') === 'contributions' ? 'contributions' : 'redesigns';
   const { state, get, isMember, rankOf, dispatch } = useDemo();
   const a = get.user(id);
   if (!a || a.role !== 'architect') return <Page narrow><Empty title="Architect not found"><div><Button to="/ranking">See the ranking</Button></div></Empty></Page>;
   const list = state.redesigns.filter((r) => r.architectId === id && r.published && !r.takenDown && !r.archived);
+  const c = contributionCounts(state, a.id);
+  const contribTotal = c.documented.length + c.experiences.length;
   return (
     <Page tag="clickable">
       <header className="stack-sm">
@@ -186,18 +190,25 @@ export function ArchitectPage() {
           </ul>
         )}
       </header>
-      {list.length === 0 && <Empty title="No published redesigns"><p>This architect has nothing for sale right now.</p></Empty>}
-      {isMember ? (
-        <div className="grid">{list.map((r) => <RedesignCard key={r.id} redesign={r} />)}</div>
-      ) : list.length > 0 && (
-        <div className="teaser">
-          <div className="grid">{list.map((r) => <RedesignCard key={r.id} redesign={r} blurred />)}</div>
-          <div className="teaser-cta"><div>
-            <h3>Redesigns are visible to members</h3>
-            <Button variant="primary" onClick={() => dispatch({ type: 'OPEN_SIGNUP', reason: 'redesigns' })}>See redesigns</Button>
-          </div></div>
-        </div>
-      )}
+      <Tabs idBase="architect" tabs={[{ id: 'redesigns', label: `Redesigns (${list.length})` }, { id: 'contributions', label: `Contributions (${contribTotal})` }]} active={tab} onChange={(t) => setParams({ tab: t }, { replace: true })} />
+      <TabPanel idBase="architect" id={tab}>
+        {tab === 'redesigns' ? (
+          <div className="stack">
+        {list.length === 0 && <Empty title="No published redesigns"><p>This architect has nothing for sale right now.</p></Empty>}
+        {isMember ? (
+          <div className="grid">{list.map((r) => <RedesignCard key={r.id} redesign={r} />)}</div>
+        ) : list.length > 0 && (
+          <div className="teaser">
+            <div className="grid">{list.map((r) => <RedesignCard key={r.id} redesign={r} blurred />)}</div>
+            <div className="teaser-cta"><div>
+              <h3>Redesigns are visible to members</h3>
+              <Button variant="primary" onClick={() => dispatch({ type: 'OPEN_SIGNUP', reason: 'redesigns' })}>See redesigns</Button>
+            </div></div>
+          </div>
+        )}
+          </div>
+        ) : <Contributions userId={a.id} headingLevel={2} />}
+      </TabPanel>
     </Page>
   );
 }

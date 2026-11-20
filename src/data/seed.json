@@ -1895,6 +1895,9 @@
       "userId": "u-c2",
       "text": "We sit here every evening. It needs shade in May and June.",
       "onSite": true,
+      "answers": {
+        "use": "Became a gathering spot"
+      },
       "photoIds": [
         "s1-ph4",
         "s1-ph9"
@@ -1907,6 +1910,9 @@
       "userId": "u-c3",
       "text": "The lower steps are slippery after rain.",
       "onSite": false,
+      "answers": {
+        "use": "People stop a while"
+      },
       "photoIds": [
         "s1-ph5",
         "s1-ph10"
@@ -1919,6 +1925,9 @@
       "userId": "u-a2",
       "text": "The landing proportions are worth keeping exactly as they are.",
       "onSite": true,
+      "answers": {
+        "use": "Became a gathering spot"
+      },
       "photoIds": [
         "s1-ph1",
         "s1-ph6",
@@ -1933,6 +1942,7 @@
       "text": "Children play here after school. Please keep it open to the lane.",
       "onSite": true,
       "answers": {
+        "use": "Became a gathering spot",
         "need": 6,
         "why": [
           "Underutilized"
@@ -1958,6 +1968,7 @@
       "text": "A water tap would change everything.",
       "onSite": true,
       "answers": {
+        "use": "Became a gathering spot",
         "need": 8,
         "why": [
           "Underutilized"
@@ -1983,6 +1994,7 @@
       "text": "The proportions are good. It needs shade and a tap, not a new plan.",
       "onSite": true,
       "answers": {
+        "use": "People stop a while",
         "need": 4,
         "why": [],
         "fix": "Shade",
@@ -2003,6 +2015,7 @@
       "text": "Too hot to sit in after eleven. We use the lane instead.",
       "onSite": false,
       "answers": {
+        "use": "Just passed through",
         "need": 7,
         "why": [
           "Unused"
@@ -2037,6 +2050,9 @@
       "userId": "u-c3",
       "text": "Best place to watch the bazaar. Nowhere to sit that is not a step.",
       "onSite": true,
+      "answers": {
+        "use": "Became a gathering spot"
+      },
       "photoIds": [
         "s3-ph3",
         "s3-ph8"
@@ -2049,6 +2065,9 @@
       "userId": "u-c1",
       "text": "Too dark at night.",
       "onSite": false,
+      "answers": {
+        "use": "People stop a while"
+      },
       "photoIds": [
         "s3-ph1",
         "s3-ph6",
@@ -2062,6 +2081,9 @@
       "userId": "u-c2",
       "text": "People wait here for buses with no bench.",
       "onSite": true,
+      "answers": {
+        "use": "Just passed through"
+      },
       "photoIds": [
         "s4-ph1",
         "s4-ph6"
@@ -2074,6 +2096,9 @@
       "userId": "u-c1",
       "text": "This niche is used by a tea seller every morning.",
       "onSite": true,
+      "answers": {
+        "use": "Became a gathering spot"
+      },
       "photoIds": [
         "s8-ph1",
         "s8-ph6"
@@ -2086,6 +2111,9 @@
       "userId": "u-c2",
       "text": "The well platform is where the lane meets. It deserves attention.",
       "onSite": true,
+      "answers": {
+        "use": "Became a gathering spot"
+      },
       "photoIds": [
         "s10-ph4",
         "s10-ph9"

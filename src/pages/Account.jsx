@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
-import { Badge, Button, Choice, DemoOnly, Empty, FileDrop, FormActions, Icon, ImageBox, Input, Modal, Page, RoleGate, StatusBadges } from '../components/ui.jsx';
+import { Badge, Button, Choice, DemoOnly, Empty, FileDrop, FormActions, Icon, ImageBox, Input, Modal, Opt, Page, RoleGate, StatusBadges } from '../components/ui.jsx';
 import { Crumbs } from '../components/domain.jsx';
 import { surplusShare } from '../lib/points.js';
 import { POINTS, fmtPoints } from '../lib/points.js';
@@ -369,8 +369,8 @@ export function Profile() {
           <Input label="City" value={f.city} onChange={(e) => setF({ ...f, city: e.target.value })} autoComplete="address-level2" />
           <Input label="Country" value={f.country} onChange={(e) => setF({ ...f, country: e.target.value })} autoComplete="country-name" />
         </div>
-        <h3 className="h-xs">Links on your public profile</h3>
-        <p className="xs muted">Optional. Shown on your architect page and next to your experiences.</p>
+        <h3 className="h-xs">Links on your public profile<Opt /></h3>
+        <p className="xs muted">Shown on your architect page and next to your experiences.</p>
         <Input label="LinkedIn" value={f.linkedin} onChange={(e) => setF({ ...f, linkedin: e.target.value })} placeholder="linkedin.com/in/your-name" />
         <Input label="Instagram" value={f.instagram} onChange={(e) => setF({ ...f, instagram: e.target.value })} placeholder="@yourhandle" />
         <Input label="Website" inputMode="url" value={f.website} onChange={(e) => setF({ ...f, website: e.target.value })} placeholder="yourstudio.com" />
@@ -431,7 +431,7 @@ export function Removal() {
           <Input label="Your name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
           <Input label="Email" type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
           <FileDrop label="Deed or equivalent proof of ownership" files={f.deed} onChange={(deed) => setF({ ...f, deed })} samples={['deed-scan.pdf']} />
-          <Input label="Anything the team should know (optional)" textarea value={f.why} onChange={(e) => setF({ ...f, why: e.target.value })} />
+          <Input label="Anything the team should know" optional textarea value={f.why} onChange={(e) => setF({ ...f, why: e.target.value })} />
           {err && <span className="error" role="alert">{err}</span>}
           <FormActions><Button to={`/space/${space.id}`}>Cancel</Button><Button variant="primary" type="submit">Send removal request</Button></FormActions>
         </form>

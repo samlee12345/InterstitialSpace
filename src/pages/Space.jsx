@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { USE_OPTIONS, gatheringOf, gatheringSummary } from '../lib/gathering.js';
 import { useDemo } from '../state/DemoContext.jsx';
-import { Badge, Banner, Button, Choice, Empty, FileDrop, FormActions, Icon, ImageBox, Input, Mine, Modal, Page, Select, StatusBadges, Steps, TabPanel, Tabs } from '../components/ui.jsx';
-import { ContestPlans, RedesignCard, SpaceCard, UserLink, contestStatus, contestWinner, typeLabel } from '../components/domain.jsx';
+import { Badge, Banner, Button, Choice, Empty, FileDrop, FormActions, Icon, ImageBox, Input, Mine, Modal, Opt, Page, Select, StatusBadges, Steps, TabPanel, Tabs } from '../components/ui.jsx';
+import { ContestPlans, GatheringBadge, RedesignCard, SpaceCard, UserLink, contestStatus, contestWinner, typeLabel } from '../components/domain.jsx';
 import { Dropdown } from '../components/Shell.jsx';
 import { ReviewForm } from './Moderation.jsx';
 import { timeAgo } from '../lib/time.js';
@@ -221,13 +222,14 @@ function Redesigns({ space }) {
 // 3. Quick questions about what it's like
 // 4. Should it be redesigned? 0–10, and why
 // Short labels for each answer when an experience is shown on the space.
-const ANSWER_LABEL = { feel: 'How it feels', senses: 'Senses', access: 'Arriving and leaving', fix: 'Needs fixing most', keep: 'Should stay as it is' };
+const ANSWER_LABEL = { use: 'Pass through or gather', feel: 'How it feels', senses: 'Senses', access: 'Arriving and leaving', fix: 'Needs fixing most', keep: 'Should stay as it is' };
 export const EXPERIENCE_QUESTIONS = [
-  { id: 'feel', type: 'multi', legend: 'How does it feel to be here?', hint: 'Pick any that fit.', options: ['Calm', 'Welcoming', 'Busy', 'Cramped', 'Exposed', 'Unsafe'] },
-  { id: 'senses', type: 'multi', legend: 'Senses: what stands out?', hint: 'Pick any that fit.', options: ['Too hot', 'Good shade', 'Noisy', 'Quiet', 'Bad smell', 'Dark at night'] },
-  { id: 'access', type: 'single', legend: 'Arriving and leaving: how easy is it to get in and out?', options: ['Easy', 'Some difficulty', 'Hard'] },
+  { id: 'use', type: 'single', optional: true, legend: 'Do people pass through here, or stay?', hint: 'Shows designers which in-between places have become places to gather.', options: USE_OPTIONS },
+  { id: 'feel', type: 'multi', optional: true, legend: 'How does it feel to be here?', hint: 'Pick any that fit.', options: ['Calm', 'Welcoming', 'Busy', 'Cramped', 'Exposed', 'Unsafe'] },
+  { id: 'senses', type: 'multi', optional: true, legend: 'Senses: what stands out?', hint: 'Pick any that fit.', options: ['Too hot', 'Good shade', 'Noisy', 'Quiet', 'Bad smell', 'Dark at night'] },
+  { id: 'access', type: 'single', optional: true, legend: 'Arriving and leaving: how easy is it to get in and out?', options: ['Easy', 'Some difficulty', 'Hard'] },
   { id: 'fix', type: 'single', legend: 'What needs fixing most?', required: true, options: ['Shade', 'Seating', 'Lighting', 'Water', 'Drainage', 'Steps and access', 'Cleanliness', 'Nothing needs fixing'] },
-  { id: 'keep', type: 'text', legend: 'What should stay as it is?', hint: 'Optional.' },
+  { id: 'keep', type: 'text', optional: true, legend: 'What should stay as it is?' },
 ];
 export const REDESIGN_REASONS = ['Unused', 'Unsafe', 'Underutilized'];
 export const NEEDS_REDESIGN = 6; // 6–10 on the scale counts as "yes, redesign it"
@@ -238,7 +240,7 @@ function ChipGroup({ q, value, onChange }) {
   const toggle = (opt) => onChange(multi ? (selected.includes(opt) ? selected.filter((x) => x !== opt) : [...selected, opt]) : opt);
   return (
     <fieldset className="chips-field">
-      <legend>{q.legend}{q.required && <span className="muted"> (required)</span>}</legend>
+      <legend>{q.legend}{q.required ? <Opt>Required</Opt> : q.optional && <Opt />}</legend>
       {q.hint && <span className="xs muted">{q.hint}</span>}
       <div className="chips">
         {q.options.map((opt) => (
@@ -315,7 +317,7 @@ function ExperienceWizard({ space, mine, onClose, onPosted, initialPhotos = 0 })
           <p className="note small">{onSite ? 'Location confirmed: you’re at this space. Full points.' : 'Not confirmed on site. You’ll earn half points.'}</p>
           <Input label="Comments" textarea value={text} onChange={(e) => setText(e.target.value)} error={err} hint="How do you use this space? What is it like?" />
           <div className="field">
-            <span className="label">Photos (optional)</span>
+            <span className="label">Photos<Opt /></span>
             <div className="thumbs">{Array.from({ length: photos }, (_, i) => <ImageBox key={i} label={`${i + 1}`} shape="square" />)}</div>
             <div className="row">
               <Button onClick={() => setPhotos(photos + 1)}><Icon name="photo" />Take a photo</Button>
@@ -331,7 +333,7 @@ function ExperienceWizard({ space, mine, onClose, onPosted, initialPhotos = 0 })
         <div className="stack">
           <p className="small muted">Quick questions. Answers from everyone feed the summary on this space and show architects what to fix.</p>
           {EXPERIENCE_QUESTIONS.map((q) => (q.type === 'text' ? (
-            <Input key={q.id} label={q.legend} hint={q.hint} value={answers[q.id] || ''} onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })} />
+            <Input key={q.id} label={q.legend} hint={q.hint} optional={q.optional} value={answers[q.id] || ''} onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })} />
           ) : (
             <ChipGroup key={q.id} q={q} value={answers[q.id]} onChange={(v) => { setAnswers({ ...answers, [q.id]: v }); setErr(''); }} />
           )))}
@@ -381,6 +383,7 @@ function Experience({ space }) {
           <div><dt>Materials</dt><dd>{q.materiality}</dd></div>
           <div><dt>Senses</dt><dd>{q.sensory}</dd></div>
           <div><dt>How it’s used</dt><dd>{space.properties.activity}</dd></div>
+          <div><dt>Pass through or gather</dt><dd>{gatheringSummary(gatheringOf(space.id, state.comments))}</dd></div>
           <div><dt>Redesign need</dt><dd>{avg ? `${avg} out of 10, from ${scored.length} ${scored.length === 1 ? 'person' : 'people'}` : 'Not rated yet'}</dd></div>
         </dl>
       </div>
@@ -579,7 +582,7 @@ function DesignateDesigner({ space, onClose }) {
       {outside && (
         <>
           <Input label="Their name or studio" value={ext.name} onChange={(e) => { setExt({ ...ext, name: e.target.value }); setErr(''); }} error={err} />
-          <Input label="Website or email (optional)" value={ext.link} onChange={(e) => setExt({ ...ext, link: e.target.value })} hint="We’ll invite them to claim the credit." />
+          <Input label="Website or email" optional value={ext.link} onChange={(e) => setExt({ ...ext, link: e.target.value })} hint="We’ll invite them to claim the credit." />
         </>
       )}
       <Input label="How do you know? (for the moderator)" textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Our studio designed the steps in 2019; drawings available." />
@@ -612,7 +615,7 @@ function Header({ space, onReport, onDesignate, onModerate, onAddExperience, has
   const text = (
     <div className="space-head-text stack">
       <div className="stack-sm">
-        <div className="row"><Badge>{typeLabel(space.type)}</Badge><StatusBadges space={space} /><Mine userId={space.uploadedBy} /></div>
+        <div className="row"><Badge>{typeLabel(space.type)}</Badge><StatusBadges space={space} /><GatheringBadge space={space} /><Mine userId={space.uploadedBy} /></div>
         <h1>{space.name}</h1>
         {space.parentId && get.space(space.parentId) && <p className="small">Part of <Link to={`/space/${space.parentId}`}>{get.space(space.parentId).name}</Link></p>}
         <p className="small muted">

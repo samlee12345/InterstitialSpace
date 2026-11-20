@@ -180,7 +180,7 @@ function RedesignForm({ space, contestId: fromRoute }) {
           </fieldset>
           {!isEntry && (
             <Choice type="checkbox" checked={f.agency} onChange={(e) => setF({ ...f, agency: e.target.checked })} title="Let agencies and civic bodies contact me about buying expanded or exclusive implementation rights">
-              Price and terms are agreed between you and them, and you must be credited. Optional.
+              Price and terms are agreed between you and them, and you must be credited.
             </Choice>
           )}
           <section className="card stack terms-box" aria-labelledby="terms-h">
@@ -316,7 +316,7 @@ function DiagramForm({ space }) {
             </ul>
           )}
           <Collaborators value={collaborators} onChange={setCollaborators} />
-          <Input label="Notes on how it was measured (optional)" textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
+          <Input label="Notes on how it was measured" optional textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
           <Choice type="checkbox" checked={measured} onChange={(e) => { setMeasured(e.target.checked); setErr({ ...err, measured: undefined }); }} title={<>This drawing is measured on site or from a scan<Req /></>} />
           {err.measured && <span className="error" role="alert">{err.measured}</span>}
           <FormActions>

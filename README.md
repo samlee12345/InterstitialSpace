@@ -200,6 +200,18 @@ been added. Use it to click through long forms quickly in the demo.
   timeline), on the contest page and on the space page.
 - **Map pins** are plain: solid for approved spaces, dashed and hollow for
   pending ones. Space cards show votes, redesigns and photos.
+- **Round 19.** Add your experience asks "Do people pass through here, or
+  stay?" (Just passed through, People stop a while, Became a gathering spot).
+  The space summary tallies the answers; when half or more say "Became a
+  gathering spot" the space gets a "Gathering spot" badge on its page and
+  card, and Browse has a "Gathering spots only" filter, so designers can find
+  thresholds that grew into third places (logic in src/lib/gathering.js).
+  Optional questions and fields show an inline "Optional" marker after the
+  label (the Opt component, or `optional` on Field, Input and Select);
+  "(optional)" and "Optional." text is gone, and the one required quick
+  question shows "Required" the same way. The architect page has two tabs,
+  Redesigns and Contributions; Contributions is the same block as a member
+  profile (spaces documented, experiences, photos).
 - **Round 18.** Host a contest uses the full page width for every field,
   with a larger map beside the space list (the intro keeps a reading
   width). The location step of Add your experience offers two choices, with

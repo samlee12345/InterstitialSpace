@@ -97,11 +97,17 @@ export function StatusBadges({ space }) {
   );
 }
 
-export function Field({ label, hint, error, children }) {
+// Inline "Optional" marker beside a question or label, in the hint style.
+export function Opt({ children = 'Optional' }) {
+  // The leading space keeps the accessible name readable ("LinkedIn Optional").
+  return <>{' '}<span className="opt">{children}</span></>;
+}
+
+export function Field({ label, hint, error, optional, children }) {
   const id = useId();
   return (
     <div className="field">
-      <label htmlFor={id}>{label}</label>
+      <label htmlFor={id}>{label}{optional && <Opt />}</label>
       {typeof children === 'function' ? children(id) : children}
       {hint && <span className="small muted">{hint}</span>}
       {error && <span className="error" role="alert">{error}</span>}
@@ -110,9 +116,9 @@ export function Field({ label, hint, error, children }) {
 }
 
 // prefix: a fixed symbol inside the field, like "$", that stays while you type.
-export function Input({ label, hint, error, textarea, prefix, ...p }) {
+export function Input({ label, hint, error, optional, textarea, prefix, ...p }) {
   return (
-    <Field label={label} hint={hint} error={error}>
+    <Field label={label} hint={hint} error={error} optional={optional}>
       {(id) => (textarea ? <textarea id={id} className="input" {...p} />
         : prefix ? <span className="input input-affix"><span className="input-prefix" aria-hidden="true">{prefix}</span><input id={id} {...p} /></span>
         : <input id={id} className="input" {...p} />)}
@@ -120,9 +126,9 @@ export function Input({ label, hint, error, textarea, prefix, ...p }) {
   );
 }
 
-export function Select({ label, hint, options, ...p }) {
+export function Select({ label, hint, optional, options, ...p }) {
   return (
-    <Field label={label} hint={hint}>
+    <Field label={label} hint={hint} optional={optional}>
       {(id) => (
         <select id={id} className="input" {...p}>
           {options.map((o) => (

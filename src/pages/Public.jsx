@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
 import { Button, Choice, DemoOnly, Empty, FormActions, Icon, ImageBox, Input, Modal, Page, Select } from '../components/ui.jsx';
-import { MapBox, SpaceCard, distanceM, matchesSearch, parseLatLng, typeLabel } from '../components/domain.jsx';
+import { gatheringOf } from '../lib/gathering.js';
+import { Contributions, MapBox, SpaceCard, distanceM, matchesSearch, parseLatLng, typeLabel } from '../components/domain.jsx';
 import { useChoices } from '../design/choices.js';
 
 const VISITOR_LIMIT = 10;
@@ -361,6 +362,7 @@ export function Browse() {
   const [country, setCountry] = useState('all');
   const [city, setCity] = useState('all');
   const [sort, setSort] = useState('votes');
+  const [gatherOnly, setGatherOnly] = useState(false);
   const [hover, setHover] = useState(null);
   const limited = !isMember && state.signupDismissed;
   // A "lat, lon" search finds spaces near that point, nearest first; anything else matches text.
@@ -373,8 +375,9 @@ export function Browse() {
   const cities = [...new Set(visibleSpaces.filter((s) => country === 'all' || s.country === country).map((s) => s.city).filter(Boolean))].sort();
   const types = ['all', ...[...new Set(inPlace.map((s) => s.type))].sort()];
   const typeNow = types.includes(type) ? type : 'all';
+  const gathers = (s) => gatheringOf(s.id, state.comments).isGathering;
   const list = inPlace
-    .filter((s) => STATUSES[status].test(s) && (typeNow === 'all' || s.type === typeNow) && (point ? near(s) : matchesSearch(s, q)))
+    .filter((s) => (!gatherOnly || gathers(s)) && STATUSES[status].test(s) && (typeNow === 'all' || s.type === typeNow) && (point ? near(s) : matchesSearch(s, q)))
     .sort(point ? (a, b) => distanceM(point, a) - distanceM(point, b) : SORTS[sort].fn);
   const hidden = limited ? list.slice(VISITOR_LIMIT).map((s) => s.id) : [];
   return (
@@ -404,6 +407,7 @@ export function Browse() {
                 ))}
               </div>
             </fieldset>
+            <label className="check-inline small"><input type="checkbox" checked={gatherOnly} onChange={(e) => setGatherOnly(e.target.checked)} /> Gathering spots only <span className="muted">{inPlace.filter(gathers).length}</span></label>
             <Select label="Sort by" value={sort} onChange={(e) => setSort(e.target.value)} options={Object.entries(SORTS).map(([value, o]) => ({ value, label: o.label }))} />
           </div>
           {limited && (
@@ -549,13 +553,10 @@ export function Terms() {
 // A member's public profile: what they've documented and shared. Points and tier stay private.
 export function MemberProfile() {
   const { id } = useParams();
-  const { state, get, user } = useDemo();
+  const { get, user } = useDemo();
   const u = get.user(id);
   if (!u) return <Page narrow><Empty title="Member not found"><div><Button to="/browse">Browse spaces</Button></div></Empty></Page>;
   if (u.role === 'architect') return <Navigate to={`/architect/${u.id}`} replace />;
-  const documented = state.spaces.filter((s) => s.uploadedBy === u.id && !s.removed);
-  const experiences = state.comments.filter((c) => c.userId === u.id && !c.archived);
-  const photos = state.spaces.reduce((n, s) => n + s.photos.filter((p) => p.credit === u.id).length, 0);
   return (
     <Page narrow>
       <div className="stack-sm">
@@ -563,25 +564,7 @@ export function MemberProfile() {
         <p className="muted">{u.role === 'paid' ? 'Organisation' : 'Community member'}{u.city ? `, ${u.city}` : ''}</p>
         {user?.id === u.id && <div><Button to="/profile">Edit your profile</Button></div>}
       </div>
-      <dl className="dl">
-        <dt>Spaces documented</dt><dd>{documented.length}</dd>
-        <dt>Experiences shared</dt><dd>{experiences.length}</dd>
-        <dt>Photos</dt><dd>{photos}</dd>
-      </dl>
-      <section className="stack-sm" aria-labelledby="member-spaces">
-        <h2 id="member-spaces" className="h-sm">Spaces documented</h2>
-        {documented.length ? (
-          <div className="related-list">{documented.map((s) => <SpaceCard key={s.id} space={s} variant="row" headingLevel={3} />)}</div>
-        ) : <p className="small muted">None yet.</p>}
-      </section>
-      <section className="stack-sm" aria-labelledby="member-exp">
-        <h2 id="member-exp" className="h-sm">Experiences</h2>
-        {experiences.length ? (
-          <ul className="stack-sm plain-list">
-            {experiences.map((c) => <li key={c.id} className="small"><Link to={`/space/${c.spaceId}?tab=experience`}>{get.space(c.spaceId)?.name}</Link>: “{c.text}”</li>)}
-          </ul>
-        ) : <p className="small muted">None yet.</p>}
-      </section>
+      <Contributions userId={u.id} />
     </Page>
   );
 }

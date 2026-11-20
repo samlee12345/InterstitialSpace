@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { areaM2, radiusOf, shapeOf, toXY } from '../lib/geo.js';
 import { useDemo } from '../state/DemoContext.jsx';
-import { Badge, Button, FormActions, Icon, ImageBox, Mine, Modal, PointsBadge, StatusBadges } from './ui.jsx';
+import { gatheringOf } from '../lib/gathering.js';
+import { Badge, Button, FormActions, Icon, ImageBox, Mine, Modal, Opt, PointsBadge, StatusBadges } from './ui.jsx';
 import { useChoices } from '../design/choices.js';
 
 // Space card layouts to compare in the sandbox. The chosen one is in design/choices.js.
@@ -36,6 +37,11 @@ function Stat({ icon, n, label }) {
 }
 
 // headingLevel keeps the page outline correct (h2 under an h1, h3 under an h2).
+export function GatheringBadge({ space }) {
+  const { state } = useDemo();
+  return gatheringOf(space.id, state.comments).isGathering ? <Badge title="Half or more of the people who shared an experience say it has become a gathering spot">Gathering spot</Badge> : null;
+}
+
 export function SpaceCard({ space, faded, active, onHover, headingLevel = 3, variant }) {
   const { spaceCard } = useChoices();
   const { state } = useDemo();
@@ -45,7 +51,7 @@ export function SpaceCard({ space, faded, active, onHover, headingLevel = 3, var
   const votes = <Stat icon="vote" n={space.votes} label={space.votes === 1 ? 'vote' : 'votes'} />;
   const photos = <Stat icon="photo" n={space.photos.length} label={space.photos.length === 1 ? 'photo' : 'photos'} />;
   const redesigns = <Stat icon="redesign" n={nRedesigns} label={nRedesigns === 1 ? 'redesign' : 'redesigns'} />;
-  const badges = <StatusBadges space={space} />;
+  const badges = <><StatusBadges space={space} /><GatheringBadge space={space} /></>;
   const hasBadges = space.status !== 'approved' || space.removal === 'review';
 
   let body;
@@ -433,7 +439,7 @@ export function Collaborators({ value, onChange }) {
   const label = (c) => (c.id ? get.user(c.id)?.name : c.email);
   return (
     <div className="field">
-      <span className="label">Collaborators (optional)</span>
+      <span className="label">Collaborators<Opt /></span>
       <span className="xs muted">They’re credited with you and notified. People not on the platform get an email invitation.</span>
       {value.length > 0 && (
         <ul className="collab-list" aria-label="Collaborators">
@@ -471,6 +477,44 @@ export function Collaborators({ value, onChange }) {
           <FormActions><Button variant="primary" onClick={() => setOpen(false)}>Done</Button></FormActions>
         </Modal>
       )}
+    </div>
+  );
+}
+
+// A person's public contributions: shared by member profiles and the architect page's Contributions tab.
+export function contributionCounts(state, userId) {
+  return {
+    documented: state.spaces.filter((s) => s.uploadedBy === userId && !s.removed),
+    experiences: state.comments.filter((c) => c.userId === userId && !c.archived),
+    photos: state.spaces.reduce((n, s) => n + s.photos.filter((p) => p.credit === userId).length, 0),
+  };
+}
+
+export function Contributions({ userId, headingLevel = 2 }) {
+  const { state, get } = useDemo();
+  const { documented, experiences, photos } = contributionCounts(state, userId);
+  const H = `h${headingLevel}`;
+  return (
+    <div className="stack">
+      <dl className="dl">
+        <dt>Spaces documented</dt><dd>{documented.length}</dd>
+        <dt>Experiences shared</dt><dd>{experiences.length}</dd>
+        <dt>Photos</dt><dd>{photos}</dd>
+      </dl>
+      <section className="stack-sm" aria-labelledby={`contrib-spaces-${userId}`}>
+        <H id={`contrib-spaces-${userId}`} className="h-sm">Spaces documented</H>
+        {documented.length ? (
+          <div className="related-list">{documented.map((s) => <SpaceCard key={s.id} space={s} variant="row" headingLevel={headingLevel + 1} />)}</div>
+        ) : <p className="small muted">None yet.</p>}
+      </section>
+      <section className="stack-sm" aria-labelledby={`contrib-exp-${userId}`}>
+        <H id={`contrib-exp-${userId}`} className="h-sm">Experiences</H>
+        {experiences.length ? (
+          <ul className="stack-sm plain-list">
+            {experiences.map((c) => <li key={c.id} className="small"><Link to={`/space/${c.spaceId}?tab=experience`}>{get.space(c.spaceId)?.name}</Link>: “{c.text}”</li>)}
+          </ul>
+        ) : <p className="small muted">None yet.</p>}
+      </section>
     </div>
   );
 }
