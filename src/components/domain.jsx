@@ -54,8 +54,8 @@ export function SpaceCard({ space, faded, active, onHover, headingLevel = 3, var
   const votes = <Stat icon="vote" n={space.votes} label={space.votes === 1 ? 'vote' : 'votes'} />;
   const photos = <Stat icon="photo" n={space.photos.length} label={space.photos.length === 1 ? 'photo' : 'photos'} />;
   const redesigns = <Stat icon="redesign" n={nRedesigns} label={nRedesigns === 1 ? 'redesign' : 'redesigns'} />;
-  const badges = <><StatusBadges space={space} /><GatheringBadge space={space} /></>;
-  const hasBadges = space.status !== 'approved' || space.removal === 'review';
+  const badges = <><StatusBadges space={space} /><ContestBadge space={space} /><GatheringBadge space={space} /></>;
+  const hasBadges = space.status !== 'approved' || space.removal === 'review' || !!activeContest(state, space.id);
 
   let body;
   if (v === 'footer') {
@@ -237,6 +237,15 @@ export function RedesignCard({ redesign, blurred }) {
 }
 
 // Two rounds: an open concept round, then a paid shortlist that develops full proposals.
+// Round 33: a space with a contest under way says so on its cards and page header.
+export const activeContest = (state, spaceId) => state.contests.find((c) => c.spaceId === spaceId && c.status !== 'closed');
+export function ContestBadge({ space }) {
+  const { state } = useDemo();
+  const c = activeContest(state, space.id);
+  if (!c) return null;
+  return <Badge kind="accent">{c.status === 'live' && c.phase === 1 ? 'Contest open' : 'Contest under way'}</Badge>;
+}
+
 export const contestStatus = (c) => {
   if (c.status === 'closed') return 'Closed';
   if (c.status === 'judging') return c.phase === 2 ? 'Final judging' : 'Shortlisting';

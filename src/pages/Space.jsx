@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'reac
 import { USE_OPTIONS, gatheringOf, gatheringSummary } from '../lib/gathering.js';
 import { useDemo } from '../state/DemoContext.jsx';
 import { Badge, Banner, Button, Choice, Empty, FileDrop, FormActions, Icon, ImageBox, Input, Mine, Modal, Opt, Page, Select, StatusBadges, Steps, TabPanel, Tabs } from '../components/ui.jsx';
-import { ContestPlans, GatheringBadge, coverPhoto, RedesignCard, SpaceCard, UserLink, contestStatus, contestWinner, typeLabel } from '../components/domain.jsx';
+import { ContestBadge, ContestPlans, GatheringBadge, activeContest, coverPhoto, RedesignCard, SpaceCard, UserLink, contestStatus, contestWinner, typeLabel } from '../components/domain.jsx';
 import { Dropdown } from '../components/Shell.jsx';
 import { ReviewForm } from './Moderation.jsx';
 import { timeAgo } from '../lib/time.js';
@@ -596,7 +596,8 @@ function DesignateDesigner({ space, onClose }) {
 // Header with three layouts (Demo bar, Space page): the photo is portrait.
 // Details, then the pending notice (with Moderate), then votes and Options.
 function Header({ space, onReport, onDesignate, onModerate, onAddExperience, hasMine }) {
-  const { get, user, isArchitect, isModerator } = useDemo();
+  const { get, user, isArchitect, isModerator, state } = useDemo();
+  const live = activeContest(state, space.id);
   const { spaceHeader } = useChoices();
   const layout = ['strip', 'compact'].includes(spaceHeader) ? spaceHeader : 'portrait';
   const designer = space.designer && get.user(space.designer);
@@ -605,7 +606,7 @@ function Header({ space, onReport, onDesignate, onModerate, onAddExperience, has
   const text = (
     <div className="space-head-text stack">
       <div className="stack-sm">
-        <div className="row"><Badge>{typeLabel(space.type)}</Badge><StatusBadges space={space} /><GatheringBadge space={space} /><Mine userId={space.uploadedBy} /></div>
+        <div className="row"><Badge>{typeLabel(space.type)}</Badge><StatusBadges space={space} /><ContestBadge space={space} /><GatheringBadge space={space} /><Mine userId={space.uploadedBy} /></div>
         <h1>{space.name}</h1>
         {space.parentId && get.space(space.parentId) && <p className="small">Part of <Link to={`/space/${space.parentId}`}>{get.space(space.parentId).name}</Link></p>}
         <p className="small muted">
@@ -614,6 +615,7 @@ function Header({ space, onReport, onDesignate, onModerate, onAddExperience, has
         </p>
         {designer && <p className="small">Designed by <Link to={`/architect/${designer.id}`}>{designer.name}</Link></p>}
         {!designer && ext && <p className="small">Designed by {ext.name} <span className="muted">(not on the platform)</span></p>}
+        {live && <p className="small"><span className="bold">Contest:</span> <Link to={`/contest/${live.id}`}>{live.title}</Link> <span className="muted">· {contestStatus(live)}</span></p>}
         {space.redesigned && (
           <p className="small">
             <span className="bold">Redesigned {space.redesigned.date}:</span> built from “{space.redesigned.title}” by <UserLink id={space.redesigned.architectId} />, winner of <Link to={`/contest/${space.redesigned.contestId}`}>the contest</Link>. Earlier experiences are in Archived.

@@ -1660,8 +1660,15 @@ def run():
         # 6 round 1 concepts, skipped; the host sees the entries
         expect(nxt).to_contain_text(re.compile("Send round 1 concepts", re.I))
         nxt.get_by_role("button", name=re.compile("Skip to the entries")).click()
-        expect(pg).to_have_url(re.compile("/judge"))
-        cid = re.search(r"#/contest/([^/]+)/judge", pg.url).group(1)
+        expect(pg).to_have_url(re.compile(r"#/$"))   # round 33: lands on the map as the host
+        # round 33: the contest shows on the space's page and card
+        pg.goto(BASE + f"/space/{sid}")
+        expect(pg.locator(".space-head .badge", has_text=re.compile("Contest"))).to_be_visible()
+        clink = pg.locator(".space-head").get_by_role("link", name=re.compile("^Redesign the Amphitheatre"))
+        cid = re.search(r"#/contest/([^/?]+)", clink.get_attribute("href") if clink.get_attribute("href").startswith("#") else "#" + clink.get_attribute("href")).group(1)
+        pg.goto(BASE + "/browse"); pg.get_by_label("Search").fill("Amphitheatre")
+        expect(pg.locator("main a.card", has_text="Amphitheatre, Jawahar").locator(".badge", has_text=re.compile("Contest"))).to_be_visible()
+        pg.goto(BASE + f"/contest/{cid}/judge")
         expect(pg.get_by_role("heading", name=re.compile("^Pick the shortlist"))).to_be_visible()
         for t in ["Jaali canopy", "Shade sails", "cooling channel"]:
             expect(pg.get_by_role("button", name=re.compile(t))).to_be_visible()
@@ -1856,6 +1863,13 @@ def run():
         expect(pg.locator(".map-popover img")).to_have_attribute("src", re.compile("passage-into-court"))
         pg.screenshot(path="/home/claude/r32_popover.png")
         step("Upload redesign in the header (verification for non-architects); overlap popover shows a photo")
+
+        # round 33: non-architects see Submit an entry too, and go to verification
+        role("Community member")
+        pg.goto(BASE + "/contest/c3")
+        pg.locator("aside").get_by_role("link", name="Submit an entry").click()
+        expect(pg).to_have_url(re.compile("#/architects"))
+        step("contest page: Submit an entry for everyone; non-architects verify first")
 
         # every route loads for every role without errors
         routes = ["/", "/browse", "/space/s1", "/space/s1?tab=library", "/space/s1?tab=diagram", "/space/new", "/item/r1", "/item/m1", "/checkout?item=r4&rights=licence",

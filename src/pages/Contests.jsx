@@ -147,7 +147,11 @@ export function Contest() {
               <span className="xs muted">Round 1 asks for one concept sheet and a short statement.{user?.paid ? ' Free for you as a paid member.' : ` Entry fee ${c.entryFee}, or free with the paid tier.`}</span>
             </>
           ) : (
-            <p className="small muted">{isMember ? 'Only architects can enter contests.' : 'Sign up as an architect to enter.'}</p>
+            <>
+              {/* Round 33: the way in is visible to everyone; non-architects verify first. */}
+              <Button variant="primary" to="/architects">Submit an entry</Button>
+              <span className="xs muted">Only architects enter contests. {isMember ? 'Verify as an architect first; it takes a few minutes.' : 'Sign up as an architect to enter.'}</span>
+            </>
           )}
         </aside>
       </div>

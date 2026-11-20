@@ -200,6 +200,11 @@ been added. Use it to click through long forms quickly in the demo.
   timeline), on the contest page and on the space page.
 - **Map pins** are plain: solid for approved spaces, dashed and hollow for
   pending ones. Space cards show votes, redesigns and photos.
+- **Round 33.** A space with a contest under way shows a "Contest open"
+  (or "Contest under way") badge on its cards and page header, plus a
+  "Contest:" link line in the header. The contest page shows "Submit an
+  entry" to everyone; non-architects go to architect verification.
+  Walkthrough: "Skip to the entries (as the host)" lands on the map.
 - **Round 32.** Spatial diagrams and 3D model are one **Base Library** tab:
   only what the AI generates from members' photos and experiences, free for
   anyone to download (no buying, no uploads; old ?tab=diagram/model links

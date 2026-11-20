@@ -69,7 +69,7 @@ export function Walkthrough({ close }) {
     },
     {
       id: 'enter', who: 'Architects', title: 'Send round 1 concepts', done: !!mine && (contest?.entries.length || 0) >= 3, as: 'architect',
-      actions: [cid && contest.phase === 1 && { label: 'Skip to the entries (as the host)', run: () => { dispatch({ type: 'JKK_SKIP_TO_ENTRIES', contestId: cid }); go('paid', `/contest/${cid}/judge`); }, demo: true }],
+      actions: [cid && contest.phase === 1 && { label: 'Skip to the entries (as the host)', run: () => { dispatch({ type: 'JKK_SKIP_TO_ENTRIES', contestId: cid }); go('paid', '/'); }, demo: true }],
     },
     {
       id: 'shortlist', who: 'Local authority', title: 'Round 1 closes; picks the shortlist', done: contest?.phase === 2, as: 'paid',
