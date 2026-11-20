@@ -1376,6 +1376,62 @@
       "removal": null,
       "private": false,
       "parentId": "s2"
+    },
+    {
+      "id": "s16",
+      "name": "Kund (Madhyavarti), Jawahar Kala Kendra",
+      "type": "courtyard",
+      "lat": 26.87632,
+      "lng": 75.80914,
+      "status": "approved",
+      "uploadedBy": "u-c1",
+      "votes": 18,
+      "photos": [
+        {
+          "id": "s16-ph1",
+          "credit": "u-c1",
+          "onSite": true,
+          "src": "demo/jkk-kund-steps.jpg",
+          "alt": "A person reading on the red sandstone steps of the kund at Jawahar Kala Kendra, with the high sandstone wall behind"
+        }
+      ],
+      "questionnaire": {
+        "feelings": "Calm and open between events; full and loud at festivals. Enclosed on all sides by the 8 m walls of the squares around it.",
+        "transition": "From the shaded galleries of the surrounding squares you step out into the open-to-sky centre and down its stepped platforms",
+        "materiality": "Red sandstone steps and walls, white marble coping",
+        "sensory": "Glare and heat off the sandstone at midday; sound carries between the high walls"
+      },
+      "properties": {
+        "activity": "Performances, festivals and craft fairs; between events people sit on the steps to read or wait",
+        "materials": "Red sandstone, white marble",
+        "climate": "Open to the sky with little shade; May highs reach about 45 °C",
+        "authorship": "Charles Correa for the Government of Rajasthan, 1986–92"
+      },
+      "diagrams": [
+        {
+          "id": "dg-s16",
+          "source": "architect",
+          "by": "u-a1",
+          "credits": [],
+          "date": "2026-11-19",
+          "label": "Axonometric of the kund over the nine-square plan",
+          "src": "demo/jkk-spatial-diagram.png",
+          "alt": "Exploded axonometric drawing: the stepped central square of Jawahar Kala Kendra lifted above the full nine-square plan, with the pivoted entrance square at the bottom"
+        }
+      ],
+      "archive": [],
+      "areaM": 17,
+      "city": "Jaipur",
+      "country": "India",
+      "addedAt": "2026-11-19",
+      "removed": false,
+      "removal": null,
+      "private": false,
+      "parentId": null,
+      "designerExternal": {
+        "name": "Charles Correa (architect), for the Government of Rajasthan",
+        "link": ""
+      }
     }
   ],
   "redesigns": [
@@ -2808,6 +2864,57 @@
         "s15-ph5"
       ],
       "date": "2026-06-17"
+    },
+    {
+      "id": "cm14",
+      "spaceId": "s16",
+      "userId": "u-c1",
+      "onSite": true,
+      "photoIds": [
+        "s16-ph1"
+      ],
+      "date": "2026-11-18",
+      "text": "Came at midday to read on the steps. Almost empty between events, and the sandstone gets too hot to sit on for long.",
+      "answers": {
+        "use": "People stop a while",
+        "feel": [
+          "Calm",
+          "Exposed"
+        ],
+        "senses": [
+          "Too hot",
+          "Quiet"
+        ],
+        "access": "Easy",
+        "fix": "Shade",
+        "keep": "The open sky and the steps",
+        "need": 5
+      }
+    },
+    {
+      "id": "cm15",
+      "spaceId": "s16",
+      "userId": "u-a2",
+      "onSite": true,
+      "date": "2026-11-02",
+      "text": "During Lokrang the steps fill completely. With that many people the 8 m walls trap the heat and sound; most of the year it sits empty. It needs shade and air, not a new plan.",
+      "answers": {
+        "use": "Became a gathering spot",
+        "feel": [
+          "Busy"
+        ],
+        "senses": [
+          "Noisy",
+          "Too hot"
+        ],
+        "access": "Some difficulty",
+        "fix": "Shade",
+        "keep": "The stepped seating facing the centre",
+        "need": 6,
+        "why": [
+          "Underutilized"
+        ]
+      }
     }
   ],
   "coopDecisions": [

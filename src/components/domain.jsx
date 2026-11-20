@@ -37,6 +37,9 @@ function Stat({ icon, n, label }) {
 }
 
 // headingLevel keeps the page outline correct (h2 under an h1, h3 under an h2).
+// The first real photo of a space, if any (round 22).
+export const coverPhoto = (space) => space?.photos?.find((p) => p.src) || null;
+
 export function GatheringBadge({ space }) {
   const { state } = useDemo();
   return gatheringOf(space.id, state.comments).isGathering ? <Badge title="Half or more of the people who shared an experience say it has become a gathering spot">Gathering spot</Badge> : null;
@@ -58,7 +61,7 @@ export function SpaceCard({ space, faded, active, onHover, headingLevel = 3, var
   if (v === 'footer') {
     body = (
       <>
-        <ImageBox label="Photo" />
+        <ImageBox label="Photo" src={coverPhoto(space)?.src} alt={coverPhoto(space)?.alt} />
         {hasBadges && <div className="row">{badges}</div>}
         <div className="stack-sm">
           <H className="card-title">{space.name}</H>
@@ -74,7 +77,7 @@ export function SpaceCard({ space, faded, active, onHover, headingLevel = 3, var
   } else if (v === 'votes') {
     body = (
       <>
-        <ImageBox label="Photo" />
+        <ImageBox label="Photo" src={coverPhoto(space)?.src} alt={coverPhoto(space)?.alt} />
         <div className="vote-lead">
           <span className="vote-box" aria-label={`${space.votes} votes`}>
             <Icon name="vote" />
@@ -91,7 +94,7 @@ export function SpaceCard({ space, faded, active, onHover, headingLevel = 3, var
   } else if (v === 'row') {
     body = (
       <div className="card-row">
-        <div className="card-row-img"><ImageBox label="Photo" shape="square" /></div>
+        <div className="card-row-img"><ImageBox label="Photo" shape="square" src={coverPhoto(space)?.src} alt={coverPhoto(space)?.alt} /></div>
         <div className="stack-sm grow">
           <H className="card-title">{space.name}</H>
           <div className="row"><Badge>{typeLabel(space.type)}</Badge>{badges}</div>
@@ -103,7 +106,7 @@ export function SpaceCard({ space, faded, active, onHover, headingLevel = 3, var
     body = (
       <>
         <div className="img-labelled">
-          <ImageBox label="Photo" />
+          <ImageBox label="Photo" src={coverPhoto(space)?.src} alt={coverPhoto(space)?.alt} />
           <span className="img-label">{typeLabel(space.type)}</span>
         </div>
         {hasBadges && <div className="row">{badges}</div>}

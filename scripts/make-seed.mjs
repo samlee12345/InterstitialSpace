@@ -46,6 +46,8 @@ const spaceRows = [
   ['s14', 'Chai stall steps outside Jaipur Darwaza', 'chowk steps', 26.91952, 75.83085, 'pending', 4, null, 'u-c1', 5],
   // Inside the Chandpole courtyard, so the fully populated example has a connected space.
   ['s15', 'Water tap niche, Chandpole haveli courtyard', 'threshold', 26.92684, 75.80944, 'approved', 5, null, 'u-c2', 3, { parentId: 's2' }],
+  // Round 22: a real place with real images, for the demo. Details are filled in below.
+  ['s16', 'Kund (Madhyavarti), Jawahar Kala Kendra', 'courtyard', 26.87632, 75.80914, 'approved', 1, null, 'u-c1', 18],
 ];
 
 const qa = [
@@ -343,6 +345,51 @@ seed.contests.find((c) => c.id === 'c2').entries.push({ id: 'e14', architectId: 
     { id: 'mu-s2-2', by: 'u-a4', files: ['massing.3dm'], date: '2026-10-28' },
   ];
   s2.archive = [{ date: '2026-07-30', reason: 'The shed against the north wall was taken down and the floor was repaved.', votes: 12, photos: photos('s2old', 6), diagrams: [{ id: 'dg-s2-old', source: 'ai', credits: [], date: '2026-06-20' }] }];
+}
+// Round 22: the central kund of Jawahar Kala Kendra (Charles Correa, 1986–92), set up
+// accurately for the demo. Location: centre of the main square in the OpenStreetMap
+// outline (way 1146531080). Size: the middle of Correa's nine squares, about a third of
+// the ~94 m main square, so roughly 31 m x 31 m (radius of an equal circle ~17 m).
+// Facts: open-to-sky central square of the navagraha plan, dedicated to the Sun, used as
+// the open-air theatre (Madhyavarti); 8 m red sandstone walls; red sandstone and white
+// marble; performances, craft fairs and festivals. The people and their experiences are
+// demo personas; the photo and the diagram are Sam's images.
+{
+  const k = seed.spaces.find((x) => x.id === 's16');
+  Object.assign(k, {
+    areaM: 17,
+    addedAt: '2026-11-19',
+    photos: [{ id: 's16-ph1', credit: 'u-c1', onSite: true, src: 'demo/jkk-kund-steps.jpg', alt: 'A person reading on the red sandstone steps of the kund at Jawahar Kala Kendra, with the high sandstone wall behind' }],
+    questionnaire: q(
+      'Calm and open between events; full and loud at festivals. Enclosed on all sides by the 8 m walls of the squares around it.',
+      'From the shaded galleries of the surrounding squares you step out into the open-to-sky centre and down its stepped platforms',
+      'Red sandstone steps and walls, white marble coping',
+      'Glare and heat off the sandstone at midday; sound carries between the high walls',
+    ),
+    properties: props(
+      'Performances, festivals and craft fairs; between events people sit on the steps to read or wait',
+      'Red sandstone, white marble',
+      'Open to the sky with little shade; May highs reach about 45 °C',
+      'Charles Correa for the Government of Rajasthan, 1986–92',
+    ),
+    designerExternal: { name: 'Charles Correa (architect), for the Government of Rajasthan', link: '' },
+    diagrams: [{
+      id: 'dg-s16', source: 'architect', by: 'u-a1', credits: [], date: '2026-11-19',
+      label: 'Axonometric of the kund over the nine-square plan',
+      src: 'demo/jkk-spatial-diagram.png',
+      alt: 'Exploded axonometric drawing: the stepped central square of Jawahar Kala Kendra lifted above the full nine-square plan, with the pivoted entrance square at the bottom',
+    }],
+  });
+  // Drop the generic photo experience made earlier for the placeholder photo.
+  seed.comments = seed.comments.filter((c) => c.spaceId !== 's16');
+  seed.comments.push(
+    { id: 'cm14', spaceId: 's16', userId: 'u-c1', onSite: true, photoIds: ['s16-ph1'], date: '2026-11-18',
+      text: 'Came at midday to read on the steps. Almost empty between events, and the sandstone gets too hot to sit on for long.',
+      answers: { use: 'People stop a while', feel: ['Calm', 'Exposed'], senses: ['Too hot', 'Quiet'], access: 'Easy', fix: 'Shade', keep: 'The open sky and the steps', need: 5 } },
+    { id: 'cm15', spaceId: 's16', userId: 'u-a2', onSite: true, date: '2026-11-02',
+      text: 'During Lokrang the steps fill completely. With that many people the 8 m walls trap the heat and sound; most of the year it sits empty. It needs shade and air, not a new plan.',
+      answers: { use: 'Became a gathering spot', feel: ['Busy'], senses: ['Noisy', 'Too hot'], access: 'Some difficulty', fix: 'Shade', keep: 'The stepped seating facing the centre', need: 6, why: ['Underutilized'] } },
+  );
 }
 // Every pending space is on the approvals list, diagram or not.
 seed.spaces.filter((x) => x.status === 'pending' && !seed.moderation.some((m) => m.spaceId === x.id))

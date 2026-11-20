@@ -78,7 +78,7 @@ export function Item() {
       <Crumbs items={[['/browse', 'Browse spaces'], [`/space/${space.id}`, space.name], [null, KIND_LABEL[kind]]]} />
       <div className="split">
         <div className="stack">
-          <ImageBox label="Preview (watermarked placeholder)" shape="wide" />
+          <ImageBox label="Preview (watermarked placeholder)" shape="wide" src={kind === 'diagram' ? item.src : undefined} alt={item.alt} fit="contain" />
           <div className="thumbs"><ImageBox label="Sheet 1" shape="square" /><ImageBox label="Sheet 2" shape="square" /><ImageBox label="Sheet 3" shape="square" /></div>
           <div className="row"><Badge>{KIND_LABEL[kind]}</Badge>{kind === 'redesign' && <Badge>Version {item.version}</Badge>}{seller && <Mine userId={seller.id} />}</div>
           <h1>{item.title}</h1>

@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'reac
 import { USE_OPTIONS, gatheringOf, gatheringSummary } from '../lib/gathering.js';
 import { useDemo } from '../state/DemoContext.jsx';
 import { Badge, Banner, Button, Choice, Empty, FileDrop, FormActions, Icon, ImageBox, Input, Mine, Modal, Opt, Page, Select, StatusBadges, Steps, TabPanel, Tabs } from '../components/ui.jsx';
-import { ContestPlans, GatheringBadge, RedesignCard, SpaceCard, UserLink, contestStatus, contestWinner, typeLabel } from '../components/domain.jsx';
+import { ContestPlans, GatheringBadge, coverPhoto, RedesignCard, SpaceCard, UserLink, contestStatus, contestWinner, typeLabel } from '../components/domain.jsx';
 import { Dropdown } from '../components/Shell.jsx';
 import { ReviewForm } from './Moderation.jsx';
 import { timeAgo } from '../lib/time.js';
@@ -64,6 +64,12 @@ function Diagrams({ space }) {
               <h3 className="h-xs">{d.label || (d.source === 'ai' ? 'AI diagram from photos' : 'Measured plan and section')}</h3>
               <span className="row small muted">{d.date && `Added ${d.date}`}{d.source === 'architect' && <Mine userId={d.by} />}</span>
             </div>
+            {d.src ? (
+              <figure className="captioned diagram-real">
+                <ImageBox label={d.label || 'Spatial diagram'} src={d.src} alt={d.alt} fit="contain" shape="diagram" />
+                <figcaption>{credit}</figcaption>
+              </figure>
+            ) : (
             <div className="halves">
               <figure className="captioned">
                 <ImageBox label="Plan (placeholder)" />
@@ -74,6 +80,7 @@ function Diagrams({ space }) {
                 <figcaption>{d.source === 'ai' ? 'Section through the main space' : 'Uploaded by an architect'}</figcaption>
               </figure>
             </div>
+            )}
             <div className="row">
               <Button to={`/item/${d.id}`} onClick={(e) => !need('buy') && e.preventDefault()}>Buy this diagram</Button>
               <span className="small muted">{cfg.priceLabel}, or {cfg.modelPointsCost} points. Plan and section as .pdf and .dwg.</span>
@@ -417,7 +424,7 @@ function Experience({ space }) {
               <div className="exp-photos" aria-label={`${c.photoIds.length} photos`}>
                 {c.photoIds.slice(0, 3).map((id, i) => (
                   <div key={id} className="exp-photo">
-                    <ImageBox label={i === 2 && c.photoIds.length > 3 ? `+${c.photoIds.length - 2}` : 'Photo'} shape="square" />
+                    {(() => { const ph = space.photos.find((p) => p.id === id); return <ImageBox label={i === 2 && c.photoIds.length > 3 ? `+${c.photoIds.length - 2}` : 'Photo'} shape="square" src={i === 2 && c.photoIds.length > 3 ? undefined : ph?.src} alt={ph?.alt} />; })()}
                   </div>
                 ))}
               </div>
@@ -643,12 +650,12 @@ function Header({ space, onReport, onDesignate, onModerate, onAddExperience, has
   );
   return (
     <header className={`space-head space-head-${layout}`}>
-      {layout === 'compact' && <div className="space-head-thumb"><ImageBox label="Photo" shape="portrait" /></div>}
+      {layout === 'compact' && <div className="space-head-thumb"><ImageBox label="Photo" shape="portrait" src={coverPhoto(space)?.src} alt={coverPhoto(space)?.alt} /></div>}
       {text}
-      {layout === 'portrait' && <div className="space-head-photo"><ImageBox label="Photo of the space (portrait)" shape="portrait" /></div>}
+      {layout === 'portrait' && <div className="space-head-photo"><ImageBox label="Photo of the space (portrait)" shape="portrait" src={coverPhoto(space)?.src} alt={coverPhoto(space)?.alt} /></div>}
       {layout === 'strip' && (
         <ul className="space-head-photos" aria-label="Photos of the space">
-          {Array.from({ length: Math.min(6, Math.max(space.photos.length, 1)) }, (_, i) => <li key={i}><ImageBox label={space.photos.length ? `Photo ${i + 1}` : 'No photos yet'} shape="portrait" /></li>)}
+          {Array.from({ length: Math.min(6, Math.max(space.photos.length, 1)) }, (_, i) => <li key={i}><ImageBox label={space.photos.length ? `Photo ${i + 1}` : 'No photos yet'} shape="portrait" src={space.photos[i]?.src} alt={space.photos[i]?.alt} /></li>)}
         </ul>
       )}
     </header>

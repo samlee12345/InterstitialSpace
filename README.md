@@ -200,6 +200,18 @@ been added. Use it to click through long forms quickly in the demo.
   timeline), on the contest page and on the space page.
 - **Map pins** are plain: solid for approved spaces, dashed and hollow for
   pending ones. Space cards show votes, redesigns and photos.
+- **Round 22: Jawahar Kala Kendra kund (/space/s16).** A real place, set up
+  accurately for the demo: the open-to-sky central square (the Sun square,
+  used as the open-air theatre, Madhyavarti) of Charles Correa's nine-square
+  arts centre in Jaipur (1986–92), with its red sandstone steps, 8 m walls
+  and white marble coping. Location is the centre of the main square in the
+  OpenStreetMap outline (26.87632, 75.80914); its size, about 31 m square, is
+  a third of that ~94 m main square. It has a real experience photo
+  (public/demo/jkk-kund-steps.jpg) and a real spatial diagram
+  (public/demo/jkk-spatial-diagram.png). Photos and diagrams in the seed can
+  now carry `src` (and `alt`); `ImageBox` shows the image when there is one
+  and the labelled placeholder otherwise. The two experiences and the people
+  posting them are demo personas.
 - **Round 21: real map, ReSpace.** The map on the landing page, Browse and
   the contest space picker is a real map: Leaflet with OpenStreetMap tiles shown
   in greyscale (src/components/RealMap.jsx; `MapBox` keeps its old

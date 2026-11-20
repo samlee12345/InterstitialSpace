@@ -715,3 +715,12 @@ body.demo-open .demo-tray { right: calc(var(--width-demo-drawer) + var(--space-3
 .header-link { appearance: none; -webkit-appearance: none; display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--height-control); padding: var(--space-2) var(--space-1); font: inherit; font-size: var(--text-sm); color: var(--color-text); background: transparent; border: 0; border-bottom: var(--border-thick) solid transparent; text-decoration: none; cursor: pointer; }
 .header-link:hover, .header-link[aria-expanded="true"] { border-bottom-color: var(--color-border-strong); }
 .header-link[aria-current="page"] { border-bottom-color: var(--color-border-strong); font-weight: var(--weight-bold); }
+
+/* Real images (round 22): photos and diagrams that have a src */
+.imgbox.imgbox-real { background: var(--color-sunken); background-image: none; border-color: var(--color-border); }
+.imgbox-real img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.imgbox.imgbox-contain { background: #fff; }
+.imgbox-contain img { object-fit: contain; padding: var(--space-2); }
+[data-theme="editorial"] .imgbox.imgbox-real { background-image: none; }
+.imgbox-diagram { aspect-ratio: 4 / 5; max-height: 44rem; }
+.diagram-real { max-width: 34rem; }

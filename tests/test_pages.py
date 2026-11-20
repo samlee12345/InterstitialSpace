@@ -51,11 +51,11 @@ def run():
         expect(pg.locator("a.card").first).to_contain_text("Chowk steps, Badi Chaupar")   # most votes first
         expect(pg.locator("a.card", has_text="No. 1 by votes")).to_have_count(0)
         pg.locator(".segment", has_text="Approved").click()
-        expect(pg.locator("main a.card")).to_have_count(8)
-        expect(pg.get_by_text("8 spaces")).to_be_visible()
+        expect(pg.locator("main a.card")).to_have_count(9)   # 8 + the Jawahar Kala Kendra kund (round 22)
+        expect(pg.get_by_text("9 spaces")).to_be_visible()
         pg.locator(".segment", has_text="All").click()
-        expect(pg.locator("main a.card")).to_have_count(15)
-        expect(pg.locator("a.pin")).to_have_count(15)
+        expect(pg.locator("main a.card")).to_have_count(16)
+        expect(pg.locator("a.pin")).to_have_count(16)
         expect(pg.locator("a.pin", has_text="57")).to_have_count(0)      # plain pins, no numbers
         pg.screenshot(path="/home/claude/shot_browse.png")
         pg.locator("a.card", has_text="Gateway niche").click()
@@ -278,7 +278,7 @@ def run():
         pg.get_by_role("button", name="See redesigns").click()
         pg.get_by_role("button", name="Not now").click()
         nav("Browse spaces")
-        expect(pg.locator("a.card.faded")).to_have_count(5)
+        expect(pg.locator("a.card.faded")).to_have_count(6)   # 16 spaces, 10 shown to visitors
         pg.screenshot(path="/home/claude/shot_browse_limited.png")
         pg.locator("a.card", has_text="Stepwell landing, Amer Road side").click()
         pg.get_by_role("button", name="Add your experience").click()
@@ -738,7 +738,7 @@ def run():
         expect(pg.locator(".browse-empty").get_by_role("link", name="Create new interstitial space")).to_have_attribute("href", re.compile("name=qqqzz"))
         expect(pg.get_by_role("link", name="Create new interstitial space")).to_have_count(1)   # no header button
         pg.get_by_label("Search").fill("")
-        expect(pg.locator("main a.card")).to_have_count(15)
+        expect(pg.locator("main a.card")).to_have_count(16)
         step("browse search; map kept on empty results")
 
         # map-first landing: search, add a place that isn't there
@@ -1557,6 +1557,30 @@ def run():
         pg.keyboard.press("Escape")
         pg.screenshot(path="/home/claude/r21_landing.png")
         step("real Leaflet map with attribution and separated pins; ReSpace name; header items look like links")
+
+        # round 22: Jawahar Kala Kendra kund with a real photo and spatial diagram
+        role("Community member")
+        pg.goto(BASE + "/space/s16")
+        expect(pg.get_by_role("heading", name="Kund (Madhyavarti), Jawahar Kala Kendra")).to_be_visible()
+        expect(pg.locator(".space-head-photo img")).to_have_attribute("src", re.compile("demo/jkk-kund-steps.jpg$"))
+        assert pg.locator(".space-head-photo img").evaluate("i => i.complete && i.naturalWidth > 0")
+        expect(pg.get_by_text("Charles Correa (architect)")).to_be_visible()
+        expect(pg.locator(".exp-photo img").first).to_have_attribute("src", re.compile("jkk-kund-steps"))
+        expect(pg.get_by_text("Red sandstone steps and walls, white marble coping")).to_be_visible()
+        pg.screenshot(path="/home/claude/r22_space.png", full_page=True)
+        pg.get_by_role("tab", name=re.compile("^Spatial diagrams")).click()
+        dimg = pg.locator(".diagram-real img")
+        expect(dimg).to_have_attribute("src", re.compile("jkk-spatial-diagram.png$"))
+        dimg.scroll_into_view_if_needed()
+        pg.wait_for_function("() => { const i = document.querySelector('.diagram-real img'); return i && i.complete && i.naturalWidth > 0; }")
+        pg.screenshot(path="/home/claude/r22_diagram.png", full_page=True)
+        pg.get_by_role("link", name="Buy this diagram").click()
+        expect(pg.locator("main .imgbox-real img").first).to_have_attribute("src", re.compile("jkk-spatial-diagram"))
+        pg.goto(BASE + "/browse")
+        pg.get_by_label("Search").fill("Jawahar")
+        expect(pg.locator("main a.card")).to_have_count(1)
+        expect(pg.locator("main a.card img")).to_have_attribute("src", re.compile("jkk-kund-steps"))
+        step("JKK kund: real photo on header, card and experience; real diagram on the tab and item page")
 
         # every route loads for every role without errors
         routes = ["/", "/browse", "/space/s1", "/space/s1?tab=diagram", "/space/new", "/item/r1", "/item/m1", "/checkout?item=r4&rights=licence",

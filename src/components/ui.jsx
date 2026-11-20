@@ -37,7 +37,17 @@ export function Page({ narrow, wide, className = '', children }) {
   );
 }
 
-export function ImageBox({ label = 'Image', shape = '', className = '' }) {
+// src: a real image (path under public/, e.g. "demo/jkk-kund.jpg"); without it, a labelled placeholder.
+// fit="contain" shows a whole drawing on white instead of cropping it.
+export function ImageBox({ label = 'Image', shape = '', className = '', src, alt, fit = 'cover' }) {
+  if (src) {
+    const url = /^(https?:|data:|\/)/.test(src) ? src : `${import.meta.env.BASE_URL}${src}`;
+    return (
+      <div className={`imgbox imgbox-real imgbox-${fit} ${shape ? `imgbox-${shape}` : ''} ${className}`}>
+        <img src={url} alt={alt || label} loading="lazy" />
+      </div>
+    );
+  }
   return (
     <div className={`imgbox ${shape ? `imgbox-${shape}` : ''} ${className}`} role="img" aria-label={`Placeholder: ${label}`}>
       <span>{label}</span>
