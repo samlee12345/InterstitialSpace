@@ -708,6 +708,7 @@ body.demo-open .demo-tray { right: calc(var(--width-demo-drawer) + var(--space-3
 .map-real .map-search, .map-real .map-zoom-out { z-index: 3; }
 .map-label-bl { top: auto; bottom: var(--space-3); }
 .map-real .leaflet-control-attribution { font-size: var(--text-xs); }
+.map-real .leaflet-tile-pane { filter: grayscale(1) contrast(0.92) brightness(1.04); }
 .map-clickable .map-canvas { cursor: crosshair; }
 
 /* Header items that open menus or pages: styled like the nav links, not buttons (round 21) */

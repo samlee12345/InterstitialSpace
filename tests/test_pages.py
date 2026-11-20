@@ -9,9 +9,9 @@ def run():
     with sync_playwright() as p:
         b = p.chromium.launch(channel="chrome", headless=True)
         pg = b.new_page(viewport={"width": 1280, "height": 900})
-        # Map tiles come from CARTO; serve a blank tile so tests run offline and stay deterministic.
+        # Map tiles come from OpenStreetMap; serve a blank tile so tests run offline and stay deterministic.
         blank_png = bytes.fromhex("89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d4944415478da63f8ffff3f0005fe02fea7d6a4c50000000049454e44ae426082")
-        pg.route("**/*.basemaps.cartocdn.com/**", lambda route: route.fulfill(status=200, content_type="image/png", body=blank_png))
+        pg.route("**/tile.openstreetmap.org/**", lambda route: route.fulfill(status=200, content_type="image/png", body=blank_png))
         pg.on("pageerror", lambda e: errors.append(f"pageerror: {e} @ {pg.url} :: {(e.stack or '')[:300]}"))
         pg.on("console", lambda m: errors.append(f"console: {m.text}") if m.type == "error" else None)
         pg.set_default_timeout(6000)

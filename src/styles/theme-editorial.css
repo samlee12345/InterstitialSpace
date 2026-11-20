@@ -139,3 +139,6 @@
   [data-theme="editorial"] .btn { transition: none; }
   [data-theme="editorial"] .btn-primary:hover, [data-theme="editorial"] .btn:active:not(:disabled) { transform: none; }
 }
+
+/* Map tiles: a little warmth instead of pure grey */
+[data-theme="editorial"] .map-real .leaflet-tile-pane { filter: grayscale(0.85) sepia(0.08) contrast(0.92) brightness(1.05); }

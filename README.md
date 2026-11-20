@@ -201,8 +201,8 @@ been added. Use it to click through long forms quickly in the demo.
 - **Map pins** are plain: solid for approved spaces, dashed and hollow for
   pending ones. Space cards show votes, redesigns and photos.
 - **Round 21: real map, ReSpace.** The map on the landing page, Browse and
-  the contest space picker is a real map: Leaflet with light grey CARTO tiles
-  on OpenStreetMap data (src/components/RealMap.jsx; `MapBox` keeps its old
+  the contest space picker is a real map: Leaflet with OpenStreetMap tiles shown
+  in greyscale (src/components/RealMap.jsx; `MapBox` keeps its old
   props). Pins are still our own buttons and links placed at each space's
   coordinates; pins only metres apart are nudged so each stays clickable.
   Scroll-wheel zoom is off so the page scrolls; use the +/- buttons or drag.
@@ -211,7 +211,7 @@ been added. Use it to click through long forms quickly in the demo.
   placeholders. The product is now called ReSpace (header, footer, page
   titles). Approvals, notifications and the account menu in the header are
   styled like the nav links instead of buttons. Tests serve a blank tile for
-  CARTO requests, so they run offline.
+  map tile requests, so they run offline.
 - **Round 20: Editorial theme (optional).** Demo controls › Controls ›
   Theme switches between "Grayscale (default)" and "Editorial": a serif type
   stack, black pill buttons, 24px rounded cards with a soft shadow, pill tabs

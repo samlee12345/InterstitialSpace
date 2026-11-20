@@ -1,4 +1,4 @@
-// A real map (round 21): Leaflet with light grey CARTO tiles on OpenStreetMap data.
+// A real map (round 21): Leaflet with OpenStreetMap tiles, shown in greyscale (CSS) to fit the prototype.
 // It keeps the old placeholder map's props, so the landing page, Browse and the
 // contest space picker work unchanged. Pins are still our own buttons and links,
 // drawn over the map at each space's real coordinates, so they keep their names,
@@ -7,8 +7,8 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import L from 'leaflet';
 
-const TILES = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
-const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener noreferrer">CARTO</a>';
+const TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors';
 const FOCUS_ZOOM = 17; // a selected space: street level
 const NUDGE_PX = 20; // pins closer than this (including their larger tap area) are nudged apart
 
@@ -27,7 +27,7 @@ export function MapBox({ spaces, area, hiddenIds = [], activeId, selectedId, onH
   // Create the map once.
   useLayoutEffect(() => {
     const m = L.map(el.current, { zoomControl: false, scrollWheelZoom: false, attributionControl: true });
-    L.tileLayer(TILES, { attribution: ATTRIBUTION, subdomains: 'abcd', maxZoom: 19 }).addTo(m);
+    L.tileLayer(TILES, { attribution: ATTRIBUTION, maxZoom: 19 }).addTo(m);
     L.control.zoom({ position: 'bottomright' }).addTo(m);
     m.attributionControl.setPrefix(false);
     if (extent.length) m.fitBounds(boundsOf(extent), { padding: [40, 40] });
