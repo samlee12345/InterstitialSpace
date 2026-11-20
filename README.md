@@ -200,6 +200,21 @@ been added. Use it to click through long forms quickly in the demo.
   timeline), on the contest page and on the space page.
 - **Map pins** are plain: solid for approved spaces, dashed and hollow for
   pending ones. Space cards show votes, redesigns and photos.
+- **Round 24: walkthrough changes.** Start signs you in as Community
+  member 1 (an existing user; no sign-up step), so there are 13 steps.
+  The diagram and community steps are one step with a "Fast forward"
+  button (also on the approval step): it approves the kund, adds the real
+  spatial diagram and a 3D model, posts the other members' experiences and
+  votes, and opens the space's Spatial diagrams tab. The contest request
+  step has "Switch to local authority user", which opens the request form
+  with the kund already picked (`/contest/request?space=…`). The team step
+  has "Skip past approval". The round 1 step has "Skip to the entries (as
+  the host)": the concepts come in (Architect A's too), round 1 closes and
+  the host lands on the shortlist page. The build is split in two: the
+  local authority marks the winning design built on the contest page
+  ("Mark as built"), then a community member reports the build from the
+  space page (Options › Report an update, with "This is the build of …"
+  ticked), and the moderator confirms it.
 - **Round 23: Jawahar Kala Kendra walkthrough.** Demo controls has a
   Walkthrough tab. "Start the walkthrough" resets the demo data without the
   kund and puts you on the map as a visitor; 15 steps then take it through

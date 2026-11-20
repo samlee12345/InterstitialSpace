@@ -1582,145 +1582,117 @@ def run():
         expect(pg.locator("main a.card img")).to_have_attribute("src", re.compile("jkk-kund-steps"))
         step("JKK kund: real photo on header, card and experience; real diagram on the tab and item page")
 
-        # round 23: Jawahar Kala Kendra walkthrough, start to finish (Demo controls › Walkthrough)
+        # rounds 23-24: Jawahar Kala Kendra walkthrough, start to finish (Demo controls › Walkthrough)
         pg.goto(BASE + "/browse")
         drawer = pg.locator(".demo-drawer")
+        nxt = drawer.locator(".wt-next")
         def open_wt():
             if pg.locator(".demo-pill").count(): pg.locator(".demo-pill").click()
             drawer.get_by_role("tab", name="Walkthrough").click()
-        def step_btn(i):  # the current step's buttons
-            return drawer.locator(".wt-next")
-        def shot(n): pg.screenshot(path=f"/home/claude/r23_{n}.png", full_page=True)
+        def shot(n): pg.screenshot(path=f"/home/claude/r24_{n}.png", full_page=True)
+        def document():
+            expect(nxt).to_contain_text(re.compile("Documents the kund", re.I))
+            nxt.get_by_role("button", name=re.compile("^Open as")).click()
+            expect(pg).to_have_url(re.compile("#/space/new"))
+            pg.get_by_role("button", name=re.compile("Use the Jawahar Kala Kendra photo")).click()
+            expect(pg.locator(".photo-tile img")).to_have_attribute("src", re.compile("jkk-kund-steps"))
+            expect(pg.get_by_text("at Jawahar Kala Kendra, JLN Marg")).to_be_visible()
+            pg.get_by_role("button", name="Continue").click()
+            pg.get_by_role("button", name="Continue").click()
+            pg.get_by_role("button", name=re.compile("Fill with Jawahar Kala Kendra details")).click()
+            expect(pg.get_by_label("Name of the space")).to_have_value("Kund (Madhyavarti), Jawahar Kala Kendra")
+            pg.get_by_role("button", name="Review").click()
+            pg.get_by_role("button", name="Submit space").click()
+            expect(pg.get_by_role("heading", name="Kund (Madhyavarti), Jawahar Kala Kendra")).to_be_visible()
+            return re.search(r"#/space/([^?]+)", pg.url).group(1)
 
         open_wt()
         drawer.get_by_role("button", name="Start the walkthrough").click()
-        expect(pg.locator(".header .brand")).to_be_visible()
         assert pg.evaluate("location.hash") in ("#/", "")
-        expect(drawer.locator(".wt-step")).to_have_count(15)
+        expect(drawer.locator(".wt-step")).to_have_count(13)
+        # an existing member: no sign-up step
+        expect(pg.locator(".header")).to_contain_text("Community member 1")
         shot("00_start")
-        # Jawahar is gone
         pg.goto(BASE + "/browse"); pg.get_by_label("Search").fill("Jawahar")
         expect(pg.locator("main a.card")).to_have_count(0)
 
-        # 2 sign up
-        step_btn(0).get_by_role("button", name=re.compile("^Open as")).click()
-        expect(pg).to_have_url(re.compile("#/signup"))
-        shot("01_signup")
-        pg.get_by_label("Name").fill("Asha")
-        pg.get_by_label("Email").fill("asha@example.com")
-        pg.get_by_label("Password").fill("correct horse battery")
-        pg.get_by_role("button", name="Create account").click()
-
-        # 3 document
-        expect(step_btn(0)).to_contain_text(re.compile("Documents the kund", re.I))
-        step_btn(0).get_by_role("button", name=re.compile("^Open as")).click()
-        expect(pg).to_have_url(re.compile("#/space/new"))
-        pg.get_by_role("button", name=re.compile("Use the Jawahar Kala Kendra photo")).click()
-        expect(pg.locator(".photo-tile img")).to_have_attribute("src", re.compile("jkk-kund-steps"))
-        expect(pg.get_by_text("at Jawahar Kala Kendra, JLN Marg")).to_be_visible()
-        shot("02_photo")
-        pg.get_by_role("button", name="Continue").click()
-        shot("03_area")
-        pg.get_by_role("button", name="Continue").click()
-        pg.get_by_role("button", name=re.compile("Fill with Jawahar Kala Kendra details")).click()
-        expect(pg.get_by_label("Name of the space")).to_have_value("Kund (Madhyavarti), Jawahar Kala Kendra")
-        shot("04_questionnaire")
-        pg.get_by_role("button", name="Review").click()
-        pg.get_by_role("button", name="Submit space").click()
-        expect(pg.get_by_role("heading", name="Kund (Madhyavarti), Jawahar Kala Kendra")).to_be_visible()
+        # 1 document
+        sid = document()
         expect(pg.locator(".space-head-photo img")).to_have_attribute("src", re.compile("jkk-kund-steps"))
-        sid = re.search(r"#/space/([^?]+)", pg.url).group(1)
-        shot("05_pending")
+        shot("01_pending")
 
-        # 4 approve
-        expect(step_btn(0)).to_contain_text(re.compile("Approves it", re.I))
-        step_btn(0).get_by_role("button", name=re.compile("Two other architects vote yes")).click()
-        step_btn(0).get_by_role("button", name=re.compile("^Open as")).click()
+        # 2 approve
+        expect(nxt).to_contain_text(re.compile("Approves it", re.I))
+        expect(nxt.get_by_role("button", name=re.compile("Fast forward"))).to_be_visible()
+        nxt.get_by_role("button", name=re.compile("Two other architects vote yes")).click()
+        nxt.get_by_role("button", name=re.compile("^Open as")).click()
         aside = pg.locator(".review-aside")
         aside.get_by_text("Yes, approve it").click()
         for c in aside.locator("fieldset").first.get_by_role("checkbox").all(): c.check()
         aside.get_by_role("button", name="Submit vote").click()
         expect(aside.get_by_text("Approved: 3 yes votes reached.")).to_be_visible()
-        shot("06_approved")
 
-        # 5 diagram
-        expect(step_btn(0)).to_contain_text(re.compile("Uploads the spatial diagram", re.I))
-        step_btn(0).get_by_role("button", name=re.compile("^Open as")).click()
-        pg.get_by_role("button", name=re.compile("Add sample file")).first.click()
-        expect(pg.locator(".preview-list img")).to_have_attribute("src", re.compile("jkk-spatial-diagram"))
-        pg.get_by_text("This drawing is measured on site or from a scan").click()
-        shot("07_diagram_files")
-        pg.get_by_role("button", name="Continue").click()
-        pg.get_by_role("checkbox").last.check()
-        btns = pg.locator(".form-actions .btn-primary")
-        btns.last.click()
+        # 3 diagram + model + experiences + votes, fast forwarded
+        expect(nxt).to_contain_text(re.compile("spatial diagram and 3D model", re.I))
+        nxt.get_by_role("button", name=re.compile("Fast forward")).click()
+        expect(pg).to_have_url(re.compile(f"#/space/{sid}\\?tab=diagram"))
         expect(pg.locator(".diagram-real img")).to_have_attribute("src", re.compile("jkk-spatial-diagram"))
-        shot("08_diagram_done")
+        shot("02_fast_forward")
+        pg.get_by_role("tab", name=re.compile("^3D model")).click()
+        expect(pg.locator("main")).not_to_contain_text("No 3D model yet")
+        pg.get_by_role("tab", name=re.compile("^Experiences")).click()
+        expect(pg.locator(".vote-line")).not_to_contain_text(re.compile(r"^\s*[0-9]\b"))
 
-        # 6 community
-        expect(step_btn(0)).to_contain_text(re.compile("Add experiences", re.I))
-        step_btn(0).get_by_role("button", name=re.compile("Three more experiences")).click()
-        step_btn(0)  # should have moved on
-        expect(drawer.locator(".wt-next")).to_contain_text(re.compile("Asks to host a contest", re.I))
-
-        # 7 request
-        drawer.locator(".wt-next").get_by_role("button", name=re.compile("^Open as")).click()
-        expect(pg).to_have_url(re.compile("#/contest/request"))
-        pg.get_by_placeholder(re.compile("Search")).first.fill("Jawahar")
-        pg.locator(".space-picker").get_by_role("button", name=re.compile("Jawahar")).first.click()
+        # 4 request: switch to the local authority; the kund is already picked
+        expect(nxt).to_contain_text(re.compile("Asks to host a contest", re.I))
+        nxt.get_by_role("button", name="Switch to local authority user").click()
+        expect(pg).to_have_url(re.compile("#/contest/request\\?space="))
+        expect(pg.locator(".space-picker")).to_contain_text("Jawahar")
         pg.get_by_label("Brief").fill("Make the kund usable every day: shade, air and seating.")
         pg.get_by_label("Total you will fund").fill("6000")
         pg.get_by_label("Payment to each shortlisted architect").fill("400")
         pg.get_by_label(re.compile("Judging criteria")).fill("Keeps the open centre\nShade at midday\nBuildable")
+        shot("03_request")
         pg.get_by_role("button", name="Send request").click()
         expect(pg.get_by_role("heading", name="Request sent")).to_be_visible()
-        shot("09_request")
 
-        # 8 team approves
-        expect(drawer.locator(".wt-next")).to_contain_text(re.compile("Approves the request", re.I))
-        pg.get_by_role("link", name="See hosted contests").click()
-        pg.locator("#hosted").get_by_role("button", name=re.compile("Team approves")).click()
+        # 5 team approval, skipped
+        expect(nxt).to_contain_text(re.compile("Approves the request", re.I))
+        nxt.get_by_role("button", name="Skip past approval").click()
         expect(pg.locator("#hosted tr", has_text="Redesign the Kund").get_by_text("Open for entries")).to_be_visible()
-        shot("10_approved_contest")
+        shot("04_contest_open")
 
-        # 9 enter
-        expect(drawer.locator(".wt-next")).to_contain_text(re.compile("Send round 1 concepts", re.I))
-        drawer.locator(".wt-next").get_by_role("button", name=re.compile("^Open as")).click()
-        pg.get_by_label("Title").fill("Jaali canopy over the upper steps")
-        pg.get_by_label("Statement").fill("A lightweight jaali canopy shades the top tiers at midday and lets air through.")
-        pg.get_by_role("button", name=re.compile("Add sample file")).last.click()
-        pg.get_by_role("checkbox", name="I have read and agree to these terms").check()
-        pg.locator("main").get_by_role("button", name=re.compile("submit", re.I)).last.click()
-        drawer.locator(".wt-next").get_by_role("button", name=re.compile("Two other architects enter")).click()
-        shot("11_entered")
-
-        # 10 shortlist
-        expect(drawer.locator(".wt-next")).to_contain_text(re.compile("picks the shortlist", re.I))
-        drawer.locator(".wt-next").get_by_role("button", name=re.compile("Skip to the round 1 deadline")).click()
-        drawer.locator(".wt-next").get_by_role("button", name=re.compile("^Open as")).click()
+        # 6 round 1 concepts, skipped; the host sees the entries
+        expect(nxt).to_contain_text(re.compile("Send round 1 concepts", re.I))
+        nxt.get_by_role("button", name=re.compile("Skip to the entries")).click()
+        expect(pg).to_have_url(re.compile("/judge"))
         expect(pg.get_by_role("heading", name=re.compile("^Pick the shortlist"))).to_be_visible()
+        for t in ["Jaali canopy", "Shade sails", "cooling channel"]:
+            expect(pg.get_by_role("button", name=re.compile(t))).to_be_visible()
+        shot("05_host_sees_entries")
+
+        # 7 shortlist
+        expect(nxt).to_contain_text(re.compile("picks the shortlist", re.I))
         for t in ["Jaali canopy", "Shade sails"]:
             pg.get_by_role("button", name=re.compile(t)).click()
             pg.get_by_text("Add to the shortlist").click()
-        shot("12_shortlist")
         pg.get_by_role("button", name=re.compile(r"Confirm shortlist \(2\)")).click()
         pg.get_by_role("dialog").get_by_role("button", name="Confirm shortlist").click()
         expect(pg.get_by_role("heading", name="Round 2 is under way")).to_be_visible()
 
-        # 11 proposals
-        expect(drawer.locator(".wt-next")).to_contain_text(re.compile("Hand in full proposals", re.I))
-        drawer.locator(".wt-next").get_by_role("button", name=re.compile("^Open as")).click()
-        shot("13_proposal_form")
+        # 8 proposals
+        expect(nxt).to_contain_text(re.compile("Hand in full proposals", re.I))
+        nxt.get_by_role("button", name=re.compile("^Open as")).click()
         pg.get_by_role("button", name=re.compile("Add sample file")).last.click()
         cb = pg.get_by_role("checkbox")
         if cb.count(): cb.last.check()
         pg.locator("main").get_by_role("button", name=re.compile("submit", re.I)).last.click()
-        drawer.locator(".wt-next").get_by_role("button", name=re.compile("rest of the shortlist")).click()
-        drawer.locator(".wt-next").get_by_role("button", name=re.compile("Skip to the round 2 deadline")).click()
+        nxt.get_by_role("button", name=re.compile("rest of the shortlist")).click()
+        nxt.get_by_role("button", name=re.compile("Skip to the round 2 deadline")).click()
 
-        # 12 winner
-        expect(drawer.locator(".wt-next")).to_contain_text(re.compile("picks a winner", re.I))
-        drawer.locator(".wt-next").get_by_role("button", name=re.compile("^Open as")).click()
+        # 9 winner
+        expect(nxt).to_contain_text(re.compile("picks a winner", re.I))
+        nxt.get_by_role("button", name=re.compile("^Open as")).click()
         expect(pg.get_by_role("heading", name=re.compile("^Pick the winner"))).to_be_visible()
         pg.get_by_role("button", name=re.compile("Jaali canopy")).click()
         for row in pg.locator(".score-row").all(): row.locator("input").nth(4).check()
@@ -1728,31 +1700,42 @@ def run():
         pg.get_by_role("button", name="Announce winner").click()
         pg.get_by_role("dialog").get_by_role("button", name="Announce winner").click()
         expect(pg.get_by_role("heading", name=re.compile("Winner announced: Jaali canopy"))).to_be_visible()
-        shot("14_winner")
 
-        # 13 built
-        expect(drawer.locator(".wt-next")).to_contain_text(re.compile("reports the build", re.I))
-        drawer.locator(".wt-next").get_by_role("button", name=re.compile("^Open as")).click()
-        pg.get_by_role("button", name="Report that it’s been built").click()
-        expect(pg.locator("main .note", has_text="A moderator will confirm it")).to_be_visible()
-        shot("15_build_reported")
+        # 10 the local authority builds it
+        expect(nxt).to_contain_text(re.compile("Local authority builds it", re.I))
+        nxt.get_by_role("button", name=re.compile("^Open as")).click()
+        pg.get_by_role("button", name="Mark as built").click()
+        expect(pg.locator("main .note", has_text="You marked this as built")).to_be_visible()
+        shot("06_marked_built")
 
-        # 14 confirm
-        expect(drawer.locator(".wt-next")).to_contain_text(re.compile("Confirms", re.I))
-        drawer.locator(".wt-next").get_by_role("button", name=re.compile("^Open as")).click()
-        li = pg.locator("li", has_text="has been built on site")
+        # 11 a community member reports the build
+        expect(nxt).to_contain_text(re.compile("reports the build", re.I))
+        nxt.get_by_role("button", name=re.compile("^Open as community")).click()
+        pg.get_by_role("button", name=re.compile("^Options")).click()
+        pg.get_by_role("button", name="Report an update").click()
+        dlg = pg.get_by_role("dialog")
+        expect(dlg.get_by_role("checkbox", name=re.compile("This is the build of “Jaali canopy"))).to_be_checked()
+        dlg.get_by_label(re.compile("What changed")).fill("The jaali canopy is up over the top steps; it’s shaded at noon now.")
+        dlg.get_by_role("button", name="Take a photo").click()
+        shot("07_report_build")
+        dlg.get_by_role("button", name="Submit update").click()
+        dlg.get_by_role("button", name="Done").click()
+
+        # 12 confirm
+        expect(nxt).to_contain_text(re.compile("Confirms", re.I))
+        nxt.get_by_role("button", name=re.compile("^Open as")).click()
+        li = pg.locator("li", has_text="jaali canopy is up")
         expect(li.get_by_text("Build of a winning design")).to_be_visible()
-        shot("16_moderator")
         li.get_by_role("button", name="Confirm update and archive").click()
         pg.goto(BASE + f"/space/{sid}")
         expect(pg.locator(".space-head .badge", has_text="Redesigned")).to_be_visible()
         expect(pg.get_by_text(re.compile("built from “Jaali canopy"))).to_be_visible()
         expect(pg.locator(".vote-line")).to_contain_text("0")
-        shot("17_redesigned")
+        shot("08_redesigned")
 
-        # 15 new experience
-        expect(drawer.locator(".wt-next")).to_contain_text(re.compile("first experience of the new round", re.I))
-        drawer.locator(".wt-next").get_by_role("button", name=re.compile("^Open as")).click()
+        # 13 new experience
+        expect(nxt).to_contain_text(re.compile("first experience of the new round", re.I))
+        nxt.get_by_role("button", name=re.compile("^Open as")).click()
         pg.get_by_role("button", name=re.compile("Add your experience")).first.click()
         dlg = pg.get_by_role("dialog")
         dlg.get_by_role("button", name="Share location: I’m here").click()
@@ -1762,14 +1745,19 @@ def run():
         dlg.get_by_role("button", name="Continue").click()
         dlg.locator("label.scale-step", has_text=re.compile(r"^2$")).click()
         dlg.get_by_role("button", name=re.compile("Post experience")).click()
-        shot("17b_after_post")
-        expect(drawer.locator(".wt-done")).to_have_count(15)
-        shot("18_done")
-        pg.get_by_role("tab", name=re.compile("^Archived")).click()
-        shot("19_archived")
+        expect(drawer.locator(".wt-done")).to_have_count(13)
+        shot("09_done")
+
+        # Start again: fast forward straight from the approval step
+        drawer.get_by_role("button", name="Start again").click()
+        document()
+        nxt.get_by_role("button", name=re.compile("Fast forward")).click()
+        expect(pg.locator(".diagram-real img")).to_have_attribute("src", re.compile("jkk-spatial-diagram"))
+        expect(nxt).to_contain_text(re.compile("Asks to host a contest", re.I))
+        expect(drawer.locator(".wt-done")).to_have_count(3)
         drawer.get_by_role("tab", name="Pages").click()
         drawer.get_by_role("button", name="Close", exact=True).click()
-        step("JKK walkthrough: document, approve, diagram, votes, contest request + team approval, entries, shortlist, proposals, winner, build, redesigned + archive, new round")
+        step("JKK walkthrough (round 24): existing member, fast forward, switch to local authority, skip team approval, skip to entries, mark built, member reports build, redesigned + archive, new round")
 
         # every route loads for every role without errors
         routes = ["/", "/browse", "/space/s1", "/space/s1?tab=diagram", "/space/new", "/item/r1", "/item/m1", "/checkout?item=r4&rights=licence",

@@ -2,7 +2,9 @@ import { createContext, useContext, useMemo, useReducer } from 'react';
 import { useLocation } from 'react-router-dom';
 import seed from '../data/seed.json';
 import { POINTS, interactPoints, uploadPoints, fmtPoints } from '../lib/points.js';
-import { JKK_COMMUNITY, JKK_ENTRIES, JKK_EXTRA_VOTES, isJkk } from '../demo/jkk.js';
+import { JKK_COMMUNITY, JKK_CONTEST, JKK_DIAGRAM, JKK_DIAGRAM_FILE, JKK_ENTRIES, JKK_EXTRA_VOTES, isJkk } from '../demo/jkk.js';
+
+const plusDays = (d) => new Date(Date.now() + d * 86400000).toISOString().slice(0, 10);
 
 export const ROLES = [
   { id: 'visitor', label: 'Visitor', userId: null },
@@ -60,9 +62,10 @@ function reducer(s, a) {
     case 'RESET':
       return toast(fresh(s.role), 'Demo data reset');
     // ── Jawahar Kala Kendra walkthrough (round 23) ──────────
-    // Fresh demo data without the kund, so it can be documented live; starts as a visitor.
+    // Fresh demo data without the kund, so it can be documented live; starts as an
+    // existing community member (round 24: no sign-up step).
     case 'JKK_START': {
-      const f = fresh('visitor');
+      const f = fresh('community');
       const gone = f.spaces.filter(isJkk).map((x) => x.id);
       return toast({
         ...f,
@@ -86,6 +89,78 @@ function reducer(s, a) {
         spaces: mapById(s.spaces, a.spaceId, (x) => ({ ...x, votes: x.votes + votes })),
       };
       return toast(n, `${fresh2.length} more experiences and ${votes} votes to redesign`);
+    }
+    // Round 24 fast forward: the kund is approved, an architect has added the real spatial
+    // diagram and a 3D model, and other members have posted experiences and votes.
+    case 'JKK_FAST_FORWARD': {
+      const sp = s.spaces.find((x) => x.id === a.spaceId);
+      let n = s;
+      if (sp.status !== 'approved') {
+        const blank = { spaceId: sp.id, yes: 0, no: 0, voted: [], votes: {}, notes: [], duplicates: [], mergeVotes: 0 };
+        const rows = n.moderation.some((m) => m.spaceId === sp.id) ? n.moderation : [...n.moderation, blank];
+        n = {
+          ...n,
+          moderation: rows.map((m) => (m.spaceId === sp.id ? { ...m, yes: Math.max(m.yes || 0, 3) } : m)),
+          spaces: mapById(n.spaces, sp.id, (x) => ({ ...x, status: 'approved', qualifiedAwarded: true })),
+        };
+      }
+      if (!sp.diagrams.some((d) => d.src)) {
+        const modelId = `m-${n.seq}`;
+        const hasModel = n.models.some((m) => m.spaceId === sp.id && !m.takenDown && !m.archived);
+        n = {
+          ...n,
+          seq: n.seq + 1,
+          spaces: mapById(n.spaces, sp.id, (x) => ({
+            ...x,
+            diagrams: [...x.diagrams, { id: `dg-${modelId}`, source: 'architect', by: 'u-a1', collaborators: [], credits: [], date: today(), label: JKK_DIAGRAM.label, src: JKK_DIAGRAM.src, alt: JKK_DIAGRAM.alt }],
+            modelUploads: [...(x.modelUploads || []), { id: `mu-${n.seq}`, by: 'u-a1', files: ['kund-scan.obj'], date: today() }],
+          })),
+          models: hasModel ? n.models : [...n.models, { id: modelId, spaceId: sp.id, title: `3D model — ${sp.name}`, files: ['model.obj'], takenDown: false }],
+          diagramUploads: [{ id: modelId, spaceId: sp.id, userId: 'u-a1', date: today(), files: [JKK_DIAGRAM_FILE], notes: '' }, ...n.diagramUploads],
+        };
+      }
+      n = reducer(n, { type: 'DEMO_COMMUNITY', spaceId: sp.id });
+      return toast({ ...n, toasts: s.toasts }, 'Fast forward: approved, spatial diagram and 3D model added, experiences and votes in');
+    }
+    // Round 24: skip past the platform team. Approves the kund's request, or, if the local
+    // authority hasn't sent one, opens the contest with the demo brief.
+    case 'JKK_SKIP_APPROVAL': {
+      let n = s;
+      let r = (n.contestRequests || []).find((x) => x.spaceId === a.spaceId);
+      if (!r) {
+        const money = (v) => `$${Number(v).toLocaleString('en-US')}`;
+        const size = 5;
+        const request = {
+          spaceId: a.spaceId, brief: JKK_CONTEST.brief, budget: money(JKK_CONTEST.budget), prize: money(JKK_CONTEST.budget - size * JKK_CONTEST.shortlistPay),
+          shortlistSize: size, shortlistPay: money(JKK_CONTEST.shortlistPay), deadline: plusDays(42), deadline2: plusDays(98), criteria: JKK_CONTEST.criteria, isPrivate: false,
+        };
+        n = reducer(n, { type: 'REQUEST_CONTEST', userId: 'u-p1', request });
+        r = n.contestRequests[0];
+      }
+      return reducer({ ...n, toasts: s.toasts }, { type: 'APPROVE_CONTEST_REQUEST', id: r.id });
+    }
+    // Round 24: skip to round 1 concepts being in (Architect A's too) and round 1 closed,
+    // so the host lands on the shortlist page with every entry in front of them.
+    case 'JKK_SKIP_TO_ENTRIES': {
+      const c = s.contests.find((x) => x.id === a.contestId);
+      let n = s;
+      if (!c.entries.some((e) => e.architectId === 'u-a1')) {
+        const e = { id: `e-${n.seq}`, architectId: 'u-a1', title: 'Jaali canopy over the upper landing', summary: 'A perforated stone canopy along the north edge that shades the top steps and lets breeze through.', submittedAt: today(), files: ['concept-sheet.pdf'] };
+        n = { ...n, seq: n.seq + 1, contests: mapById(n.contests, c.id, (x) => ({ ...x, entries: [...x.entries, e] })) };
+      }
+      n = reducer(n, { type: 'DEMO_ENTRIES', contestId: c.id });
+      n = reducer(n, { type: 'END_ROUND_1', contestId: c.id });
+      const count = n.contests.find((x) => x.id === c.id).entries.length;
+      return toast({ ...n, toasts: s.toasts }, `${count} round 1 concepts are in and round 1 has closed`);
+    }
+    // Round 24: the host marks the winning design as built. Anyone can then report the
+    // build from the space page; a moderator confirms it.
+    case 'CONTEST_BUILT': {
+      const c = s.contests.find((x) => x.id === a.contestId);
+      const won = c.entries.find((e) => e.id === c.winner);
+      let n = { ...s, contests: mapById(s.contests, c.id, (x) => ({ ...x, built: today() })) };
+      if (won) n = notify(n, won.architectId, 'contest', `The local authority says your winning design “${won.title}” has been built.`, `/contest/${c.id}`);
+      return toast(n, 'Marked as built. Anyone who visits can now report the build on the space page');
     }
     // Other architects send concepts, so the host has entries to shortlist.
     case 'DEMO_ENTRIES': {

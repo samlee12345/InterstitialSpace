@@ -510,7 +510,12 @@ function RelatedSpaces({ space }) {
 
 // ── Report an update: the space has changed on the ground ───
 function ReportUpdate({ space, onClose }) {
-  const { dispatch, user } = useDemo();
+  const { dispatch, user, state } = useDemo();
+  // Round 24: if a contest's winning design here has been marked built, the report can say
+  // it's that build, which lets the moderator mark the space Redesigned.
+  const builtContest = !space.redesigned && state.contests.find((c) => c.spaceId === space.id && c.built && c.winner);
+  const won = builtContest && builtContest.entries.find((e) => e.id === builtContest.winner);
+  const [isBuild, setIsBuild] = useState(!!won);
   const [sent, setSent] = useState(false);
   const [text, setText] = useState('');
   const [photos, setPhotos] = useState(0);
@@ -521,7 +526,7 @@ function ReportUpdate({ space, onClose }) {
     if (!photos) e.photos = 'Add at least one photo of the space as it is now.';
     setErr(e);
     if (Object.keys(e).length) return;
-    dispatch({ type: 'REPORT_UPDATE', spaceId: space.id, userId: user.id, text: text.trim(), photos });
+    dispatch({ type: 'REPORT_UPDATE', spaceId: space.id, userId: user.id, text: text.trim(), photos, contestId: won && isBuild ? builtContest.id : null });
     setSent(true);
   };
   if (sent) {
@@ -536,6 +541,12 @@ function ReportUpdate({ space, onClose }) {
   return (
     <Modal title="Report an update" onClose={onClose} wide>
       <p className="small">Has {space.name} been rebuilt, repaired or changed? Show what it looks like now. If a moderator confirms it, everything contributed so far (votes, photos, experiences, diagrams and redesigns) moves to the Archived tab and the space starts fresh.</p>
+      {won && (
+        <label className="check-row">
+          <input type="checkbox" checked={isBuild} onChange={(e) => setIsBuild(e.target.checked)} />
+          <span>This is the build of “{won.title}”, the winning design from <Link to={`/contest/${builtContest.id}`}>{builtContest.title}</Link></span>
+        </label>
+      )}
       <Input label={<>What changed?<span className="req" aria-hidden="true"> *</span></>} textarea value={text} onChange={(e) => setText(e.target.value)} error={err.text} placeholder="e.g. The steps were rebuilt in stone and a handrail was added in October." />
       <div className="field">
         <span className="label">Proof: photos of the space now<span className="req" aria-hidden="true"> *</span></span>

@@ -162,19 +162,25 @@ function BuildReport({ contest: c, space }) {
   const won = c.entries.find((e) => e.id === c.winner);
   if (!won || !space) return null;
   const report = state.updateReports.find((r) => r.contestId === c.id);
+  const host = user && user.id === c.coHostId;
   if (space.redesigned?.contestId === c.id) {
     return <p className="note small">Built. <Link to={`/space/${space.id}`}>{space.name}</Link> is marked Redesigned, its earlier contributions are archived, and a new round of experiences has started.</p>;
   }
   if (report?.status === 'pending') return <p className="note small">Build reported on {report.date}. A moderator will confirm it and mark the space Redesigned.</p>;
-  if (!user || user.id !== c.coHostId) return null;
-  const send = () => dispatch({
-    type: 'REPORT_UPDATE', spaceId: space.id, userId: user.id, photos: 2, contestId: c.id,
-    text: `The winning design “${won.title}” has been built on site.`,
-  });
+  // Round 24: the host only says it's built; someone on the ground reports it from the
+  // space page with photos, so the record is checked independently.
+  if (c.built) {
+    return (
+      <p className="note small">
+        {host ? 'You marked this as built' : 'The host marked this as built'} on {c.built}. Anyone who visits <Link to={`/space/${space.id}`}>{space.name}</Link> can now report the build there (Options › Report an update); a moderator then confirms it.
+      </p>
+    );
+  }
+  if (!host) return null;
   return (
     <div className="stack-sm">
-      <p className="small">Once “{won.title}” is built, report it. A moderator checks it, the space is marked Redesigned, and its earlier experiences and votes move to Archived so a new round can start.</p>
-      <div><Button onClick={send}>Report that it’s been built</Button></div>
+      <p className="small">Once “{won.title}” is built, mark it here. People who visit the space then report it with photos, a moderator checks it, and the space is marked Redesigned.</p>
+      <div><Button onClick={() => dispatch({ type: 'CONTEST_BUILT', contestId: c.id })}>Mark as built</Button></div>
     </div>
   );
 }
@@ -185,7 +191,10 @@ export function ContestRequest() {
   const { state, dispatch, isPaid, user } = useDemo();
   const [sent, setSent] = useState(null);
   const approved = state.spaces.filter((s) => !s.removed && s.status === 'approved');
-  const [f, setF] = useState({ spaceId: '', isPrivate: 'no', deed: [], brief: '', budget: '', shortlistSize: '5', shortlistPay: '', deadline: plusDays(42), deadline2: plusDays(98), criteria: '' });
+  // ?space= preselects the space (from a space page or the demo walkthrough).
+  const [params] = useSearchParams();
+  const pre = approved.some((x) => x.id === params.get('space')) ? params.get('space') : '';
+  const [f, setF] = useState({ spaceId: pre, isPrivate: 'no', deed: [], brief: '', budget: '', shortlistSize: '5', shortlistPay: '', deadline: plusDays(42), deadline2: plusDays(98), criteria: '' });
   const [payEdited, setPayEdited] = useState(false);
   const [err, setErr] = useState('');
   if (!isPaid) {
