@@ -1,11 +1,11 @@
 // Jawahar Kala Kendra walkthrough (round 23): the real photo, diagram and details used
 // when the kund is documented live during the demo. See DemoContext JKK_* actions and
 // the Walkthrough section of Demo controls.
-export const JKK_NAME = 'Kund (Madhyavarti), Jawahar Kala Kendra';
+export const JKK_NAME = 'Amphitheatre, Jawahar Kala Kendra';
 // The kund itself (not other spaces there, like the gallery s17). In the walkthrough the
 // space documented live is flagged `jkk` when it's created, so it's found whatever it's
 // named (round 28: a different name used to leave step 1 unticked).
-export const isJkk = (space) => !!space && (!!space.jkk || /^Kund\b.*Jawahar Kala Kendra/i.test(space.name || ''));
+export const isJkk = (space) => !!space && (!!space.jkk || /^(Amphitheatre|Kund)\b.*Jawahar Kala Kendra/i.test(space.name || ''));
 
 // Where the photo was taken: the centre of the kund (OpenStreetMap outline, way 1146531080).
 export const JKK_POINT = { lat: 26.87632, lng: 75.80914, label: 'at Jawahar Kala Kendra, JLN Marg' };
@@ -15,12 +15,12 @@ export const JKK_SHAPE = { mode: 'rect', pts: [{ x: -15.5, y: 15.5 }, { x: 15.5,
 export const JKK_PHOTO = {
   id: 'jkk-photo',
   src: 'demo/jkk-kund-steps.jpg',
-  alt: 'A person reading on the red sandstone steps of the kund at Jawahar Kala Kendra, with the high sandstone wall behind',
+  alt: 'A person reading on the red sandstone steps of the amphitheatre at Jawahar Kala Kendra, with the high sandstone wall behind',
 };
 export const JKK_DIAGRAM_FILE = 'jkk-axonometric-and-plan.png';
 export const JKK_DIAGRAM = {
   src: 'demo/jkk-spatial-diagram.png',
-  label: 'Axonometric of the kund over the nine-square plan',
+  label: 'Axonometric of the amphitheatre over the nine-square plan',
   alt: 'Exploded axonometric drawing: the stepped central square of Jawahar Kala Kendra lifted above the full nine-square plan, with the pivoted entrance square at the bottom',
 };
 
@@ -62,12 +62,14 @@ export const JKK_EXPERIENCE_PHOTOS = {
     P('zigzag-stairs', 'Stairs zigzagging up the walls of a small court'),
     P('tower-round-projection', 'Looking up at a tower with a round projection, between two red walls'),
     P('enclosed-court-doorway', 'An enclosed court with a doorway, small windows and a raised stone step'),
-    P('passage-into-court', 'A paved passage opening into a courtyard, with a wooden door and small windows'),
     P('outer-wall-balcony', 'The outer sandstone wall with a projecting balcony box, a bare tree beside it'),
     P('path-along-outer-wall', 'A stone-paved path along the tall outer wall, planting on the other side'),
     P('gap-between-walls', 'Two tall red walls frame a gap, with steps up to a white building beyond'),
   ],
 };
+
+// Round 32: the gallery next to the kund (s17) shows this one.
+export const JKK_GALLERY_PHOTO = P('passage-into-court', 'A paved passage opening into a courtyard, with a wooden door and small windows');
 
 export const JKK_COMMUNITY = [
   { userId: 'u-c2', onSite: true, text: 'Came for an evening performance. Every step was taken and people stood along the top edge.', answers: { use: 'Became a gathering spot', feel: ['Busy', 'Welcoming'], senses: ['Noisy'], access: 'Some difficulty', fix: 'Shade', need: 7, why: ['Underutilized'] } },
@@ -78,7 +80,7 @@ export const JKK_EXTRA_VOTES = 24; // other members' votes, so the space ranks h
 
 // The contest the local authority hosts.
 export const JKK_CONTEST = {
-  brief: 'Make the kund usable every day, not only during festivals: shade, air movement and seating that keep the stepped amphitheatre and Correa’s open-to-sky centre intact.',
+  brief: 'Make the amphitheatre usable every day, not only during festivals: shade, air movement and seating that keep the stepped amphitheatre and Correa’s open-to-sky centre intact.',
   budget: '6000',
   shortlistPay: '400',
   criteria: 'Keeps the open-to-sky centre and the steps\nShade and cooling that work at midday in May\nBuildable within the budget',

@@ -2,7 +2,7 @@
 // Everything here is PLACEHOLDER content for the class demo.
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { JKK_COMMUNITY, JKK_EXPERIENCE_PHOTOS } from '../src/demo/jkk.js';
+import { JKK_COMMUNITY, JKK_EXPERIENCE_PHOTOS, JKK_GALLERY_PHOTO } from '../src/demo/jkk.js';
 
 const out = fileURLToPath(new URL('../src/data/seed.json', import.meta.url));
 
@@ -48,13 +48,13 @@ const spaceRows = [
   // Inside the Chandpole courtyard, so the fully populated example has a connected space.
   ['s15', 'Water tap niche, Chandpole haveli courtyard', 'threshold', 26.92684, 75.80944, 'approved', 5, null, 'u-c2', 3, { parentId: 's2' }],
   // Round 22: a real place with real images, for the demo. Details are filled in below.
-  ['s16', 'Kund (Madhyavarti), Jawahar Kala Kendra', 'courtyard', 26.87632, 75.80914, 'approved', 1, null, 'u-c1', 18],
+  ['s16', 'Amphitheatre, Jawahar Kala Kendra', 'courtyard', 26.87632, 75.80914, 'approved', 1, null, 'u-c1', 18],
   // Round 25: an already documented space at the kund's north edge, so documenting the
   // kund live has an overlap to answer (they share part of the area). 16 m north of the
   // kund's centre, about 12 m across. Demo persona; not one of Sam's images. Its name
   // leaves out "Jawahar Kala Kendra" (round 27) so searching that in the walkthrough
   // finds nothing: the kund clearly isn't on the platform yet.
-  ['s17', 'Shaded gallery on the north side of the kund', 'threshold', 26.87646, 75.80914, 'approved', 3, null, 'u-c2', 6, { areaM: 6 }],
+  ['s17', 'Shaded gallery on the north side of the amphitheatre', 'threshold', 26.87646, 75.80914, 'approved', 3, null, 'u-c2', 6, { areaM: 6 }],
 ];
 
 const qa = [
@@ -366,7 +366,7 @@ seed.contests.find((c) => c.id === 'c2').entries.push({ id: 'e14', architectId: 
   Object.assign(k, {
     areaM: 17,
     addedAt: '2026-11-19',
-    photos: [{ id: 's16-ph1', credit: 'u-c1', onSite: true, src: 'demo/jkk-kund-steps.jpg', alt: 'A person reading on the red sandstone steps of the kund at Jawahar Kala Kendra, with the high sandstone wall behind' }],
+    photos: [{ id: 's16-ph1', credit: 'u-c1', onSite: true, src: 'demo/jkk-kund-steps.jpg', alt: 'A person reading on the red sandstone steps of the amphitheatre at Jawahar Kala Kendra, with the high sandstone wall behind' }],
     questionnaire: q(
       'Calm and open between events; full and loud at festivals. Enclosed on all sides by the 8 m walls of the squares around it.',
       'From the shaded galleries of the surrounding squares you step out into the open-to-sky centre and down its stepped platforms',
@@ -381,8 +381,8 @@ seed.contests.find((c) => c.id === 'c2').entries.push({ id: 'e14', architectId: 
     ),
     designerExternal: { name: 'Charles Correa (architect), for the Government of Rajasthan', link: '' },
     diagrams: [{
-      id: 'dg-s16', source: 'architect', by: 'u-a1', credits: [], date: '2026-11-19',
-      label: 'Axonometric of the kund over the nine-square plan',
+      id: 'dg-s16', source: 'ai', credits: ['u-c1'], date: '2026-11-19',
+      label: 'Axonometric of the amphitheatre over the nine-square plan',
       src: 'demo/jkk-spatial-diagram.png',
       alt: 'Exploded axonometric drawing: the stepped central square of Jawahar Kala Kendra lifted above the full nine-square plan, with the pivoted entrance square at the bottom',
     }],
@@ -398,6 +398,13 @@ seed.contests.find((c) => c.id === 'c2').entries.push({ id: 'e14', architectId: 
       answers: { use: 'Became a gathering spot', feel: ['Busy'], senses: ['Noisy', 'Too hot'], access: 'Some difficulty', fix: 'Shade', keep: 'The stepped seating facing the centre', need: 6, why: ['Underutilized'] } },
   );
 }
+// Round 32: the Base Library holds only what the AI generates. Seeded diagrams that were
+// architect uploads become AI ones, credited to the photo contributors.
+seed.spaces.forEach((x) => {
+  x.diagrams = x.diagrams.map((d) => ({ id: d.id, source: 'ai', credits: [...new Set(x.photos.map((p) => p.credit).filter(Boolean))], date: d.date, ...(d.src ? { label: d.label, src: d.src, alt: d.alt } : {}) }));
+  x.diagrams = x.diagrams.filter((d, i, all) => d.src || all.findIndex((e) => !e.src) === i);   // one placeholder AI diagram is enough
+  delete x.modelUploads;
+});
 // Round 29: the other members' experiences of the kund come with Sam's photos of
 // Jawahar Kala Kendra (the same ones the walkthrough adds after the kund is documented).
 {
@@ -412,9 +419,10 @@ seed.contests.find((c) => c.id === 'c2').entries.push({ id: 'e14', architectId: 
 // Round 25: the gallery next to the kund (demo persona).
 {
   const g = seed.spaces.find((x) => x.id === 's17');
+  g.photos = g.photos.map((p, i) => (i === 0 ? { ...p, ...JKK_GALLERY_PHOTO } : p));
   Object.assign(g, {
     addedAt: '2026-10-21',
-    questionnaire: q('Shaded and quiet; a place to wait before stepping out into the sun', 'From the gallery shade out onto the top step of the kund', 'Red sandstone', 'Cooler than the open kund; voices from the steps carry in'),
+    questionnaire: q('Shaded and quiet; a place to wait before stepping out into the sun', 'From the gallery shade out onto the top step of the amphitheatre', 'Red sandstone', 'Cooler than the open amphitheatre; voices from the steps carry in'),
     properties: props('Waiting, watching performances from the shade', 'Red sandstone', 'Shaded most of the day', 'Charles Correa for the Government of Rajasthan, 1986–92'),
   });
 }

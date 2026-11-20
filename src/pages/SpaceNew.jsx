@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDemo } from '../state/DemoContext.jsx';
 import { JKK_FIELDS, JKK_PHOTO, JKK_POINT, JKK_SHAPE } from '../demo/jkk.js';
 import { Badge, Button, FormActions, Icon, ImageBox, Input, Modal, Page, RoleGate, Select, Steps } from '../components/ui.jsx';
-import { typeLabel } from '../components/domain.jsx';
+import { coverPhoto, typeLabel } from '../components/domain.jsx';
 import { useChoices } from '../design/choices.js';
 import { POINTS, fmtPoints, uploadPoints } from '../lib/points.js';
 import { radiusOf, shapeOf } from '../lib/geo.js';
@@ -313,6 +313,8 @@ function AreaEditor({ center, shape, setShape, candidates, popover, relations = 
               >{n}</button>
               {openId === s.id && (
                 <span className="map-popover" role="dialog" aria-label={s.name}>
+                  {/* Round 32: a picture helps decide how the two relate. */}
+                  <span className="map-popover-photo"><ImageBox label="No photo yet" src={coverPhoto(s)?.src} alt={coverPhoto(s)?.alt || ''} /></span>
                   <span className="row"><span className="mark-num" style={markStyle(n)} aria-hidden="true">{n}</span><a className="bold small" href={`#/space/${s.id}`} target="_blank" rel="noopener noreferrer">{s.name}<span className="visually-hidden"> (opens in a new tab)</span></a></span>
                   <label className="small" htmlFor={`rel-pop-${s.id}`}>How does it relate to your space?</label>
                   <select id={`rel-pop-${s.id}`} className="input" value={rel || ''} onChange={(e) => { onRelate(s, e.target.value); setOpenId(null); }}>

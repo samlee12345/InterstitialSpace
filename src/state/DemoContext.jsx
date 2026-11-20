@@ -2,7 +2,7 @@ import { createContext, useContext, useMemo, useReducer } from 'react';
 import { useLocation } from 'react-router-dom';
 import seed from '../data/seed.json';
 import { POINTS, interactPoints, uploadPoints, fmtPoints } from '../lib/points.js';
-import { JKK_COMMUNITY, JKK_CONTEST, JKK_DIAGRAM, JKK_DIAGRAM_FILE, JKK_ENTRIES, JKK_EXPERIENCE_PHOTOS, JKK_EXTRA_VOTES, JKK_FIELDS, JKK_NAME, JKK_PHOTO, JKK_POINT, JKK_SHAPE, isJkk } from '../demo/jkk.js';
+import { JKK_COMMUNITY, JKK_CONTEST, JKK_DIAGRAM, JKK_ENTRIES, JKK_EXPERIENCE_PHOTOS, JKK_EXTRA_VOTES, JKK_FIELDS, JKK_NAME, JKK_PHOTO, JKK_POINT, JKK_SHAPE, isJkk } from '../demo/jkk.js';
 
 const plusDays = (d) => new Date(Date.now() + d * 86400000).toISOString().slice(0, 10);
 const money = (v) => `$${Number(v).toLocaleString('en-US')}`;
@@ -90,16 +90,26 @@ function reducer(s, a) {
       const votes = fresh2.filter((x) => x.answers.need >= 6).length + JKK_EXTRA_VOTES;
       // Round 29: each member's experience comes with their photos of the place.
       const photosOf = (x) => (JKK_EXPERIENCE_PHOTOS[x.userId] || []).map((p, j) => ({ id: `${a.spaceId}-${x.userId}-ph${j + 1}`, credit: x.userId, onSite: true, ...p }));
-      const n = {
+      let n = {
         ...s,
         seq: s.seq + fresh2.length + 1,
         comments: [...s.comments, ...fresh2.map((x, i) => ({ id: `cm-${s.seq + i}`, spaceId: a.spaceId, ...x, photoIds: photosOf(x).map((p) => p.id), date: today() }))],
         spaces: mapById(s.spaces, a.spaceId, (x) => ({ ...x, votes: x.votes + votes, photos: [...x.photos, ...fresh2.flatMap(photosOf).filter((p) => !x.photos.some((q) => q.id === p.id))] })),
       };
-      return toast(n, `${fresh2.length} more experiences and ${votes} votes to redesign`);
+      // Round 32: with the new photos the AI builds the Base Library: the real spatial
+      // diagram and a 3D model.
+      const sp = n.spaces.find((x) => x.id === a.spaceId);
+      if (!sp.diagrams.some((d) => d.source === 'ai')) {
+        const credits = [...new Set(sp.photos.map((p) => p.credit).filter(Boolean))];
+        n = { ...n, spaces: mapById(n.spaces, sp.id, (x) => ({ ...x, diagrams: [...x.diagrams, { id: `dg-ai-${x.id}`, source: 'ai', credits, date: today(), label: JKK_DIAGRAM.label, src: JKK_DIAGRAM.src, alt: JKK_DIAGRAM.alt }] })) };
+      }
+      if (!n.models.some((m) => m.spaceId === sp.id && !m.takenDown && !m.archived)) {
+        n = { ...n, seq: n.seq + 1, models: [...n.models, { id: `m-${n.seq}`, spaceId: sp.id, title: `3D model — ${sp.name}`, files: ['model.obj'], takenDown: false }] };
+      }
+      return toast(n, `${fresh2.length} more experiences and ${votes} votes for an upgrade; the AI built the Base Library`);
     }
-    // Round 24 fast forward: the kund is approved, an architect has added the real spatial
-    // diagram and a 3D model, and other members have posted experiences and votes.
+    // Fast forward: the kund is approved and other members post experiences and votes;
+    // with their photos the AI builds the Base Library (round 32).
     case 'JKK_FAST_FORWARD': {
       const sp = s.spaces.find((x) => x.id === a.spaceId);
       let n = s;
@@ -112,23 +122,8 @@ function reducer(s, a) {
           spaces: mapById(n.spaces, sp.id, (x) => ({ ...x, status: 'approved', qualifiedAwarded: true })),
         };
       }
-      if (!sp.diagrams.some((d) => d.src)) {
-        const modelId = `m-${n.seq}`;
-        const hasModel = n.models.some((m) => m.spaceId === sp.id && !m.takenDown && !m.archived);
-        n = {
-          ...n,
-          seq: n.seq + 1,
-          spaces: mapById(n.spaces, sp.id, (x) => ({
-            ...x,
-            diagrams: [...x.diagrams, { id: `dg-${modelId}`, source: 'architect', by: 'u-a1', collaborators: [], credits: [], date: today(), label: JKK_DIAGRAM.label, src: JKK_DIAGRAM.src, alt: JKK_DIAGRAM.alt }],
-            modelUploads: [...(x.modelUploads || []), { id: `mu-${n.seq}`, by: 'u-a1', files: ['kund-scan.obj'], date: today() }],
-          })),
-          models: hasModel ? n.models : [...n.models, { id: modelId, spaceId: sp.id, title: `3D model — ${sp.name}`, files: ['model.obj'], takenDown: false }],
-          diagramUploads: [{ id: modelId, spaceId: sp.id, userId: 'u-a1', date: today(), files: [JKK_DIAGRAM_FILE], notes: '' }, ...n.diagramUploads],
-        };
-      }
       n = reducer(n, { type: 'DEMO_COMMUNITY', spaceId: sp.id });
-      return toast({ ...n, toasts: s.toasts }, 'Fast forward: approved, spatial diagram and 3D model added, experiences and votes in');
+      return toast({ ...n, toasts: s.toasts }, 'Fast forward: approved, experiences and votes in, and the Base Library is built');
     }
     // Round 24: skip past the platform team. Approves the kund's request, or, if the local
     // authority hasn't sent one, opens the contest with the demo brief.
@@ -169,8 +164,8 @@ function reducer(s, a) {
       if (k >= 8) { run({ type: 'DEMO_PROPOSALS', contestId: con().id }); run({ type: 'END_ROUND_2', contestId: con().id }); }
       if (k >= 9) run({ type: 'PICK_WINNER', contestId: con().id, entryId: entryOf('u-a1') });
       if (k >= 10) run({ type: 'CONTEST_BUILT', contestId: con().id });
-      if (k >= 11) run({ type: 'REPORT_UPDATE', spaceId: sid(), userId: 'u-c1', photos: 1, contestId: con().id, text: 'The jaali canopy is up over the top steps; the kund is shaded at noon now.' });
-      if (k >= 12) run({ type: 'RESOLVE_UPDATE', id: n.updateReports.find((r) => r.contestId === con().id).id, ok: true });
+      if (k >= 11) run({ type: 'REPORT_UPDATE', spaceId: sid(), userId: 'u-c1', photos: 1, text: 'The jaali canopy is up over the top steps; the amphitheatre is shaded at noon now.' });
+      if (k >= 12) run({ type: 'RESOLVE_UPDATE', id: n.updateReports.find((r) => r.spaceId === sid() && r.status === 'pending').id, ok: true, contestId: con().id });
       return toast({ ...n, toasts: [], role: a.role || n.role }, `Jumped to step ${k + 1}`);
     }
     // Round 24: skip to round 1 concepts being in (Architect A's too) and round 1 closed,
@@ -413,14 +408,14 @@ function reducer(s, a) {
         const n = {
           ...s,
           seq: s.seq + 1,
-          comments: s.comments.map((c) => (c === prev ? { ...c, text: a.text, onSite: a.onSite, photoIds: [...(c.photoIds || []), ...ids], answers: a.answers || c.answers, updatedAt: today() } : c)),
+          comments: s.comments.map((c) => (c === prev ? { ...c, text: a.text, onSite: a.onSite, photoIds: [...(c.photoIds || []), ...ids], drawings: [...(c.drawings || []), ...(a.drawings || [])], answers: a.answers || c.answers, updatedAt: today() } : c)),
           spaces: mapById(s.spaces, a.spaceId, (x) => ({ ...x, photos: [...x.photos, ...ids.map((id) => ({ id, credit: a.userId, onSite: a.onSite }))] })),
         };
         return toast(n, 'Experience updated');
       }
       let n = {
         ...s,
-        comments: [...s.comments, { id: `cm-${s.seq}`, spaceId: a.spaceId, userId: a.userId, text: a.text, onSite: a.onSite, photoIds: ids, answers: a.answers || null, date: today() }],
+        comments: [...s.comments, { id: `cm-${s.seq}`, spaceId: a.spaceId, userId: a.userId, text: a.text, onSite: a.onSite, photoIds: ids, drawings: a.drawings || [], answers: a.answers || null, date: today() }],
         spaces: mapById(s.spaces, a.spaceId, (x) => ({ ...x, photos: [...x.photos, ...ids.map((id) => ({ id, credit: a.userId, onSite: a.onSite }))] })),
       };
       n = awardToast(n, a.userId, interactPoints(a.onSite), a.onSite ? 'experience posted (on site)' : 'experience posted (off site, half points)');
@@ -580,7 +575,9 @@ function reducer(s, a) {
           models: n.models.map((m) => (m.spaceId === sp.id && !m.archived ? { ...m, archived: round.date } : m)),
         };
         // Round 23: a build of a contest's winning design marks the space Redesigned.
-        const c = r.contestId && s.contests.find((x) => x.id === r.contestId);
+        // Round 32: the moderator says whether it is (a.contestId); older reports carry it.
+        const cid = a.contestId !== undefined ? a.contestId : r.contestId;
+        const c = cid && s.contests.find((x) => x.id === cid);
         const won = c && c.entries.find((e) => e.id === c.winner);
         if (won) {
           n = {

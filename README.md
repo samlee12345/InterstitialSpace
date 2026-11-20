@@ -200,6 +200,18 @@ been added. Use it to click through long forms quickly in the demo.
   timeline), on the contest page and on the space page.
 - **Map pins** are plain: solid for approved spaces, dashed and hollow for
   pending ones. Space cards show votes, redesigns and photos.
+- **Round 32.** Spatial diagrams and 3D model are one **Base Library** tab:
+  only what the AI generates from members' photos and experiences, free for
+  anyone to download (no buying, no uploads; old ?tab=diagram/model links
+  open it). Members attach their own drawings to an experience instead
+  (optional Drawings field). The header has "Upload redesign" (architects
+  upload; others go to verification). Fast forward lands on Experiences.
+  Reporting an update no longer asks whether it's a contest build; the
+  moderator answers that on the review page. Designer credits moved into the
+  Waiting for review table (Confirm or Decline in the row). The overlap
+  popover on the Area step shows the space's photo; the gallery (s17) has
+  one of Sam's photos. The kund is renamed "Amphitheatre, Jawahar Kala
+  Kendra", and "votes to redesign" reads "votes for an upgrade".
 - **Round 31.** Spaces pending approval is now "Waiting for review": reported
   updates sit in the same table as new spaces, with a Type column (New space,
   Reported update, Build of a winning design). An update opens its own review

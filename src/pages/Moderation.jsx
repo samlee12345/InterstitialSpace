@@ -126,6 +126,13 @@ export function ReviewForm({ space, onDone }) {
   );
 }
 
+// The contest whose winning design for this report's space was marked built (or that an
+// older report named), if any.
+function builtContestFor(state, r) {
+  if (r.contestId) return state.contests.find((c) => c.id === r.contestId);
+  return state.contests.find((c) => c.spaceId === r.spaceId && c.built && c.winner);
+}
+
 // Round 31: a reported update is reviewed on its own page, like a new space, but one
 // moderator's decision is enough (it's a check of the proof, not a vote).
 export function UpdateReview() {
@@ -133,19 +140,26 @@ export function UpdateReview() {
   const { state, dispatch, get, isModerator } = useDemo();
   const nav = useNavigate();
   const r = state.updateReports.find((x) => x.id === id);
+  const [isBuild, setIsBuild] = useState(null);
+  const [err, setErr] = useState('');
   if (!isModerator) return <Gate />;
   if (!r) return <Page><p className="note">This report isn’t waiting any more. <Link to="/moderation">Back to Waiting for review</Link></p></Page>;
   const sp = get.space(r.spaceId);
-  const contest = r.contestId && state.contests.find((c) => c.id === r.contestId);
+  // Round 32: if a contest's winning design for this space was marked built, the moderator
+  // says whether this report is that build (the reporter isn't asked).
+  const contest = builtContestFor(state, r);
   const won = contest && contest.entries.find((e) => e.id === contest.winner);
-  const decide = (ok) => { dispatch({ type: 'RESOLVE_UPDATE', id: r.id, ok }); nav(ok ? `/space/${r.spaceId}` : '/moderation'); };
+  const decide = (ok) => {
+    if (ok && contest && isBuild === null) return setErr('Say whether this is the build of the winning design.');
+    dispatch({ type: 'RESOLVE_UPDATE', id: r.id, ok, contestId: ok && contest && isBuild ? contest.id : null });
+    return nav(ok ? `/space/${r.spaceId}` : '/moderation');
+  };
   return (
     <Page tag="simulated">
       <Crumbs items={[['/moderation', 'Waiting for review'], [null, `Reported update: ${sp?.name}`]]} />
       <div className="stack">
         <h1>Reported update</h1>
         <p><Link className="bold" to={`/space/${r.spaceId}`}>{sp?.name}</Link> <span className="muted">· reported by <UserLink id={r.by} you={false} /> on {r.date}</span></p>
-        {contest && <p><Badge>Build of a winning design</Badge> This is the build of {won ? `“${won.title}”` : 'the winning design'} from <Link to={`/contest/${contest.id}`}>{contest.title}</Link>{contest.built ? `, which the host marked built on ${contest.built}` : ''}.</p>}
         <section className="stack-sm" aria-labelledby="what-h">
           <h2 id="what-h" className="h-sm">What changed</h2>
           <p className="prose">{r.text}</p>
@@ -153,7 +167,18 @@ export function UpdateReview() {
         </section>
         <section className="card stack-sm" aria-labelledby="decide-h">
           <h2 id="decide-h" className="h-sm">Your decision</h2>
-          <p className="small muted">One moderator decides. Confirming moves every past contribution to the space’s Archived tab and resets its votes{contest ? ', and marks the space Redesigned' : ''}.</p>
+          <p className="small muted">One moderator decides. Confirming moves every past contribution to the space’s Archived tab and resets its votes.</p>
+          {contest && (
+            <fieldset className="stack-sm">
+              <legend className="bold">Is this the build of “{won?.title}”, the winning design from <Link to={`/contest/${contest.id}`}>{contest.title}</Link>?</legend>
+              <p className="small muted">The host marked it built on {contest.built}. If it is, the space is also marked Redesigned and linked to the contest.</p>
+              <div className="row">
+                <Choice name="is-build" checked={isBuild === true} onChange={() => { setIsBuild(true); setErr(''); }} title="Yes, it’s that build" />
+                <Choice name="is-build" checked={isBuild === false} onChange={() => { setIsBuild(false); setErr(''); }} title="No, a different change" />
+              </div>
+              {err && <span className="error" role="alert">{err}</span>}
+            </fieldset>
+          )}
           <div className="row">
             <Button variant="primary" onClick={() => decide(true)}>Confirm update and archive</Button>
             <Button onClick={() => decide(false)}>Not an update</Button>
@@ -164,32 +189,8 @@ export function UpdateReview() {
   );
 }
 
-// Who designed a space: named by an architect, confirmed by a moderator.
-function DesignerClaims() {
-  const { state, dispatch, get } = useDemo();
-  const pending = state.designerClaims.filter((c) => c.status === 'pending');
-  return (
-    <section className="stack" aria-labelledby="designers-h">
-      <h2 id="designers-h" className="h-sm">Designer credits ({pending.length})</h2>
-      {pending.length === 0 && <p className="note">No designer credits waiting.</p>}
-      <ul className="list">
-        {pending.map((c) => (
-          <li key={c.id} className="stack-sm">
-            <span>{c.external ? <span className="bold">{c.external.name} <span className="muted">(not on the platform{c.external.link ? `: ${c.external.link}` : ''})</span></span> : <UserLink id={c.designer} you={false} className="bold" />} designed <Link to={`/space/${c.spaceId}`}>{get.space(c.spaceId)?.name}</Link><span className="small muted">, says <UserLink id={c.by} you={false} /> on {c.date}</span></span>
-            {c.note && <p className="small">{c.note}</p>}
-            <div className="row">
-              <Button variant="primary" onClick={() => dispatch({ type: 'DESIGNER_RESOLVE', id: c.id, ok: true })}>Confirm designer</Button>
-              <Button onClick={() => dispatch({ type: 'DESIGNER_RESOLVE', id: c.id, ok: false })}>Decline</Button>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
 export function Moderation() {
-  const { state, user, isModerator, isArchitect, get } = useDemo();
+  const { state, user, isModerator, isArchitect, get, dispatch } = useDemo();
   const [city, setCity] = useState('all');
   if (!isModerator && !isArchitect) return <Gate />;
   // Every pending space is listed as soon as it is created; no diagram needed.
@@ -200,12 +201,14 @@ export function Moderation() {
     .map((space) => ({ ...(state.moderation.find((m) => m.spaceId === space.id) || emptyRow(space.id)), space }));
   // Reported updates sit in the same list, for moderators only (round 31).
   const updates = isModerator ? state.updateReports.filter((r) => r.status === 'pending' && (city === 'all' || (get.space(r.spaceId)?.city || 'Jaipur') === city)) : [];
+  // Designer credits too (round 32): named by an architect, one moderator confirms.
+  const claims = isModerator ? state.designerClaims.filter((c) => c.status === 'pending' && (city === 'all' || (get.space(c.spaceId)?.city || 'Jaipur') === city)) : [];
   return (
     <Page tag="simulated">
       <div className="split">
         <div className="stack">
           <h1>Waiting for review</h1>
-          <p className="prose muted">New spaces wait here until architects confirm they are interstitial spaces: pick any, nothing is assigned, and three yes votes approve one. {isModerator ? 'Reported updates are here too; one moderator confirms those.' : ''}</p>
+          <p className="prose muted">New spaces wait here until architects confirm they are interstitial spaces: pick any, nothing is assigned, and three yes votes approve one. {isModerator ? 'Reported updates and designer credits are here too; one moderator decides those.' : ''}</p>
           <Select label="City" value={city} onChange={(e) => setCity(e.target.value)} options={[{ value: 'all', label: 'All cities' }, ...cities.map((c) => ({ value: c, label: c }))]} />
           <div className="table-wrap">
             <table>
@@ -216,13 +219,22 @@ export function Moderation() {
                   return (
                     <tr key={r.id}>
                       <td><span className="bold">{sp?.name}</span><br /><span className="small muted">Reported {r.date}</span></td>
-                      <td>{r.contestId ? <Badge kind="accent">Build of a winning design</Badge> : <Badge>Reported update</Badge>}</td>
+                      <td><Badge>Reported update</Badge>{builtContestFor(state, r) && <><br /><span className="small muted">A winning design here was marked built</span></>}</td>
                       <td><UserLink id={r.by} you={false} /></td>
                       <td className="small muted">One moderator decides</td>
                       <td className="nowrap"><Button to={`/moderation/update/${r.id}`}>Review</Button></td>
                     </tr>
                   );
                 })}
+                {claims.map((c) => (
+                  <tr key={c.id}>
+                    <td><span className="bold">{get.space(c.spaceId)?.name}</span><br /><span className="small muted">Named {c.date}</span></td>
+                    <td><Badge>Designer credit</Badge><br /><span className="small">{c.external ? `${c.external.name} (not on the platform)` : <UserLink id={c.designer} you={false} />} designed it</span>{c.note && <><br /><span className="small muted">{c.note}</span></>}</td>
+                    <td><UserLink id={c.by} you={false} /></td>
+                    <td className="small muted">One moderator decides</td>
+                    <td><div className="stack-sm"><Button onClick={() => dispatch({ type: 'DESIGNER_RESOLVE', id: c.id, ok: true })}>Confirm</Button><Button variant="quiet" onClick={() => dispatch({ type: 'DESIGNER_RESOLVE', id: c.id, ok: false })}>Decline</Button></div></td>
+                  </tr>
+                ))}
                 {rows.map((m) => {
                   const t = tally(m);
                   const own = m.space.uploadedBy === user.id;
@@ -239,9 +251,9 @@ export function Moderation() {
               </tbody>
             </table>
           </div>
-          {rows.length + updates.length === 0 && <p className="note">Nothing waiting{city !== 'all' ? ` in ${city}` : ''}.</p>}
+          {rows.length + updates.length + claims.length === 0 && <p className="note">Nothing waiting{city !== 'all' ? ` in ${city}` : ''}.</p>}
           <p className="small muted">You can’t review spaces you created.</p>
-          {isModerator && <><hr className="rule" /><DesignerClaims /><div><Button to="/flags">Open the flag queue</Button></div></>}
+          {isModerator && <div><Button to="/flags">Open the flag queue</Button></div>}
         </div>
         <StatusCard />
       </div>

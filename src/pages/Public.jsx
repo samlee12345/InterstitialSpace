@@ -492,7 +492,7 @@ const TERMS = [
     ['What you can document', 'Spaces you can see from public ground. Your photos need location data so the space can be placed on the map.'],
     ['Licence', 'Photos, scans, questionnaire answers and experiences are shared under a Creative Commons licence and stay open. You keep ownership of what you upload.'],
     ['Approval', 'A new space shows as Pending until architects confirm it qualifies against the published criteria. Points for it arrive then.'],
-    ['Experiences and votes', 'Each person has one experience per space and can update it. Rating a space’s need for redesign 6 or more out of 10 counts as one vote to redesign it.'],
+    ['Experiences and votes', 'Each person has one experience per space and can update it. Rating a space’s need for redesign 6 or more out of 10 counts as one vote for an upgrade.'],
     ['When a space changes', 'If a space is rebuilt or changes on the ground, a moderator confirms the update. Everything contributed before it moves to the space’s Archived tab, where it stays visible and credited, and votes start again.'],
     ['Private owners', 'An owner can request removal of a space on their property with proof of ownership. The team reviews each request.'],
   ]],

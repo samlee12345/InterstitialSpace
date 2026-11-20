@@ -129,8 +129,6 @@ export function Points() {
                 <tr><td>Your first experience on a space</td><td className="num">{fmtPoints(POINTS.interactOnSite)}</td><td className="num">{fmtPoints(POINTS.interactOffSite)}</td></tr>
                 <tr><td>Photo, when the space is approved (creator only)</td><td className="num">{fmtPoints(POINTS.photo)}</td><td className="num">Needs location data</td></tr>
                 <tr><td>Each optional detail when documenting a space</td><td className="num">{fmtPoints(POINTS.field)}</td><td className="num">{fmtPoints(POINTS.field)}</td></tr>
-                <tr><td>3D model or scan upload</td><td className="num">{fmtPoints(POINTS.diagram)}</td><td className="num">{fmtPoints(POINTS.diagram)}</td></tr>
-                <tr><td>Spatial diagram</td><td className="num">{fmtPoints(POINTS.diagram)}</td><td className="num">{fmtPoints(POINTS.diagram)}</td></tr>
                 <tr><td>Redesign</td><td className="num">{fmtPoints(POINTS.redesign)}</td><td className="num">{fmtPoints(POINTS.redesign)}</td></tr>
                 <tr><td>Approval review</td><td className="num">{fmtPoints(POINTS.review)}</td><td className="num">{fmtPoints(POINTS.review)}</td></tr>
               </tbody>

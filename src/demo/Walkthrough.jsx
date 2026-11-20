@@ -15,7 +15,8 @@ function useJkk() {
   const request = space && (state.contestRequests || []).find((r) => r.spaceId === space.id);
   const contest = space && state.contests.find((c) => c.spaceId === space.id);
   const mod = space && state.moderation.find((m) => m.spaceId === space.id);
-  const report = contest && state.updateReports.find((r) => r.contestId === contest.id);
+  // The build report: any update reported on the kund after the contest was marked built.
+  const report = contest?.built && state.updateReports.find((r) => r.spaceId === space.id && r.date >= contest.built);
   const mine = contest && contest.entries.find((e) => e.architectId === 'u-a1');
   const live = space && state.comments.filter((c) => c.spaceId === space.id && !c.archived);
   return { state, space, request, contest, mod, report, mine, live };
@@ -47,17 +48,17 @@ export function Walkthrough({ close }) {
   // "Switch to … user" button signs in as (it lands on the map); `actions` are extra buttons ({ label, run, demo } — demo ones stand in for
   // people who aren't in the room).
   // Fast forward: approved, diagram + 3D model in, experiences and votes in.
-  const fastForward = sid && { label: 'Fast forward', run: () => { dispatch({ type: 'JKK_FAST_FORWARD', spaceId: sid }); go('community', `/space/${sid}?tab=diagram`); }, demo: true };
+  const fastForward = sid && { label: 'Fast forward', run: () => { dispatch({ type: 'JKK_FAST_FORWARD', spaceId: sid }); go('community', `/space/${sid}?tab=experience`); }, demo: true };
   const steps = [
-    { id: 'document', who: 'Community member', title: 'Documents the kund', done: !!space, as: 'community' },
+    { id: 'document', who: 'Community member', title: 'Documents the amphitheatre', done: !!space, as: 'community' },
     {
       id: 'approve', who: 'Moderator', title: 'Approves it (3 yes votes)', done: space?.status === 'approved', as: 'moderator',
       actions: [sid && space.status === 'pending' && (mod?.yes || 0) < 2 && { label: 'Two other architects vote yes', run: () => dispatch({ type: 'DEMO_REVIEWERS_YES', spaceId: sid }), demo: true }, sid && fastForward],
     },
     {
-      id: 'grow', who: 'Architects and other members', title: 'Add the spatial diagram and 3D model, post experiences and vote to redesign',
-      done: !!space?.diagrams.some((d) => d.src) && others.length >= 2 && space.votes >= 10, as: 'architect',
-      actions: [sid && fastForward],
+      id: 'grow', who: 'Other members', title: 'Add experiences and vote for an upgrade; the AI builds the Base Library',
+      done: !!space?.diagrams.some((d) => d.source === 'ai') && others.length >= 2 && space.votes >= 10, as: 'architect',
+      actions: [sid && { label: 'Other members add their experiences', run: () => { dispatch({ type: 'DEMO_COMMUNITY', spaceId: sid }); go('community', `/space/${sid}?tab=experience`); }, demo: true }],
     },
     {
       id: 'request', who: 'Local authority (paid account)', title: 'Asks to host a contest', done: !!request || !!contest, as: 'paid',
@@ -94,18 +95,18 @@ export function Walkthrough({ close }) {
   // where to go from there, so the demo is clicked through like a real visit.
   const TIPS = {
     document: 'From the map: search “Jawahar” (nothing there yet), then “Add this place”. Photos: “Demo · Use the Jawahar Kala Kendra photo”. Questionnaire: “Demo · Fill with Jawahar Kala Kendra details”.',
-    approve: 'Header › Approvals, then Review on the kund’s row.',
-    grow: 'Open the kund (search “Jawahar” on the map), then Spatial diagrams › Upload spatial diagram; “Demo · Add sample files” adds the real drawing. Or fast forward to the space with it all in place.',
-    request: 'Account menu › Host a contest. Pick the kund, then fill the form or use Fill fields.',
+    approve: 'Header › Approvals, then Review on the amphitheatre’s row.',
+    grow: 'Open the amphitheatre (search “Jawahar” on the map), then Add your experience; you can attach a drawing to it. With the other members’ photos the AI draws the spatial diagram and 3D model in the Base Library tab.',
+    request: 'Account menu › Host a contest. Pick the amphitheatre, then fill the form or use Fill fields.',
     team: 'Account menu › Contributions › Hosted contests shows the request under team review.',
-    enter: 'Contests › Redesign the Kund… › Submit an entry.',
+    enter: 'Contests › Redesign the Amphitheatre… › Submit an entry.',
     shortlist: 'Account menu › Contributions (“to judge”) › Hosted contests › Ready to judge.',
-    proposal: 'Contests › the kund’s contest › Submit your full proposal. Architect A’s concept has to be on the shortlist.',
+    proposal: 'Contests › the amphitheatre’s contest › Submit your full proposal. Architect A’s concept has to be on the shortlist.',
     winner: 'Account menu › Contributions › Hosted contests › Ready to judge.',
     built: 'Account menu › Contributions › Hosted contests › the contest, then “Mark as built”.',
-    report: 'Open the kund (search “Jawahar” on the map), then Options › Report an update. “This is the build of …” is already ticked.',
-    confirm: 'Header › Approvals, then Review on the kund’s “Build of a winning design” row. One moderator decides.',
-    new: 'Open the kund, then Add your experience.',
+    report: 'Open the amphitheatre (search “Jawahar” on the map), then Options › Report an update and say what changed.',
+    confirm: 'Header › Approvals, then Review on the amphitheatre’s Reported update row. Answer “Is this the build…?” and confirm. One moderator decides.',
+    new: 'Open the amphitheatre, then Add your experience.',
   };
   steps.forEach((x) => { x.tip = TIPS[x.id]; });
   // Confirming the build archives the old round, so earlier steps stay ticked once it's redesigned.
@@ -116,7 +117,7 @@ export function Walkthrough({ close }) {
     <div className="stack">
       <section className="stack-sm" aria-labelledby="wt-h">
         <h3 id="wt-h" className="demo-h">Jawahar Kala Kendra, start to finish</h3>
-        <p className="xs muted">Documents the kund live, takes it through approval, votes, a contest, the build and a new round. Start removes it from the demo data, resets everything else and signs you in as Community member 1. Select any step to jump there.</p>
+        <p className="xs muted">Documents the amphitheatre live, takes it through approval, votes, a contest, the build and a new round. Start removes it from the demo data, resets everything else and signs you in as Community member 1. Select any step to jump there.</p>
         <div><button type="button" className="btn" onClick={() => { dispatch({ type: 'JKK_START' }); nav('/'); }}>{state.jkkWalkthrough ? 'Start again' : 'Start the walkthrough'}</button></div>
       </section>
       {state.jkkWalkthrough && (

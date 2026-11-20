@@ -312,23 +312,7 @@
             "u-c3",
             "u-a2"
           ],
-          "date": "2026-08-14",
-          "label": "AI diagram from community photos"
-        },
-        {
-          "id": "dg-s2",
-          "source": "architect",
-          "by": "u-a2",
-          "credits": [],
-          "date": "2026-09-01"
-        },
-        {
-          "id": "dg-s2-b",
-          "source": "architect",
-          "by": "u-a2",
-          "credits": [],
-          "date": "2026-10-20",
-          "label": "Long section through the courtyard and lane"
+          "date": "2026-08-14"
         }
       ],
       "archive": [
@@ -383,25 +367,7 @@
       "designerExternal": {
         "name": "Original builders, haveli family (placeholder)",
         "link": ""
-      },
-      "modelUploads": [
-        {
-          "id": "mu-s2-1",
-          "by": "u-a2",
-          "files": [
-            "courtyard-scan.e57"
-          ],
-          "date": "2026-10-02"
-        },
-        {
-          "id": "mu-s2-2",
-          "by": "u-a4",
-          "files": [
-            "massing.3dm"
-          ],
-          "date": "2026-10-28"
-        }
-      ]
+      }
     },
     {
       "id": "s3",
@@ -572,9 +538,14 @@
       "diagrams": [
         {
           "id": "dg-s4",
-          "source": "architect",
-          "by": "u-a3",
-          "credits": [],
+          "source": "ai",
+          "credits": [
+            "u-c2",
+            "u-c3",
+            "u-a2",
+            "u-a4",
+            "u-c1"
+          ],
           "date": "2026-09-01"
         }
       ],
@@ -746,9 +717,14 @@
       "diagrams": [
         {
           "id": "dg-s6",
-          "source": "architect",
-          "by": "u-a2",
-          "credits": [],
+          "source": "ai",
+          "credits": [
+            "u-a2",
+            "u-a4",
+            "u-c1",
+            "u-c2",
+            "u-c3"
+          ],
           "date": "2026-09-01"
         }
       ],
@@ -818,9 +794,14 @@
       "diagrams": [
         {
           "id": "dg-s7",
-          "source": "architect",
-          "by": "u-a3",
-          "credits": [],
+          "source": "ai",
+          "credits": [
+            "u-a4",
+            "u-c1",
+            "u-c2",
+            "u-c3",
+            "u-a2"
+          ],
           "date": "2026-09-01"
         }
       ],
@@ -1248,9 +1229,14 @@
       "diagrams": [
         {
           "id": "dg-s13",
-          "source": "architect",
-          "by": "u-a1",
-          "credits": [],
+          "source": "ai",
+          "credits": [
+            "u-c2",
+            "u-c3",
+            "u-a2",
+            "u-a4",
+            "u-c1"
+          ],
           "date": "2026-09-01"
         }
       ],
@@ -1379,7 +1365,7 @@
     },
     {
       "id": "s16",
-      "name": "Kund (Madhyavarti), Jawahar Kala Kendra",
+      "name": "Amphitheatre, Jawahar Kala Kendra",
       "type": "courtyard",
       "lat": 26.87632,
       "lng": 75.80914,
@@ -1392,7 +1378,7 @@
           "credit": "u-c1",
           "onSite": true,
           "src": "demo/jkk-kund-steps.jpg",
-          "alt": "A person reading on the red sandstone steps of the kund at Jawahar Kala Kendra, with the high sandstone wall behind"
+          "alt": "A person reading on the red sandstone steps of the amphitheatre at Jawahar Kala Kendra, with the high sandstone wall behind"
         },
         {
           "id": "s16-u-c2-ph1",
@@ -1496,25 +1482,18 @@
           "id": "s16-u-a2-ph6",
           "credit": "u-a2",
           "onSite": true,
-          "src": "demo/jkk/passage-into-court.jpg",
-          "alt": "A paved passage opening into a courtyard, with a wooden door and small windows"
-        },
-        {
-          "id": "s16-u-a2-ph7",
-          "credit": "u-a2",
-          "onSite": true,
           "src": "demo/jkk/outer-wall-balcony.jpg",
           "alt": "The outer sandstone wall with a projecting balcony box, a bare tree beside it"
         },
         {
-          "id": "s16-u-a2-ph8",
+          "id": "s16-u-a2-ph7",
           "credit": "u-a2",
           "onSite": true,
           "src": "demo/jkk/path-along-outer-wall.jpg",
           "alt": "A stone-paved path along the tall outer wall, planting on the other side"
         },
         {
-          "id": "s16-u-a2-ph9",
+          "id": "s16-u-a2-ph8",
           "credit": "u-a2",
           "onSite": true,
           "src": "demo/jkk/gap-between-walls.jpg",
@@ -1536,11 +1515,12 @@
       "diagrams": [
         {
           "id": "dg-s16",
-          "source": "architect",
-          "by": "u-a1",
-          "credits": [],
+          "source": "ai",
+          "credits": [
+            "u-c1"
+          ],
           "date": "2026-11-19",
-          "label": "Axonometric of the kund over the nine-square plan",
+          "label": "Axonometric of the amphitheatre over the nine-square plan",
           "src": "demo/jkk-spatial-diagram.png",
           "alt": "Exploded axonometric drawing: the stepped central square of Jawahar Kala Kendra lifted above the full nine-square plan, with the pivoted entrance square at the bottom"
         }
@@ -1561,7 +1541,7 @@
     },
     {
       "id": "s17",
-      "name": "Shaded gallery on the north side of the kund",
+      "name": "Shaded gallery on the north side of the amphitheatre",
       "type": "threshold",
       "lat": 26.87646,
       "lng": 75.80914,
@@ -1572,7 +1552,9 @@
         {
           "id": "s17-ph1",
           "credit": "u-c1",
-          "onSite": true
+          "onSite": true,
+          "src": "demo/jkk/passage-into-court.jpg",
+          "alt": "A paved passage opening into a courtyard, with a wooden door and small windows"
         },
         {
           "id": "s17-ph2",
@@ -1587,9 +1569,9 @@
       ],
       "questionnaire": {
         "feelings": "Shaded and quiet; a place to wait before stepping out into the sun",
-        "transition": "From the gallery shade out onto the top step of the kund",
+        "transition": "From the gallery shade out onto the top step of the amphitheatre",
         "materiality": "Red sandstone",
-        "sensory": "Cooler than the open kund; voices from the steps carry in"
+        "sensory": "Cooler than the open amphitheatre; voices from the steps carry in"
       },
       "properties": {
         "activity": "Waiting, watching performances from the shade",
@@ -3131,8 +3113,7 @@
         "s16-u-a2-ph5",
         "s16-u-a2-ph6",
         "s16-u-a2-ph7",
-        "s16-u-a2-ph8",
-        "s16-u-a2-ph9"
+        "s16-u-a2-ph8"
       ]
     },
     {

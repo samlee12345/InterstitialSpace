@@ -743,3 +743,10 @@ body.demo-open .demo-tray { right: calc(var(--width-demo-drawer) + var(--space-3
 .wt-next { background: var(--color-sunken); }
 .wt-next .wt-num { border-width: var(--border-thick); font-weight: var(--weight-bold); }
 .nowrap { white-space: nowrap; }
+
+/* Round 32: a second line under a menu item, and an unavailable item. */
+.menu-hint { display: block; font-size: var(--text-xs); color: var(--color-text-muted); font-weight: var(--weight-regular); }
+.menu-item-off { color: var(--color-text-muted); cursor: default; }
+.file-chip { display: inline-block; margin: 0 var(--space-1) var(--space-1) 0; padding: 0 var(--space-2); border: var(--border-thin) solid var(--color-border); border-radius: var(--radius-sm); font-size: var(--text-sm); }
+.map-popover-photo { display: block; width: 100%; }
+.map-popover-photo .imgbox { width: 100%; aspect-ratio: 4 / 3; height: auto; }

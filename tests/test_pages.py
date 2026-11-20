@@ -113,36 +113,19 @@ def run():
         expect(pg.locator("tr", has_text="Architect A (you)").locator("td").nth(2)).to_have_text("4")
         step("upload redesign -> banner on space, Yours badge, weekly limit, portfolio, ranking")
 
-        # 2. spatial diagram
+        # 2. Base Library (round 32): AI-made diagrams and model, free; nothing to upload
         open_space("Gateway niche")
-        tab("Spatial diagrams (0)")
-        pg.get_by_role("link", name="Upload spatial diagram").click()
-        expect(pg.locator("main .imgbox")).to_have_count(0)     # no placeholders before upload
-        pg.get_by_role("button", name="Continue").click()
-        expect(pg.get_by_text("Add a plan and a section")).to_be_visible()
-        pg.get_by_role("button", name=re.compile("Add sample file")).last.click()
-        expect(pg.locator(".preview-list .imgbox")).to_have_count(2)
-        pg.get_by_role("checkbox").check()
-        pg.get_by_role("button", name="Continue").click()
-        expect(pg.get_by_role("heading", name="How your diagram is sold")).to_be_visible()
-        pg.screenshot(path="/home/claude/r9_diagram_terms.png", full_page=True)
-        pg.get_by_role("button", name="Add to Base Library").click()
-        expect(pg.locator(".error", has_text="Agree to the Base Library licence")).to_be_visible()
-        pg.get_by_role("checkbox").check()
-        pg.get_by_role("button", name="Add to Base Library").click()
-        expect(pg.get_by_role("heading", name="Spatial diagram added to the Base Library")).to_be_visible()
-        expect(pg.get_by_role("tab", name="Spatial diagrams (1)")).to_be_visible()
-        pg.get_by_role("link", name="Upload spatial diagram").click()         # more than one diagram per space
-        pg.get_by_role("button", name=re.compile("Add sample file")).last.click()
-        pg.get_by_role("checkbox").check()
-        pg.get_by_role("button", name="Continue").click()
-        pg.get_by_role("checkbox").check()
-        pg.get_by_role("button", name="Add to Base Library").click()
-        expect(pg.get_by_role("tab", name="Spatial diagrams (2)")).to_be_visible()
-        expect(pg.get_by_role("tab", name="3D model (1)")).to_be_visible()   # still only one model
-        tab("3D model (1)")
-        expect(pg.get_by_text("Generated from 6 photos, 2 spatial diagrams and 0 uploaded models")).to_be_visible()
-        step("upload two diagrams -> one 3D model generated from both")
+        tab(re.compile("^Base Library"))
+        expect(pg.get_by_role("link", name=re.compile("Upload spatial diagram"))).to_have_count(0)
+        expect(pg.get_by_text("Free for anyone to download and use")).to_be_visible()
+        pg.goto(BASE + "/space/s2?tab=library")
+        pg.get_by_role("button", name="Download diagram (free)").first.click()
+        expect(pg.locator(".toast", has_text="Downloaded the spatial diagram")).to_be_visible()
+        pg.get_by_role("button", name="Download 3D model (free)").click()
+        expect(pg.locator(".toast", has_text="Downloaded the 3D model")).to_be_visible()
+        pg.goto(BASE + "/space/s2?tab=diagram")   # old links open the Base Library
+        expect(pg.get_by_role("tab", name=re.compile("^Base Library"))).to_have_attribute("aria-selected", "true")
+        step("Base Library: AI diagrams and 3D model, free downloads, no uploads")
 
         # 3. full rights by agreement, then buy with a failed payment first
         open_space("Gateway threshold, Jaipur Darwaza (east side)")
@@ -180,17 +163,6 @@ def run():
         expect(pg.get_by_role("button", name="Update to version 2")).to_have_count(0)
         step("full rights at a set price + connect with architect; buy redesign (fail, retry), receipt, purchases, update")
 
-        # 3b. measured model, not enough points
-        open_space("Haveli courtyard, Chandpole lane")
-        tab("3D model (1)")
-        pg.get_by_role("link", name="Buy 3D model").click()
-        pg.get_by_role("link", name="Continue to checkout").click()
-        expect(pg.get_by_text(re.compile("Not enough points: you have"))).to_be_visible()
-        expect(pg.get_by_role("radio", name="100 points")).to_be_disabled()
-        pg.locator(".demo-tray").get_by_role("button", name="Fill test card").click()
-        pg.get_by_role("button", name="Pay $XX").click()
-        expect(pg.get_by_role("heading", name="Purchase confirmed")).to_be_visible()
-        step("buy measured model with money")
 
         # 4. edit / unpublish
         nav("Portfolio")
@@ -236,18 +208,18 @@ def run():
         expect(pg.locator(".contest-card .badge", has_text="You entered")).to_be_visible()
         expect(pg.get_by_role("link", name="Submit an entry")).to_have_count(0)
         pg.screenshot(path="/home/claude/shot_space_contest.png", full_page=True)
-        # tabs only, seven of them; header layouts
-        expect(pg.get_by_role("tab")).to_have_count(7)
+        # tabs only, six of them (Base Library replaced two, round 32); header layouts
+        expect(pg.get_by_role("tab")).to_have_count(6)
         pg.get_by_role("tab", name=re.compile(r"^Experiences")).click()
         expect(pg.locator(".tabpanel h2:not(.visually-hidden)")).to_have_count(0)    # no repeated heading in tabs
         expect(pg.locator(".tabpanel").get_by_role("button", name="Vote")).to_have_count(0)   # voting lives in the header
         expect(pg.locator(".experience .points-badge, .experience .pts")).to_have_count(0)
         pg.get_by_role("tab", name="Experiences").focus()
         pg.keyboard.press("ArrowRight")
-        expect(pg.get_by_role("tab", name="Spatial diagrams")).to_be_focused()
-        expect(pg.get_by_role("tab", name="Spatial diagrams")).to_have_attribute("aria-selected", "true")
+        expect(pg.get_by_role("tab", name=re.compile("^Base Library"))).to_be_focused()
+        expect(pg.get_by_role("tab", name=re.compile("^Base Library"))).to_have_attribute("aria-selected", "true")
         expect(pg.locator(".space-head-portrait .space-head-photo")).to_be_visible()
-        expect(pg.locator(".space-head .vote-line")).to_contain_text("votes to redesign")
+        expect(pg.locator(".space-head .vote-line")).to_contain_text("votes for an upgrade")
         view("Space page", "photo strip")
         expect(pg.locator(".space-head-photos li")).to_have_count(6)
         pg.screenshot(path="/home/claude/r10_head_strip.png")
@@ -407,7 +379,7 @@ def run():
         tab("Experiences (1)")
         expect(pg.get_by_role("button", name="Update your experience")).to_be_visible()   # the uploader's first experience counts
         pg.goto(BASE + "/space/s9")    # a space this member hasn't posted on yet
-        expect(pg.locator(".vote-line")).to_contain_text("4 votes to redesign")
+        expect(pg.locator(".vote-line")).to_contain_text("4 votes for an upgrade")
         expect(pg.get_by_role("button", name="Vote to redesign")).to_have_count(0)   # votes come from experiences
         pg.locator(".space-head").get_by_role("button", name="Add your experience").click()
         dlg = pg.get_by_role("dialog", name="Add your experience")
@@ -443,7 +415,7 @@ def run():
         expect(pg.get_by_role("dialog")).to_have_count(0)
         expect(pg.get_by_role("heading", name="Experience posted")).to_be_visible()
         expect(pg.locator(".toast", has_text=re.compile(r"\+0\.125 (ghost )?points"))).to_be_visible()
-        expect(pg.locator(".vote-line")).to_contain_text("5 votes to redesign")            # 8/10 counts as a vote
+        expect(pg.locator(".vote-line")).to_contain_text("5 votes for an upgrade")            # 8/10 counts as a vote
         exp = pg.locator("li.experience", has_text="I pass here daily.")
         expect(exp.locator(".exp-answers div", has_text="Needs fixing most")).to_contain_text("Shade")
         expect(exp.locator(".exp-answers div", has_text="Comments")).to_contain_text("I pass here daily.")
@@ -533,7 +505,7 @@ def run():
         pg.get_by_role("button", name="Confirm update and archive").click()
         expect(pg.locator(".toast", has_text="past contributions archived")).to_be_visible()
         pg.goto(BASE + "/space/s6")
-        expect(pg.locator(".vote-line")).to_contain_text("0 votes to redesign")
+        expect(pg.locator(".vote-line")).to_contain_text("0 votes for an upgrade")
         expect(pg.get_by_role("tab", name="Experiences (0)")).to_be_visible()
         tab("Archived (1)")
         expect(pg.get_by_role("heading", name=re.compile("Before the update on"))).to_be_visible()
@@ -607,16 +579,7 @@ def run():
         pg.goto(BASE + "/membership")
         expect(pg.get_by_role("columnheader", name=re.compile("^Paid"))).to_be_visible()
         expect(pg.get_by_role("row", name=re.compile("Share of the year-end surplus"))).to_be_visible()
-        open_space("Stepwell landing, Amer Road side")
-        tab("3D model (1)")
-        pg.get_by_role("link", name="Buy 3D model").click()
-        pg.get_by_role("link", name="Continue to checkout").click()
-        pg.get_by_text("Free download (paid tier)").click()
-        pg.get_by_role("button", name="Download for free").click()
-        expect(pg.get_by_role("heading", name="Purchase confirmed")).to_be_visible()
-        nav("Points & membership")
-        expect(pg.get_by_text("9 of 10 free model downloads")).to_be_visible()
-        step("paid: counter, host request, judging, escrow, free download")
+        step("paid: counter, host request, judging, escrow")
 
         role("Private owner")
         open_space("Temple plinth steps")
@@ -637,9 +600,9 @@ def run():
 
         role("Architect")
         open_space("Chowk well platform")
-        tab("Spatial diagrams (0)")
+        tab(re.compile("^Base Library"))
         expect(pg.get_by_role("heading", name="Processing…")).to_be_visible()
-        expect(pg.locator(".captioned figcaption", has_text="Drawn by AI from")).to_be_visible(timeout=8000)
+        expect(pg.locator(".captioned figcaption", has_text=re.compile("generated by AI from", re.I))).to_be_visible(timeout=8000)
         step("AI processing -> diagram")
 
         panel(True)
@@ -708,8 +671,8 @@ def run():
         pg.goto(BASE + "/space/s1")
         expect(pg.locator(".space-head h1")).to_have_text("Stepwell landing, Amer Road side")
         expect(pg.get_by_text("Placeholder entry")).to_have_count(0)
-        tab("Spatial diagrams (1)")
-        expect(pg.locator(".captioned figcaption").first).to_contain_text("Drawn by AI from")
+        tab(re.compile("^Base Library"))
+        expect(pg.locator(".captioned figcaption").first).to_contain_text(re.compile("generated by AI from", re.I))
         pg.get_by_role("tab", name=re.compile("^Experiences")).click()
         expect(pg.get_by_role("heading", name="What people say it’s like")).to_be_visible()
         expect(pg.get_by_text("Show all")).to_have_count(0)
@@ -1175,16 +1138,6 @@ def run():
         dd.get_by_role("button", name="Send for confirmation").click()
         pg.get_by_role("dialog", name="Designer sent for confirmation").get_by_role("button", name="Done").click()
         expect(pg.locator(".experience time").first).to_have_text(re.compile(r"(ago|today|yesterday)"))
-        tab("3D model (0)") if pg.get_by_role("tab", name="3D model (0)").count() else tab(re.compile("^3D model"))
-        pg.get_by_role("button", name="Upload a 3D model or scan").click()
-        um = pg.get_by_role("dialog", name="Upload a 3D model or scan")
-        um.locator("input[type=file]").set_input_files([{"name": "plan.pdf", "mimeType": "application/pdf", "buffer": b"x"}])
-        expect(um.get_by_text("Not added: plan.pdf")).to_be_visible()
-        pg.get_by_role("button", name=re.compile("Add sample file")).last.click()
-        um.get_by_role("checkbox").check()
-        um.get_by_role("button", name="Upload model").click()
-        expect(pg.get_by_role("heading", name="Uploaded models and scans (1)")).to_be_visible()
-        expect(pg.get_by_role("link", name="Buy 3D model")).to_be_visible()
         pg.goto(BASE + "/space/s9")                                   # pending, created by someone else
         expect(pg.locator(".space-head .pending-note")).to_be_visible()
         pn = pg.locator(".pending-note").bounding_box()
@@ -1202,8 +1155,9 @@ def run():
         expect(pg.get_by_role("dialog")).to_have_count(0)
         role("Moderator")
         nav("Waiting for review")
-        claim = pg.locator("li", has_text="designed Chowk steps, Badi Chaupar corner")
-        claim.get_by_role("button", name="Confirm designer").click()
+        expect(pg.get_by_role("heading", name=re.compile("^Designer credits"))).to_have_count(0)   # round 32: in the main list
+        claim = pg.locator("tr", has_text="Designer credit").filter(has_text="Chowk steps, Badi Chaupar corner")
+        claim.get_by_role("button", name="Confirm").click()
         pg.goto(BASE + "/space/s3")
         expect(pg.locator(".space-head")).to_contain_text("Designed by Architect A")
         role("Community member")
@@ -1309,15 +1263,13 @@ def run():
         pg.get_by_role("button", name="Publish").click()
         pg.locator("a.card", has_text="Shared chowk shade").click()
         expect(pg.locator("main")).to_contain_text("with Architect B, mira@studio.example")
-        pg.goto(BASE + "/space/s9/upload-diagram")
-        expect(pg.get_by_role("button", name="Add collaborator")).to_be_visible()
         role("Architect")
         pg.goto(BASE + "/contest/c3/enter")
         expect(pg.get_by_role("button", name="Add collaborator")).to_be_visible()
         role("Moderator")
         nav("Waiting for review")
-        expect(pg.locator("li", has_text="Studio Sangath")).to_contain_text("not on the platform")
-        step("header on one line; designer not on the platform; collaborators on redesign, diagram, entry")
+        expect(pg.locator("tr", has_text="Studio Sangath")).to_contain_text("not on the platform")
+        step("header on one line; designer not on the platform; collaborators on redesign and entry")
 
         # round 13: ghost points, create space D default, buy diagrams, populated space, toast, terms
         view("Create new space", "D: Choose on the map")
@@ -1368,18 +1320,10 @@ def run():
         assert x.evaluate("e => getComputedStyle(e).backgroundColor") != "rgba(0, 0, 0, 0)", "Dismiss has a solid chip"
         pg.goto(BASE + "/space/s2")
         tabs = pg.get_by_role("tablist").inner_text()
-        for t in ["Experiences (", "Spatial diagrams (3)", "3D model (1)", "Redesigns (2)", "Connected spaces (1)", "Contests (1)", "Archived (1)"]:
+        for t in ["Experiences (", "Base Library (2)", "Redesigns (2)", "Connected spaces (1)", "Contests (1)", "Archived (1)"]:
             assert t in tabs, (t, tabs)
-        pg.goto(BASE + "/space/s2?tab=diagram")
-        expect(pg.get_by_role("link", name="Buy this diagram")).to_have_count(3)
-        pg.get_by_role("link", name="Buy this diagram").first.click()
-        expect(pg.locator("main")).to_contain_text("Spatial diagram")
-        pg.get_by_role("link", name="Continue to checkout").click()
-        pg.locator(".demo-tray").get_by_role("button", name="Fill test card").click()
-        pg.get_by_role("button", name=re.compile("^Pay ")).click()
-        expect(pg.locator("main")).to_contain_text("Spatial diagram")
-        pg.goto(BASE + "/purchases")
-        expect(pg.get_by_role("heading", name="Purchase confirmed")).to_be_visible()
+        assert "Spatial diagrams" not in tabs and "3D model" not in tabs, tabs   # round 32: one Base Library tab
+        expect(pg.get_by_role("link", name="Buy this diagram")).to_have_count(0)
         pg.goto(BASE + "/terms")
         expect(pg.get_by_role("heading", name="Points, payouts and the surplus")).to_be_visible()
         pg.goto(BASE + "/points")
@@ -1478,7 +1422,7 @@ def run():
         dlg.get_by_role("button", name="Close").first.click()
         pg.goto(BASE + "/points")
         expect(pg.get_by_role("cell", name=re.compile("^Like"))).to_have_count(0)
-        expect(pg.get_by_role("cell", name="3D model or scan upload")).to_be_visible()
+        expect(pg.get_by_role("cell", name="3D model or scan upload")).to_have_count(0)   # round 32: the AI makes those
         step("host form full width with big map; location step has two choices; rate table matches rules")
 
         # round 19: pass-through-or-gather question, inline Optional markers, architect Contributions tab
@@ -1563,7 +1507,7 @@ def run():
         # round 22: Jawahar Kala Kendra kund with a real photo and spatial diagram
         role("Community member")
         pg.goto(BASE + "/space/s16")
-        expect(pg.get_by_role("heading", name="Kund (Madhyavarti), Jawahar Kala Kendra")).to_be_visible()
+        expect(pg.get_by_role("heading", name="Amphitheatre, Jawahar Kala Kendra")).to_be_visible()
         expect(pg.locator(".space-head-photo img")).to_have_attribute("src", re.compile("demo/jkk-kund-steps.jpg$"))
         pg.wait_for_function("() => { const i = document.querySelector('.space-head-photo img'); return i && i.complete && i.naturalWidth > 0; }")
         expect(pg.get_by_text("Charles Correa (architect)")).to_be_visible()
@@ -1571,27 +1515,25 @@ def run():
         # round 29: the other members' experiences carry Sam's photos of the place
         expect(pg.locator(".exp-photo img[src*='demo/jkk/']").first).to_be_visible()
         assert pg.locator(".exp-photo img[src*='demo/jkk/']").count() >= 6
-        pg.get_by_role("button", name="See all 9 photos").click()
-        expect(pg.get_by_role("dialog")).to_contain_text("Photo 3 of 9")
+        pg.get_by_role("button", name="See all 8 photos").click()
+        expect(pg.get_by_role("dialog")).to_contain_text("Photo 3 of 8")
         pg.get_by_role("dialog").get_by_role("button", name="Next").click()
-        expect(pg.get_by_role("dialog")).to_contain_text("Photo 4 of 9")
+        expect(pg.get_by_role("dialog")).to_contain_text("Photo 4 of 8")
         expect(pg.get_by_role("dialog").locator("img")).to_have_attribute("src", re.compile("demo/jkk/"))
         pg.keyboard.press("Escape")
         expect(pg.get_by_text("Red sandstone steps and walls, white marble coping")).to_be_visible()
         pg.screenshot(path="/home/claude/r22_space.png", full_page=True)
-        pg.get_by_role("tab", name=re.compile("^Spatial diagrams")).click()
+        pg.get_by_role("tab", name=re.compile("^Base Library")).click()
         dimg = pg.locator(".diagram-real img")
         expect(dimg).to_have_attribute("src", re.compile("jkk-spatial-diagram.png$"))
         dimg.scroll_into_view_if_needed()
         pg.wait_for_function("() => { const i = document.querySelector('.diagram-real img'); return i && i.complete && i.naturalWidth > 0; }")
         pg.screenshot(path="/home/claude/r22_diagram.png", full_page=True)
-        pg.get_by_role("link", name="Buy this diagram").click()
-        expect(pg.locator("main .imgbox-real img").first).to_have_attribute("src", re.compile("jkk-spatial-diagram"))
         pg.goto(BASE + "/browse")
         pg.get_by_label("Search").fill("Jawahar")
         expect(pg.locator("main a.card")).to_have_count(1)   # the gallery (round 25) doesn't say Jawahar (round 27)
-        expect(pg.locator("main a.card", has_text="Kund (Madhyavarti)").locator("img")).to_have_attribute("src", re.compile("jkk-kund-steps"))
-        step("JKK kund: real photo on header, card and experience; real diagram on the tab and item page")
+        expect(pg.locator("main a.card", has_text="Amphitheatre, Jawahar").locator("img")).to_have_attribute("src", re.compile("jkk-kund-steps"))
+        step("JKK kund: real photo on header, card and experience; real diagram in the Base Library")
 
         # rounds 23-24: Jawahar Kala Kendra walkthrough, start to finish (Demo controls › Walkthrough)
         pg.goto(BASE + "/browse")
@@ -1605,7 +1547,7 @@ def run():
             nxt.get_by_role("button", name=f"Switch to {who} user").click()
             expect(pg).to_have_url(re.compile(r"#/$"))
         def document(name=None):
-            expect(nxt).to_contain_text(re.compile("Documents the kund", re.I))
+            expect(nxt).to_contain_text(re.compile("Documents the amphitheatre", re.I))
             switch("community member")
             pg.locator("#map-q").fill("Jawahar")
             expect(pg.locator(".map-search")).to_contain_text("No space called “Jawahar” yet.")
@@ -1618,18 +1560,18 @@ def run():
             # round 25: a real map under the area, and the gallery next door overlaps it
             expect(pg.locator(".area-map .area-base.leaflet-container")).to_have_count(1)
             expect(pg.locator(".area-map")).not_to_contain_text("Map placeholder")
-            pin = pg.get_by_role("button", name=re.compile(r"^1\. Shaded gallery on the north side of the kund"))
+            pin = pg.get_by_role("button", name=re.compile(r"^1\. Shaded gallery on the north side of the amphitheatre"))
             pin.click()
             pg.get_by_label("How does it relate to your space?").select_option("overlap")
             expect(pin).to_have_attribute("aria-label", re.compile("marked: They share part of the area"))
             shot("area_real_map")
             pg.get_by_role("button", name="Continue").click()
             pg.get_by_role("button", name=re.compile("Fill with Jawahar Kala Kendra details")).click()
-            expect(pg.get_by_label("Name of the space")).to_have_value("Kund (Madhyavarti), Jawahar Kala Kendra")
+            expect(pg.get_by_label("Name of the space")).to_have_value("Amphitheatre, Jawahar Kala Kendra")
             if name: pg.get_by_label("Name of the space").fill(name)
             pg.get_by_role("button", name="Review").click()
             pg.get_by_role("button", name="Submit space").click()
-            expect(pg.get_by_role("heading", name=name or "Kund (Madhyavarti), Jawahar Kala Kendra")).to_be_visible()
+            expect(pg.get_by_role("heading", name=name or "Amphitheatre, Jawahar Kala Kendra")).to_be_visible()
             return re.search(r"#/space/([^?]+)", pg.url).group(1)
 
         open_wt()
@@ -1654,29 +1596,45 @@ def run():
         nxt.get_by_role("button", name=re.compile("Two other architects vote yes")).click()
         switch("moderator")
         pg.locator(".header").get_by_role("link", name=re.compile("^Approvals")).click()
-        pg.locator("tr", has_text="Kund (Madhyavarti)").get_by_role("link", name="Review").click()
+        pg.locator("tr", has_text="Amphitheatre, Jawahar").get_by_role("link", name="Review").click()
         aside = pg.locator(".review-aside")
         aside.get_by_text("Yes, approve it").click()
         for c in aside.locator("fieldset").first.get_by_role("checkbox").all(): c.check()
         aside.get_by_role("button", name="Submit vote").click()
         expect(aside.get_by_text("Approved: 3 yes votes reached.")).to_be_visible()
 
-        # 3 diagram + model + experiences + votes, fast forwarded
-        expect(nxt).to_contain_text(re.compile("spatial diagram and 3D model", re.I))
-        nxt.get_by_role("button", name=re.compile("Fast forward")).click()
-        expect(pg).to_have_url(re.compile(f"#/space/{sid}\\?tab=diagram"))
-        expect(pg.locator(".diagram-real img")).to_have_attribute("src", re.compile("jkk-spatial-diagram"))
-        shot("02_fast_forward")
+        # 3 experiences + votes; the AI builds the Base Library (round 32)
+        expect(nxt).to_contain_text(re.compile("the AI builds the Base Library", re.I))
+        switch("architect")
+        pg.goto(BASE + f"/space/{sid}?tab=library")
+        expect(pg.locator(".diagram-real img")).to_have_count(0)            # nothing until others add photos
         pg.get_by_role("tab", name=re.compile("^Experiences")).click()
+        pg.get_by_role("button", name="Add your experience").click()
+        dlg = pg.get_by_role("dialog")
+        dlg.get_by_role("button", name="Share location: I’m here").click()
+        dlg.get_by_label("Comments").fill("Measured the steps: risers are uneven, about 30 to 45 cm.")
+        dlg.get_by_role("button", name=re.compile("Add sample file")).click()   # a drawing travels with the experience
+        dlg.get_by_role("button", name="Continue").click()
+        dlg.get_by_role("group", name=re.compile("^What needs fixing most")).locator("label.chip", has_text="Shade").click()
+        dlg.get_by_role("button", name="Continue").click()
+        dlg.locator("label.scale-step", has_text=re.compile(r"^7$")).click()
+        dlg.locator("label.chip", has_text="Underutilized").click()
+        dlg.get_by_role("button", name=re.compile("Post experience")).click()
+        expect(pg.locator(".experience", has_text="Measured the steps")).to_contain_text("sketch-plan.pdf")
+        nxt.get_by_role("button", name=re.compile("Other members add their experiences")).click()
+        expect(pg).to_have_url(re.compile(f"#/space/{sid}\\?tab=experience"))
+        expect(pg.get_by_role("tab", name=re.compile("^Experiences"))).to_have_attribute("aria-selected", "true")
+        shot("02_fast_forward")
         assert pg.locator(".exp-photo img[src*='demo/jkk/']").count() >= 6
-        pg.get_by_role("button", name="See all 9 photos").click()
-        expect(pg.get_by_role("dialog")).to_contain_text("Photo 3 of 9")
+        pg.get_by_role("button", name="See all 8 photos").click()
+        expect(pg.get_by_role("dialog")).to_contain_text("Photo 3 of 8")
         pg.get_by_role("dialog").get_by_role("button", name="Next").click()
-        expect(pg.get_by_role("dialog")).to_contain_text("Photo 4 of 9")
+        expect(pg.get_by_role("dialog")).to_contain_text("Photo 4 of 8")
         expect(pg.get_by_role("dialog").locator("img")).to_have_attribute("src", re.compile("demo/jkk/"))
         pg.keyboard.press("Escape")   # round 29: others' photos arrive with their experiences
-        pg.get_by_role("tab", name=re.compile("^3D model")).click()
-        expect(pg.locator("main")).not_to_contain_text("No 3D model yet")
+        pg.get_by_role("tab", name=re.compile("^Base Library")).click()
+        expect(pg.locator(".diagram-real img")).to_have_attribute("src", re.compile("jkk-spatial-diagram"))
+        expect(pg.get_by_role("button", name="Download 3D model (free)")).to_be_visible()
         pg.get_by_role("tab", name=re.compile("^Experiences")).click()
         expect(pg.locator(".vote-line")).not_to_contain_text(re.compile(r"^\s*[0-9]\b"))
 
@@ -1696,7 +1654,7 @@ def run():
         # 5 team approval, skipped
         expect(nxt).to_contain_text(re.compile("Approves the request", re.I))
         nxt.get_by_role("button", name="Skip past approval").click()
-        expect(pg.locator("#hosted tr", has_text="Redesign the Kund").get_by_text("Open for entries")).to_be_visible()
+        expect(pg.locator("#hosted tr", has_text="Redesign the Amphitheatre").get_by_text("Open for entries")).to_be_visible()
         shot("04_contest_open")
 
         # 6 round 1 concepts, skipped; the host sees the entries
@@ -1760,7 +1718,7 @@ def run():
         pg.get_by_role("button", name=re.compile("^Options")).click()
         pg.get_by_role("button", name="Report an update").click()
         dlg = pg.get_by_role("dialog")
-        expect(dlg.get_by_role("checkbox", name=re.compile("This is the build of “Jaali canopy"))).to_be_checked()
+        expect(dlg.get_by_role("checkbox")).to_have_count(0)   # round 32: the reporter isn't asked; the moderator decides
         dlg.get_by_label(re.compile("What changed")).fill("The jaali canopy is up over the top steps; it’s shaded at noon now.")
         dlg.get_by_role("button", name="Take a photo").click()
         shot("07_report_build")
@@ -1772,10 +1730,13 @@ def run():
         switch("moderator")
         pg.goto(BASE + "/moderation")
         pg.locator(".header").get_by_role("link", name=re.compile("^Approvals")).click()
-        row = pg.locator("tr", has_text="Build of a winning design")
+        row = pg.locator("tr", has_text="A winning design here was marked built")
         expect(row).to_contain_text("One moderator decides")
         row.get_by_role("link", name="Review").click()
         expect(pg.get_by_text("jaali canopy is up")).to_be_visible()
+        pg.get_by_role("button", name="Confirm update and archive").click()
+        expect(pg.get_by_role("alert")).to_contain_text("Say whether this is the build")   # the moderator must answer
+        pg.get_by_role("radio", name="Yes, it’s that build").check()
         pg.get_by_role("button", name="Confirm update and archive").click()
         pg.goto(BASE + f"/space/{sid}")
         expect(pg.locator(".space-head .badge", has_text="Redesigned")).to_be_visible()
@@ -1803,7 +1764,7 @@ def run():
         drawer.get_by_role("button", name="Start again").click()
         document()
         nxt.get_by_role("button", name=re.compile("Fast forward")).click()
-        expect(pg.locator(".diagram-real img")).to_have_attribute("src", re.compile("jkk-spatial-diagram"))
+        expect(pg.locator(".exp-photo img[src*='demo/jkk/']").first).to_be_visible()
         expect(nxt).to_contain_text(re.compile("Asks to host a contest", re.I))
         expect(drawer.locator(".wt-done")).to_have_count(3)
         # round 28: a space documented under another name still counts as the kund
@@ -1821,7 +1782,7 @@ def run():
             expect(nxt.get_by_role("button", name=f"Switch to {labels[i]} user")).to_be_visible()
         shot("jump_step8")
         drawer.locator(".wt-step").nth(12).locator(".wt-jump").click()
-        pg.goto(BASE + "/browse"); pg.get_by_label("Search").fill("Kund (Madhyavarti)")
+        pg.goto(BASE + "/browse"); pg.get_by_label("Search").fill("Amphitheatre, Jawahar")
         pg.locator("main a.card").first.click()
         expect(pg.locator(".space-head .badge", has_text="Redesigned")).to_be_visible()
         open_wt()
@@ -1879,8 +1840,25 @@ def run():
         expect(pg.get_by_role("tab", name="Archived (1)")).to_be_visible()
         step("Archived tab only on spaces with an earlier round")
 
+        # round 32: Upload redesign in the space header; a picture in the overlap popover
+        role("Architect")
+        pg.goto(BASE + "/space/s3")
+        pg.locator(".space-head").get_by_role("link", name="Upload redesign").click()
+        expect(pg).to_have_url(re.compile("#/space/s3/upload-redesign"))
+        role("Community member")
+        pg.goto(BASE + "/space/s3")
+        pg.locator(".space-head").get_by_role("link", name="Upload redesign").click()
+        expect(pg).to_have_url(re.compile("#/architects"))   # only architects upload: verify first
+        pg.goto(BASE + "/space/new")
+        pg.get_by_role("button", name=re.compile("Use the Jawahar Kala Kendra photo")).click()
+        pg.get_by_role("button", name="Continue").click()
+        pg.get_by_role("button", name=re.compile(r"^\d+\. Shaded gallery")).click()
+        expect(pg.locator(".map-popover img")).to_have_attribute("src", re.compile("passage-into-court"))
+        pg.screenshot(path="/home/claude/r32_popover.png")
+        step("Upload redesign in the header (verification for non-architects); overlap popover shows a photo")
+
         # every route loads for every role without errors
-        routes = ["/", "/browse", "/space/s1", "/space/s1?tab=diagram", "/space/new", "/item/r1", "/item/m1", "/checkout?item=r4&rights=licence",
+        routes = ["/", "/browse", "/space/s1", "/space/s1?tab=library", "/space/s1?tab=diagram", "/space/new", "/item/r1", "/item/m1", "/checkout?item=r4&rights=licence",
                   "/purchase/p-seed1", "/purchases", "/portfolio", "/architect/u-a2", "/ranking", "/contests", "/contest/c1", "/contest/c2", "/contest/request",
                   "/moderation", "/moderation/s7", "/flags", "/points", "/co-op", "/notifications", "/earnings", "/profile", "/contributions", "/spaces/ranking", "/about", "/contact", "/privacy", "/contest/c3/enter", "/about", "/moderation/s8", "/space/s3?tab=model", "/space/s6?tab=archived", "/space/s2?tab=model", "/architects", "/login", "/space/s2/upload-redesign?contest=c1", "/membership", "/member/u-c2", "/contest/c4/judge", "/item/dg-s2", "/item/dg-s2-ai", "/removal/s3", "/terms", "/signup", "/nope",
                   "/space/s8/upload-redesign", "/space/s8/upload-diagram"]
