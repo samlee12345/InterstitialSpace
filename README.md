@@ -200,6 +200,9 @@ been added. Use it to click through long forms quickly in the demo.
   timeline), on the contest page and on the space page.
 - **Map pins** are plain: solid for approved spaces, dashed and hollow for
   pending ones. Space cards show votes, redesigns and photos.
+- **Round 34.** The Redesigns tab has its own "Upload redesign" button again
+  (same rules as the header's). Walkthrough: "Skip past approval" opens the
+  new contest's page as the local authority.
 - **Round 33.** A space with a contest under way shows a "Contest open"
   (or "Contest under way") badge on its cards and page header, plus a
   "Contest:" link line in the header. The contest page shows "Submit an

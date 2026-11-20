@@ -139,6 +139,7 @@ function Redesigns({ space }) {
   return (
     <section className="stack" data-screen-label="Redesigns" aria-labelledby="redesigns-heading">
       <SectionHead id="redesigns-heading" title={`Redesigns (${list.length})`} note="Proposals by architects, paid per download. Architects ranked higher appear first.">
+        {(!isArchitect || limit.allowed) && <UploadRedesign space={space} primary />}
         {isArchitect && !limit.allowed && <span className="small muted">You published a redesign for this space this week. You can add another here on {limit.next.toLocaleDateString()}; other spaces are open now.</span>}
       </SectionHead>
       {list.length === 0 && (
@@ -528,11 +529,11 @@ function ReportUpdate({ space, onClose }) {
 // Round 32: upload a redesign from the header, whatever tab you're on. Architects go
 // straight to the upload; anyone else is sent to architect verification. (Spatial
 // diagrams and 3D models are made by the AI for the Base Library, not uploaded.)
-function UploadRedesign({ space }) {
+function UploadRedesign({ space, primary }) {
   const { isArchitect, user, uploadLimit } = useDemo();
   const limit = isArchitect ? uploadLimit(user.id, space.id) : null;
   if (limit && !limit.allowed) return <Button disabled title={`You published a redesign for this space this week. Next one here on ${limit.next.toLocaleDateString()}.`}>Upload redesign</Button>;
-  return <Button to={isArchitect ? `/space/${space.id}/upload-redesign` : '/architects'} title={isArchitect ? undefined : 'Architects upload redesigns: verify as an architect first'}>Upload redesign</Button>;
+  return <Button variant={primary ? 'primary' : 'default'} to={isArchitect ? `/space/${space.id}/upload-redesign` : '/architects'} title={isArchitect ? undefined : 'Architects upload redesigns: verify as an architect first'}>Upload redesign</Button>;
 }
 
 function OptionsMenu({ space, onReport, onDesignate }) {

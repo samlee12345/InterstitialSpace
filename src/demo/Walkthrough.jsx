@@ -5,6 +5,7 @@
 // who does it, opens the right page as the right role, and ticks itself off from the
 // demo state. Shortcuts stand in for people who aren't in the room (other reviewers,
 // other members, other architects, the platform team).
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROLES, useDemo } from '../state/DemoContext.jsx';
 import { isJkk } from './jkk.js';
@@ -31,6 +32,11 @@ export function Walkthrough({ close }) {
     nav(to);
     if (window.matchMedia('(max-width: 64rem)').matches) close();
   };
+  // Round 34: after "Skip past approval", open the new contest's page once it exists.
+  const [toContest, setToContest] = useState(false);
+  useEffect(() => {
+    if (toContest && contest) { setToContest(false); go('paid', `/contest/${contest.id}`); }
+  }, [toContest, contest]); // eslint-disable-line react-hooks/exhaustive-deps
   // Round 28: jump to any step. Earlier steps are played for you; you land on the map
   // as whoever does that step.
   const jump = (i) => {
@@ -65,7 +71,7 @@ export function Walkthrough({ close }) {
     },
     {
       id: 'team', who: 'Platform team', title: 'Approves the request; the contest opens', done: !!contest, as: 'paid',
-      actions: [sid && !contest && { label: 'Skip past approval', run: () => { dispatch({ type: 'JKK_SKIP_APPROVAL', spaceId: sid }); go('paid', '/contributions#hosted'); }, demo: true }],
+      actions: [sid && !contest && { label: 'Skip past approval', run: () => { dispatch({ type: 'JKK_SKIP_APPROVAL', spaceId: sid }); setToContest(true); }, demo: true }],
     },
     {
       id: 'enter', who: 'Architects', title: 'Send round 1 concepts', done: !!mine && (contest?.entries.length || 0) >= 3, as: 'architect',

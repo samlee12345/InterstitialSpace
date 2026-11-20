@@ -60,7 +60,7 @@ def run():
         pg.screenshot(path="/home/claude/shot_browse.png")
         pg.locator("a.card", has_text="Gateway niche").click()
         tab("Redesigns (0)")
-        pg.get_by_role("link", name="Upload redesign").click()
+        pg.locator(".tabpanel").get_by_role("link", name="Upload redesign").click()
         pg.get_by_role("button", name="Continue").click()
         expect(pg.get_by_text("Give the design a title.")).to_be_visible()
         pg.get_by_label("Title").fill("Tea seller's niche with a bench")
@@ -90,14 +90,14 @@ def run():
         expect(pg.get_by_text("You published a redesign for this space this week")).to_be_visible()
         expect(pg.get_by_role("link", name="Upload redesign")).to_have_count(0)
         pg.goto(BASE + "/space/s2?tab=redesigns")   # other spaces stay open the same week
-        expect(pg.get_by_role("link", name="Upload redesign")).to_be_visible()
+        expect(pg.locator(".tabpanel").get_by_role("link", name="Upload redesign")).to_be_visible()
         pg.go_back()
         pg.screenshot(path="/home/claude/shot_space_banner.png", full_page=True)
         pg.go_back()
         expect(pg.get_by_role("heading", name="Upload a redesign")).to_have_count(0)   # Back does not reopen the form
         pg.go_forward()
         panel(True); pg.get_by_role("button", name="Skip ahead one week").click(); panel(False)
-        expect(pg.get_by_role("link", name="Upload redesign")).to_be_visible()
+        expect(pg.locator(".tabpanel").get_by_role("link", name="Upload redesign")).to_be_visible()
         nav("Portfolio")
         expect(pg.get_by_text("Tea seller's niche with a bench")).to_be_visible()
         expect(pg.get_by_role("link", name="View public page")).to_have_count(0)
@@ -1243,7 +1243,7 @@ def run():
         dd.get_by_role("button", name="Send for confirmation").click()
         pg.get_by_role("dialog").get_by_role("button", name="Done").click()
         pg.goto(BASE + "/space/s3?tab=redesigns")
-        pg.get_by_role("link", name="Upload redesign").click()
+        pg.locator(".tabpanel").get_by_role("link", name="Upload redesign").click()
         pg.get_by_role("button", name="Add collaborator").click()
         cd = pg.get_by_role("dialog", name="Invite collaborators")
         cd.get_by_label("Find people by name, or enter an email").fill("Architect B")
@@ -1654,6 +1654,9 @@ def run():
         # 5 team approval, skipped
         expect(nxt).to_contain_text(re.compile("Approves the request", re.I))
         nxt.get_by_role("button", name="Skip past approval").click()
+        expect(pg).to_have_url(re.compile(r"#/contest/c-[^/]+$"))   # round 34: lands on the new contest's page
+        expect(pg.get_by_role("heading", name=re.compile("^Redesign the Amphitheatre"))).to_be_visible()
+        pg.goto(BASE + "/contributions#hosted")
         expect(pg.locator("#hosted tr", has_text="Redesign the Amphitheatre").get_by_text("Open for entries")).to_be_visible()
         shot("04_contest_open")
 
