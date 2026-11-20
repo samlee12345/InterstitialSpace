@@ -30,6 +30,14 @@ export function Walkthrough({ close }) {
     nav(to);
     if (window.matchMedia('(max-width: 64rem)').matches) close();
   };
+  // Round 28: jump to any step. Earlier steps are played for you; you land on the map
+  // as whoever does that step.
+  const jump = (i) => {
+    const order = ['document', 'approve', 'grow', 'request', 'team', 'enter', 'shortlist', 'proposal', 'winner', 'built', 'report', 'confirm', 'new'];
+    const as = { document: 'community', approve: 'moderator', grow: 'architect', request: 'paid', team: 'paid', enter: 'architect', shortlist: 'paid', proposal: 'architect', winner: 'paid', built: 'paid', report: 'community', confirm: 'moderator', new: 'community' }[order[i]];
+    dispatch({ type: 'JKK_JUMP', to: i, role: as });
+    nav('/');
+  };
   const sid = space?.id;
   const cid = contest?.id;
   const others = space ? state.comments.filter((c) => c.spaceId === sid && c.userId !== space.uploadedBy) : [];
@@ -108,7 +116,7 @@ export function Walkthrough({ close }) {
     <div className="stack">
       <section className="stack-sm" aria-labelledby="wt-h">
         <h3 id="wt-h" className="demo-h">Jawahar Kala Kendra, start to finish</h3>
-        <p className="xs muted">Documents the kund live, takes it through approval, votes, a contest, the build and a new round. Start removes it from the demo data, resets everything else and signs you in as Community member 1.</p>
+        <p className="xs muted">Documents the kund live, takes it through approval, votes, a contest, the build and a new round. Start removes it from the demo data, resets everything else and signs you in as Community member 1. Select any step to jump there.</p>
         <div><button type="button" className="btn" onClick={() => { dispatch({ type: 'JKK_START' }); nav('/'); }}>{state.jkkWalkthrough ? 'Start again' : 'Start the walkthrough'}</button></div>
       </section>
       {state.jkkWalkthrough && (
@@ -117,7 +125,14 @@ export function Walkthrough({ close }) {
             <li key={x.id} className={`wt-step ${x.done ? 'wt-done' : ''} ${next === x ? 'wt-next' : ''}`} aria-current={next === x ? 'step' : undefined}>
               <span className="wt-num" aria-hidden="true">{x.done ? '✓' : i + 1}</span>
               <div className="stack-sm grow">
-                <span className="small"><span className="bold">{x.who}</span> {x.title.charAt(0).toLowerCase() + x.title.slice(1)}{x.done && <span className="visually-hidden"> (done)</span>}</span>
+                {next === x ? (
+                  <span className="small"><span className="bold">{x.who}</span> {x.title.charAt(0).toLowerCase() + x.title.slice(1)}</span>
+                ) : (
+                  <button type="button" className="wt-jump small" onClick={() => jump(i)} title="Jump here: earlier steps are done for you">
+                    <span className="bold">{x.who}</span> {x.title.charAt(0).toLowerCase() + x.title.slice(1)}
+                    <span className="visually-hidden">{x.done ? ' (done)' : ''}. Jump to this step</span>
+                  </button>
+                )}
                 {next === x && x.tip && <span className="xs muted">{x.tip}</span>}
                 {next === x && (
                   <div className="row">

@@ -2,9 +2,15 @@ import { createContext, useContext, useMemo, useReducer } from 'react';
 import { useLocation } from 'react-router-dom';
 import seed from '../data/seed.json';
 import { POINTS, interactPoints, uploadPoints, fmtPoints } from '../lib/points.js';
-import { JKK_COMMUNITY, JKK_CONTEST, JKK_DIAGRAM, JKK_DIAGRAM_FILE, JKK_ENTRIES, JKK_EXTRA_VOTES, isJkk } from '../demo/jkk.js';
+import { JKK_COMMUNITY, JKK_CONTEST, JKK_DIAGRAM, JKK_DIAGRAM_FILE, JKK_ENTRIES, JKK_EXTRA_VOTES, JKK_FIELDS, JKK_NAME, JKK_PHOTO, JKK_POINT, JKK_SHAPE, isJkk } from '../demo/jkk.js';
 
 const plusDays = (d) => new Date(Date.now() + d * 86400000).toISOString().slice(0, 10);
+const money = (v) => `$${Number(v).toLocaleString('en-US')}`;
+// The local authority's contest request for the kund, with the demo brief.
+const jkkRequest = (spaceId, size = 5) => ({
+  spaceId, brief: JKK_CONTEST.brief, budget: money(JKK_CONTEST.budget), prize: money(JKK_CONTEST.budget - size * JKK_CONTEST.shortlistPay),
+  shortlistSize: size, shortlistPay: money(JKK_CONTEST.shortlistPay), deadline: plusDays(42), deadline2: plusDays(98), criteria: JKK_CONTEST.criteria, isPrivate: false,
+});
 
 export const ROLES = [
   { id: 'visitor', label: 'Visitor', userId: null },
@@ -128,16 +134,42 @@ function reducer(s, a) {
       let n = s;
       let r = (n.contestRequests || []).find((x) => x.spaceId === a.spaceId);
       if (!r) {
-        const money = (v) => `$${Number(v).toLocaleString('en-US')}`;
-        const size = 5;
-        const request = {
-          spaceId: a.spaceId, brief: JKK_CONTEST.brief, budget: money(JKK_CONTEST.budget), prize: money(JKK_CONTEST.budget - size * JKK_CONTEST.shortlistPay),
-          shortlistSize: size, shortlistPay: money(JKK_CONTEST.shortlistPay), deadline: plusDays(42), deadline2: plusDays(98), criteria: JKK_CONTEST.criteria, isPrivate: false,
-        };
-        n = reducer(n, { type: 'REQUEST_CONTEST', userId: 'u-p1', request });
+        n = reducer(n, { type: 'REQUEST_CONTEST', userId: 'u-p1', request: jkkRequest(a.spaceId) });
         r = n.contestRequests[0];
       }
       return reducer({ ...n, toasts: s.toasts }, { type: 'APPROVE_CONTEST_REQUEST', id: r.id });
+    }
+    // Round 28: click a walkthrough step to jump there. Starts over, then plays every
+    // earlier step with the same actions the pages and shortcuts use, so the state is
+    // what you'd have after doing them by hand. `to` is the step that will be next.
+    case 'JKK_JUMP': {
+      let n = reducer(s, { type: 'JKK_START' });
+      const run = (act) => { n = reducer(n, act); };
+      const sid = () => n.spaces.find((x) => isJkk(x) && !x.removed)?.id;
+      const con = () => n.contests.find((c) => c.spaceId === sid());
+      const entryOf = (who) => con().entries.find((e) => e.architectId === who)?.id;
+      const k = a.to;
+      if (k >= 1) {
+        run({
+          type: 'CREATE_SPACE', id: `s-jkk-${n.seq}`, userId: 'u-c1', name: JKK_NAME, spaceType: JKK_FIELDS.type, photos: 1, scans: 0, fields: 5, full: true,
+          photoMeta: [{ src: JKK_PHOTO.src, alt: JKK_PHOTO.alt }], lat: JKK_POINT.lat, lng: JKK_POINT.lng, area: JKK_SHAPE, areaM: JKK_SHAPE.r,
+          relations: n.spaces.some((x) => x.id === 's17') ? { s17: 'overlap' } : {},
+          questionnaire: { feelings: JKK_FIELDS.feelings, transition: JKK_FIELDS.transition, materiality: JKK_FIELDS.materiality.join(', '), sensory: JKK_FIELDS.sensory },
+          properties: { activity: JKK_FIELDS.activity, materials: JKK_FIELDS.materiality.join(', '), setting: JKK_FIELDS.materials, climate: 'Not given', authorship: 'Not given' },
+        });
+      }
+      if (k >= 2) { run({ type: 'DEMO_REVIEWERS_YES', spaceId: sid() }); run({ type: 'MOD_VOTE', spaceId: sid(), userId: 'u-a2', yes: true, checks: [] }); }
+      if (k >= 3) run({ type: 'JKK_FAST_FORWARD', spaceId: sid() });
+      if (k >= 4) run({ type: 'REQUEST_CONTEST', userId: 'u-p1', request: jkkRequest(sid()) });
+      if (k >= 5) run({ type: 'JKK_SKIP_APPROVAL', spaceId: sid() });
+      if (k >= 6) run({ type: 'JKK_SKIP_TO_ENTRIES', contestId: con().id });
+      if (k >= 7) run({ type: 'SET_SHORTLIST', contestId: con().id, ids: [entryOf('u-a1'), entryOf('u-a2')] });
+      if (k >= 8) { run({ type: 'DEMO_PROPOSALS', contestId: con().id }); run({ type: 'END_ROUND_2', contestId: con().id }); }
+      if (k >= 9) run({ type: 'PICK_WINNER', contestId: con().id, entryId: entryOf('u-a1') });
+      if (k >= 10) run({ type: 'CONTEST_BUILT', contestId: con().id });
+      if (k >= 11) run({ type: 'REPORT_UPDATE', spaceId: sid(), userId: 'u-c1', photos: 1, contestId: con().id, text: 'The jaali canopy is up over the top steps; the kund is shaded at noon now.' });
+      if (k >= 12) run({ type: 'RESOLVE_UPDATE', id: n.updateReports.find((r) => r.contestId === con().id).id, ok: true });
+      return toast({ ...n, toasts: [], role: a.role || n.role }, `Jumped to step ${k + 1}`);
     }
     // Round 24: skip to round 1 concepts being in (Architect A's too) and round 1 closed,
     // so the host lands on the shortlist page with every entry in front of them.
@@ -409,6 +441,8 @@ function reducer(s, a) {
         photos: Array.from({ length: a.photos }, (_, i) => ({ id: `${a.id}-ph${i + 1}`, credit: a.userId, onSite: a.full, ...(a.photoMeta?.[i] || {}) })),
         questionnaire: a.questionnaire, properties: a.properties, diagrams: [], archive: [], removed: false, removal: null, private: false,
         pendingPoints: uploadPoints({ photos: a.photos, scans: a.scans, fields: a.fields || 0, full: a.full }),
+        // Walkthrough: the first space documented after Start is the kund, whatever it's called.
+        ...(s.jkkWalkthrough && !s.spaces.some((x) => isJkk(x) && !x.removed) ? { jkk: true } : {}),
       };
       // The uploader's first experience: how it felt, with their photos.
       const first = { id: `cm-${s.seq}`, spaceId: a.id, userId: a.userId, text: a.questionnaire.feelings, onSite: a.full, photoIds: sp.photos.map((p) => p.id), date: today() };

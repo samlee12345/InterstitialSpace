@@ -97,7 +97,7 @@ function Sandbox() {
     <>
       <header className="header">
         <div className="header-in">
-          <a className="brand" href={appUrl('/')}>ReSpace</a>
+          <a className="brand" href={appUrl('/')}>reSpace</a>
           <span className="small muted grow">Component sandbox</span>
           <a className="btn" href={appUrl('/browse')}>Back to the prototype</a>
         </div>

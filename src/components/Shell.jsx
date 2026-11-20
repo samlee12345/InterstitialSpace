@@ -130,7 +130,7 @@ function Header() {
   return (
     <header className="header">
       <div className="header-in">
-        <Link to="/" className="brand">ReSpace</Link>
+        <Link to="/" className="brand">reSpace</Link>
         <nav className="nav" aria-label="Main">
           <NavLink to="/browse" className={link}>Browse spaces</NavLink>
           <NavLink to="/spaces/ranking" className={link}>Space ranking</NavLink>
@@ -663,7 +663,7 @@ function Footer() {
     <footer className="footer">
       <div className="footer-inner">
         <div className="stack-sm footer-brand">
-          <span className="bold">ReSpace</span>
+          <span className="bold">reSpace</span>
           <span className="small muted">A co-operative for documenting and redesigning the in-between places of a city.</span>
         </div>
         {cols.map(([h, links]) => (

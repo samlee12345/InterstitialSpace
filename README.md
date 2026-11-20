@@ -1,4 +1,4 @@
-# ReSpace (Interstitial Spaces) Platform — grayscale prototype
+# reSpace (Interstitial Spaces) Platform — grayscale prototype
 
 Clickable wireframe for the Dec 4 class demo. No backend: all data comes from
 `src/data/seed.json` and lives in memory. Reloading the page (or "Reset demo
@@ -200,6 +200,11 @@ been added. Use it to click through long forms quickly in the demo.
   timeline), on the contest page and on the space page.
 - **Map pins** are plain: solid for approved spaces, dashed and hollow for
   pending ones. Space cards show votes, redesigns and photos.
+- **Round 28.** The product name is written "reSpace". Select any step in
+  Demo controls › Walkthrough to jump there: it starts over and plays every
+  earlier step with the same actions the pages use, then lands you on the
+  map as whoever does that step. The space documented live is flagged as the
+  kund when it's created, so step 1 ticks off whatever it's named.
 - **Round 27.** The gallery next to the kund (s17) is now just "Shaded
   gallery on the north side of the kund", without "Jawahar Kala Kendra", so
   searching "Jawahar" in the walkthrough finds nothing and it's clear the
@@ -271,7 +276,7 @@ been added. Use it to click through long forms quickly in the demo.
   now carry `src` (and `alt`); `ImageBox` shows the image when there is one
   and the labelled placeholder otherwise. The two experiences and the people
   posting them are demo personas.
-- **Round 21: real map, ReSpace.** The map on the landing page, Browse and
+- **Round 21: real map, reSpace.** The map on the landing page, Browse and
   the contest space picker is a real map: Leaflet with OpenStreetMap tiles shown
   in greyscale (src/components/RealMap.jsx; `MapBox` keeps its old
   props). Pins are still our own buttons and links placed at each space's
@@ -279,7 +284,7 @@ been added. Use it to click through long forms quickly in the demo.
   Scroll-wheel zoom is off so the page scrolls; use the +/- buttons or drag.
   The search radius around a "lat, lon" search is drawn to scale. The area
   map when documenting a space and the map on Review a space are still
-  placeholders. The product is now called ReSpace (header, footer, page
+  placeholders. The product is now called reSpace (header, footer, page
   titles). Approvals, notifications and the account menu in the header are
   styled like the nav links instead of buttons. Tests serve a blank tile for
   map tile requests, so they run offline.

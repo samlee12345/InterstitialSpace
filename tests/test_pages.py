@@ -1538,7 +1538,7 @@ def run():
         pg.locator(".demo-drawer").get_by_role("button", name="Close", exact=True).click()
         step("Editorial theme switches on from Demo controls, persists, and reverts to grayscale")
 
-        # round 21: real map, ReSpace name, link-style header items
+        # round 21: real map, reSpace name, link-style header items
         role("Architect")
         pg.goto(BASE + "/")
         expect(pg.locator(".map-hero .leaflet-container")).to_be_visible()
@@ -1546,8 +1546,8 @@ def run():
         expect(pg.get_by_text("Map placeholder")).to_have_count(0)
         boxes = [b for b in (pg.locator(".map-hero .pin").nth(i).bounding_box() for i in range(pg.locator(".map-hero .pin").count())) if b]
         assert len(boxes) >= 8 and len({(round(b["x"]), round(b["y"])) for b in boxes}) == len(boxes), boxes
-        expect(pg.locator(".header .brand")).to_have_text("ReSpace")
-        assert "ReSpace" in pg.title()
+        expect(pg.locator(".header .brand")).to_have_text("reSpace")
+        assert "reSpace" in pg.title()
         for loc in [pg.locator(".header .approvals-chip"), pg.locator(".header .menu-wrap > button").first, pg.locator(".header .menu-wrap > button").last]:
             cls = loc.get_attribute("class")
             assert "header-link" in cls and "btn" not in cls.split(), cls
@@ -1556,7 +1556,7 @@ def run():
         expect(pg.locator(".header .menu")).to_be_visible()
         pg.keyboard.press("Escape")
         pg.screenshot(path="/home/claude/r21_landing.png")
-        step("real Leaflet map with attribution and separated pins; ReSpace name; header items look like links")
+        step("real Leaflet map with attribution and separated pins; reSpace name; header items look like links")
 
         # round 22: Jawahar Kala Kendra kund with a real photo and spatial diagram
         role("Community member")
@@ -1593,7 +1593,7 @@ def run():
         def switch(who):  # round 26: switching lands on the map as that user
             nxt.get_by_role("button", name=f"Switch to {who} user").click()
             expect(pg).to_have_url(re.compile(r"#/$"))
-        def document():
+        def document(name=None):
             expect(nxt).to_contain_text(re.compile("Documents the kund", re.I))
             switch("community member")
             pg.locator("#map-q").fill("Jawahar")
@@ -1615,9 +1615,10 @@ def run():
             pg.get_by_role("button", name="Continue").click()
             pg.get_by_role("button", name=re.compile("Fill with Jawahar Kala Kendra details")).click()
             expect(pg.get_by_label("Name of the space")).to_have_value("Kund (Madhyavarti), Jawahar Kala Kendra")
+            if name: pg.get_by_label("Name of the space").fill(name)
             pg.get_by_role("button", name="Review").click()
             pg.get_by_role("button", name="Submit space").click()
-            expect(pg.get_by_role("heading", name="Kund (Madhyavarti), Jawahar Kala Kendra")).to_be_visible()
+            expect(pg.get_by_role("heading", name=name or "Kund (Madhyavarti), Jawahar Kala Kendra")).to_be_visible()
             return re.search(r"#/space/([^?]+)", pg.url).group(1)
 
         open_wt()
@@ -1778,6 +1779,25 @@ def run():
         expect(pg.locator(".diagram-real img")).to_have_attribute("src", re.compile("jkk-spatial-diagram"))
         expect(nxt).to_contain_text(re.compile("Asks to host a contest", re.I))
         expect(drawer.locator(".wt-done")).to_have_count(3)
+        # round 28: a space documented under another name still counts as the kund
+        drawer.get_by_role("button", name="Start again").click()
+        document("Stepped theatre at the arts centre")
+        expect(drawer.locator(".wt-done")).to_have_count(1)
+        expect(nxt.get_by_role("button", name="Switch to moderator user")).to_be_visible()
+        # round 28: select any step to jump there; earlier steps are done for you
+        labels = ["community member", "moderator", "architect", "local authority", "local authority", "architect", "local authority", "architect", "local authority", "local authority", "community member", "moderator", "community member"]
+        for i in [12, 2, 6, 9, 0, 11, 4, 8, 10, 1, 3, 5, 7]:
+            drawer.locator(".wt-step").nth(i).locator(".wt-jump").click()
+            expect(drawer.locator(".wt-done")).to_have_count(i)
+            expect(drawer.locator(".wt-step").nth(i)).to_have_class(re.compile("wt-next"))
+            expect(pg).to_have_url(re.compile(r"#/$"))
+            expect(nxt.get_by_role("button", name=f"Switch to {labels[i]} user")).to_be_visible()
+        shot("jump_step8")
+        drawer.locator(".wt-step").nth(12).locator(".wt-jump").click()
+        pg.goto(BASE + "/browse"); pg.get_by_label("Search").fill("Kund (Madhyavarti)")
+        pg.locator("main a.card").first.click()
+        expect(pg.locator(".space-head .badge", has_text="Redesigned")).to_be_visible()
+        open_wt()
         drawer.get_by_role("tab", name="Pages").click()
         drawer.get_by_role("button", name="Close", exact=True).click()
         step("JKK walkthrough (round 24): existing member, fast forward, switch to local authority, skip team approval, skip to entries, mark built, member reports build, redesigned + archive, new round")
@@ -1794,9 +1814,9 @@ def run():
         pg.goto(BASE + "/space/new")
         pg.get_by_role("button", name=re.compile("Use the Jawahar Kala Kendra photo")).click()
         pg.get_by_role("button", name="Continue").click()
-        pg.get_by_role("button", name=re.compile(r"^1\. Kund \(Madhyavarti\)")).click()
+        pg.get_by_role("button", name=re.compile(r"^1\. ")).click()
         pg.get_by_label("How does it relate to your space?").select_option("child")
-        pg.get_by_role("button", name=re.compile(r"^2\. Shaded gallery")).click()
+        pg.get_by_role("button", name=re.compile(r"^2\. ")).click()
         pg.get_by_label("How does it relate to your space?").select_option("overlap")
         pg.get_by_role("button", name="Continue").click()
         pg.get_by_role("button", name=re.compile("Fill with Jawahar Kala Kendra details")).click()
