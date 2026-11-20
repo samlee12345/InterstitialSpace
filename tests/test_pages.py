@@ -1859,6 +1859,17 @@ def run():
         expect(pg).to_have_url(re.compile(r"#/$"))
         step("accent Ready to judge; light-blue Space submitted banner; real photo on Review a space; sign-up lands on the landing page; real map + gallery overlap on Area")
 
+        # round 30: Archived only shows once a space has an earlier round
+        role("Community member")
+        pg.goto(BASE + "/space/s3")
+        expect(pg.get_by_role("tab", name=re.compile("^Experiences"))).to_be_visible()
+        expect(pg.get_by_role("tab", name=re.compile("^Archived"))).to_have_count(0)
+        pg.goto(BASE + "/space/s3?tab=archived")
+        expect(pg.get_by_role("tab", name=re.compile("^Experiences"))).to_have_attribute("aria-selected", "true")
+        pg.goto(BASE + "/space/s2")
+        expect(pg.get_by_role("tab", name="Archived (1)")).to_be_visible()
+        step("Archived tab only on spaces with an earlier round")
+
         # every route loads for every role without errors
         routes = ["/", "/browse", "/space/s1", "/space/s1?tab=diagram", "/space/new", "/item/r1", "/item/m1", "/checkout?item=r4&rights=licence",
                   "/purchase/p-seed1", "/purchases", "/portfolio", "/architect/u-a2", "/ranking", "/contests", "/contest/c1", "/contest/c2", "/contest/request",

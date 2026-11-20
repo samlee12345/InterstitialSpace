@@ -730,7 +730,9 @@ export default function Space() {
     if (params.get('experience')) setParams({ tab: 'experience' }, { replace: true });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const space = get.space(id);
-  const tab = TABS.some((t) => t.id === params.get('tab')) ? params.get('tab') : 'experience';
+  // Round 30: Archived only appears once the space has been updated (an earlier round exists).
+  const tabs = TABS.filter((t) => t.id !== 'archived' || (space?.archive || []).length > 0);
+  const tab = tabs.some((t) => t.id === params.get('tab')) ? params.get('tab') : 'experience';
   const banner = loc.state?.banner;
   const setBanner = (b) => nav(loc.pathname + loc.search, { replace: true, state: b ? { banner: b } : null });
   useEffect(() => { if (banner) window.scrollTo(0, 0); }, [banner]);
@@ -780,7 +782,7 @@ export default function Space() {
         </div>
       )}
 
-      <Tabs idBase="space" tabs={TABS.map((t) => ({ ...t, label: `${t.label} (${counts[t.id]})` }))} active={tab} onChange={(t) => setParams({ tab: t }, { replace: true })} />
+      <Tabs idBase="space" tabs={tabs.map((t) => ({ ...t, label: `${t.label} (${counts[t.id]})` }))} active={tab} onChange={(t) => setParams({ tab: t }, { replace: true })} />
       <TabPanel idBase="space" id={tab}>
         {tab === 'experience' && <Experience space={space} />}
         {tab === 'diagram' && <Diagrams space={space} />}

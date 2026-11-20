@@ -200,6 +200,9 @@ been added. Use it to click through long forms quickly in the demo.
   timeline), on the contest page and on the space page.
 - **Map pins** are plain: solid for approved spaces, dashed and hollow for
   pending ones. Space cards show votes, redesigns and photos.
+- **Round 30.** A space's Archived tab only appears once it has an earlier
+  round (after a moderator confirms an update or a build). /space/s2 has one
+  in the seed; the kund gets one when its redesign is confirmed.
 - **Round 29: Jawahar Kala Kendra photos.** 18 of Sam's photos of Jawahar
   Kala Kendra (public/demo/jkk/, resized to 1000 px, location data removed)
   are attached to the other members' experiences of the kund (Community
