@@ -200,6 +200,17 @@ been added. Use it to click through long forms quickly in the demo.
   timeline), on the contest page and on the space page.
 - **Map pins** are plain: solid for approved spaces, dashed and hollow for
   pending ones. Space cards show votes, redesigns and photos.
+- **Round 20: Editorial theme (optional).** Demo controls › Controls ›
+  Theme switches between "Grayscale (default)" and "Editorial": a serif type
+  stack, black pill buttons, 24px rounded cards with a soft shadow, pill tabs
+  and badges, and soft gradient image placeholders. The theme lives in
+  src/styles/theme-editorial.css, scoped to `html[data-theme="editorial"]`;
+  the attribute is set from the `theme` design choice in
+  src/design/choices.js. The choice is kept in this browser only, so the
+  shared link still opens in grayscale. Its source is "DESIGN - Editorial
+  theme.md" in the Design Project folder, whose last section lists where the
+  prototype differs from the analysis. To remove the theme, delete the CSS
+  file, its two imports and the Theme control.
 - **Round 19.** Add your experience asks "Do people pass through here, or
   stay?" (Just passed through, People stop a while, Became a gathering spot).
   The space summary tallies the answers; when half or more say "Became a

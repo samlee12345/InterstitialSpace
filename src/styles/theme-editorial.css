@@ -1,0 +1,139 @@
+/*
+  theme-editorial.css — optional "Editorial" theme (round 20).
+  Based on the design analysis in the Design Project folder
+  ("DESIGN - Editorial theme.md"); that file is the source of truth, and the
+  "Prototype adaptation" section at its end lists where this file differs.
+
+  Everything here is scoped to html[data-theme="editorial"], which is set from
+  Demo controls › Theme. With the theme off, nothing in this file applies and
+  the grayscale prototype is unchanged. To drop the theme, delete this file,
+  its import in main.jsx and sandbox.jsx, and the Theme control.
+*/
+[data-theme="editorial"] {
+  /* Monochrome core */
+  --color-bg: #fdfcfc;
+  --color-surface: #ffffff;
+  --color-sunken: #f4f3f2;
+  --color-border: #e5e5e5;          /* neutral 100: card and divider lines */
+  --color-border-strong: #000000;   /* outlines on buttons, chips, tabs */
+  --color-text: #000000;
+  --color-text-muted: #5f5f5f;      /* darker than the analysis' #767676 so small captions stay above 4.5:1 */
+  --color-text-inverse: #fdfcfc;
+  --color-action: #000000;
+  --color-action-hover: #2b2b2b;
+  --color-placeholder: #f1eef4;
+  --color-placeholder-line: #d8d2dd;
+  --ed-input-border: #bdbdbd;       /* neutral 300 */
+  --ed-focus-ring: rgb(147 197 253 / 0.5);
+
+  /* Decorative gradient palette: backgrounds only, never text or buttons */
+  --ed-purple: #c8b6e2;
+  --ed-pink: #f5c3c8;
+  --ed-green: #a8c3a3;
+  --ed-orange: #e5a880;
+
+  /* Type: Waldenburg is a licensed font, so a system serif stands in */
+  --font-body: "Iowan Old Style", Charter, "Bitstream Charter", Georgia, "Times New Roman", serif;
+  --text-xs: 0.8125rem;   /* 13px */
+  --text-sm: 0.9375rem;   /* 15px */
+  --text-md: 1.0625rem;   /* 17px body; the analysis uses 18px for a marketing site */
+  --text-lg: 1.375rem;
+  --text-xl: 1.75rem;
+  --text-2xl: 2.5rem;
+  --text-3xl: 3.25rem;
+  --leading-tight: 1.2;
+  --leading-body: 1.5;
+
+  /* Shape and depth */
+  --radius-sm: 6px;
+  --radius-md: 8px;       /* inputs and small controls */
+  --ed-radius-card: 24px; /* cards and large containers */
+  --radius-pill: 999px;   /* buttons, badges, chips, tabs */
+  --shadow-1: 0 4px 20px rgb(0 0 0 / 0.06);
+  --shadow-2: 0 8px 30px rgb(0 0 0 / 0.08);
+  --ed-shadow-3: 0 12px 40px rgb(0 0 0 / 0.1);
+}
+
+/* Headings: regular weight, slightly tight tracking */
+[data-theme="editorial"] h1,
+[data-theme="editorial"] h2,
+[data-theme="editorial"] h3 { font-weight: var(--weight-regular); letter-spacing: -0.01em; }
+[data-theme="editorial"] h1 { letter-spacing: -0.02em; }
+
+/* Focus: keep a clearly visible ring */
+[data-theme="editorial"] :focus-visible { outline: var(--border-thick) solid var(--color-text); outline-offset: var(--border-thick); box-shadow: 0 0 0 5px var(--ed-focus-ring); }
+
+/* Buttons: black pill primary, outlined pill secondary, text-only quiet */
+[data-theme="editorial"] .btn { border-radius: var(--radius-pill); padding-inline: var(--space-5); font-weight: var(--weight-regular); transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease; }
+[data-theme="editorial"] .btn:hover { background: var(--color-action); color: var(--color-text-inverse); }
+[data-theme="editorial"] .btn-primary { border-color: var(--color-action); }
+[data-theme="editorial"] .btn-primary:hover { background: var(--color-action-hover); transform: scale(1.02); }
+[data-theme="editorial"] .btn:active:not(:disabled) { transform: scale(0.98); }
+[data-theme="editorial"] .btn:disabled:hover { background: var(--color-surface); color: var(--color-text); transform: none; }
+[data-theme="editorial"] .btn-primary:disabled:hover { background: var(--color-action); color: var(--color-text-inverse); }
+[data-theme="editorial"] .btn-quiet { text-decoration: none; padding-inline: var(--space-2); }
+[data-theme="editorial"] .btn-quiet:hover { background: transparent; color: var(--color-text); text-decoration: underline; }
+
+/* Cards and containers: 24px corners, hairline border, soft shadow */
+[data-theme="editorial"] .card,
+[data-theme="editorial"] .contest-card,
+[data-theme="editorial"] .alert,
+[data-theme="editorial"] .teaser-cta > div,
+[data-theme="editorial"] .map-search { border-radius: var(--ed-radius-card); border: var(--border-thin) solid var(--color-border); box-shadow: var(--shadow-1); }
+[data-theme="editorial"] .card { padding: var(--space-5); }
+[data-theme="editorial"] .summary-box,
+[data-theme="editorial"] .coop-band,
+[data-theme="editorial"] .note,
+[data-theme="editorial"] .drop { border-radius: var(--ed-radius-card); }
+[data-theme="editorial"] .summary-box { padding: var(--space-5) var(--space-6); }
+[data-theme="editorial"] .table-wrap { border-radius: var(--ed-radius-card); box-shadow: var(--shadow-1); }
+[data-theme="editorial"] .choice { border-radius: 16px; }
+[data-theme="editorial"] .menu { border-radius: 16px; border-color: var(--color-border); box-shadow: var(--shadow-2); }
+[data-theme="editorial"] .modal { border-radius: var(--ed-radius-card); border: var(--border-thin) solid var(--color-border); box-shadow: var(--ed-shadow-3); }
+[data-theme="editorial"] .space-hero { border-radius: var(--ed-radius-card); }
+
+/* Inputs: lighter outline that turns black on focus */
+[data-theme="editorial"] .input { border-color: var(--ed-input-border); border-radius: var(--radius-md); transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+[data-theme="editorial"] .input:focus { border-color: var(--color-text); }
+[data-theme="editorial"] .segmented-track { border-radius: var(--radius-pill); }
+[data-theme="editorial"] .segment span:first-of-type { border-radius: var(--radius-pill); }
+
+/* Badges and chips: pills, regular weight */
+[data-theme="editorial"] .badge { padding: 0 var(--space-3); font-weight: var(--weight-regular); border-color: var(--ed-input-border); }
+[data-theme="editorial"] .badge-solid { border-color: var(--color-action); }
+[data-theme="editorial"] .chip span { border-color: var(--ed-input-border); }
+[data-theme="editorial"] .chip input:checked + span { border-color: var(--color-action); }
+
+/* Tabs: a row of pills instead of folder tabs */
+[data-theme="editorial"] .tabs { border-bottom: 0; gap: var(--space-2); }
+[data-theme="editorial"] .tab { border: var(--border-thin) solid var(--ed-input-border); border-radius: var(--radius-pill); background: transparent; }
+[data-theme="editorial"] .tab:hover { background: var(--color-sunken); }
+[data-theme="editorial"] .tab[aria-selected="true"] { background: var(--color-action); color: var(--color-text-inverse); border-color: var(--color-action); font-weight: var(--weight-regular); margin-bottom: 0; }
+
+/* Navigation: pill hover */
+[data-theme="editorial"] .header { background: var(--color-bg); }
+[data-theme="editorial"] .nav { gap: 0; }
+[data-theme="editorial"] .nav a { border-radius: var(--radius-pill); padding: var(--space-1) var(--space-2); border-bottom: 0; white-space: nowrap; font-size: 0.875rem; }
+[data-theme="editorial"] .header .btn { padding-inline: var(--space-3); }
+[data-theme="editorial"] .nav a:hover { background: var(--color-sunken); }
+[data-theme="editorial"] .nav a.active, [data-theme="editorial"] .nav a[aria-current="page"] { background: var(--color-action); color: var(--color-text-inverse); }
+[data-theme="editorial"] .brand { border-radius: var(--radius-pill); padding: var(--space-1) var(--space-3); }
+
+/* Signature element: soft gradient image placeholders (decorative only) */
+[data-theme="editorial"] .imgbox {
+  border-color: transparent;
+  border-radius: 16px;
+  background-color: var(--color-placeholder);
+  background-image:
+    radial-gradient(circle at 20% 25%, var(--ed-purple) 0, transparent 55%),
+    radial-gradient(circle at 80% 30%, var(--ed-pink) 0, transparent 50%),
+    radial-gradient(circle at 70% 85%, var(--ed-orange) 0, transparent 55%),
+    radial-gradient(circle at 15% 90%, var(--ed-green) 0, transparent 50%);
+}
+[data-theme="editorial"] .imgbox span { border-radius: var(--radius-pill); border-color: transparent; padding-inline: var(--space-3); }
+[data-theme="editorial"] .imgbox-hero { border-radius: var(--ed-radius-card); }
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="editorial"] .btn { transition: none; }
+  [data-theme="editorial"] .btn-primary:hover, [data-theme="editorial"] .btn:active:not(:disabled) { transform: none; }
+}

@@ -10,6 +10,7 @@ import { createRoot } from 'react-dom/client';
 import { MemoryRouter } from 'react-router-dom';
 import './styles/tokens.css';
 import './styles/app.css';
+import './styles/theme-editorial.css';
 import './styles/sandbox.css';
 import { DemoProvider, useDemo } from './state/DemoContext.jsx';
 import { SpaceCard, SPACE_CARD_VARIANTS } from './components/domain.jsx';

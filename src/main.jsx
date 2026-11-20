@@ -7,6 +7,7 @@ import { BrowserRouter, HashRouter } from 'react-router-dom';
 const Router = import.meta.env.PROD ? HashRouter : BrowserRouter;
 import './styles/tokens.css';
 import './styles/app.css';
+import './styles/theme-editorial.css';
 import App from './App.jsx';
 import { DemoProvider } from './state/DemoContext.jsx';
 

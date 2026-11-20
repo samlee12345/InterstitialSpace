@@ -1515,6 +1515,26 @@ def run():
         pg.screenshot(path="/home/claude/r19_architect.png", full_page=True)
         step("gathering question + badge + filter; inline Optional/Required; architect Contributions tab")
 
+        # round 20: Editorial theme, switched in Demo controls and reverted
+        pg.goto(BASE + "/space/s2")
+        assert pg.evaluate("document.documentElement.dataset.theme") is None
+        radius_off = pg.locator(".btn-primary").first.evaluate("e => getComputedStyle(e).borderRadius")
+        pg.locator(".demo-pill").click()
+        pg.locator("#demo-theme").select_option("editorial")
+        assert pg.evaluate("document.documentElement.dataset.theme") == "editorial"
+        assert "serif" in pg.evaluate("getComputedStyle(document.documentElement).fontFamily")
+        radius_on = pg.locator("main .btn-primary").first.evaluate("e => getComputedStyle(e).borderRadius")
+        assert radius_on != radius_off and float(radius_on.replace("px", "")) > 100, (radius_off, radius_on)
+        pg.reload()
+        assert pg.evaluate("document.documentElement.dataset.theme") == "editorial"  # kept in this browser
+        hdr = pg.locator(".header").bounding_box()
+        assert hdr["height"] < 80, hdr  # nav stays on one line
+        pg.locator("#demo-theme").select_option("grayscale")
+        assert pg.evaluate("document.documentElement.dataset.theme") is None
+        assert pg.locator("main .btn-primary").first.evaluate("e => getComputedStyle(e).borderRadius") == radius_off
+        pg.locator(".demo-drawer").get_by_role("button", name="Close", exact=True).click()
+        step("Editorial theme switches on from Demo controls, persists, and reverts to grayscale")
+
         # every route loads for every role without errors
         routes = ["/", "/browse", "/space/s1", "/space/s1?tab=diagram", "/space/new", "/item/r1", "/item/m1", "/checkout?item=r4&rights=licence",
                   "/purchase/p-seed1", "/purchases", "/portfolio", "/architect/u-a2", "/ranking", "/contests", "/contest/c1", "/contest/c2", "/contest/request",

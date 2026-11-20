@@ -5,7 +5,7 @@ import { Badge, Button, Icon, Modal, Toasts } from './ui.jsx';
 import { fmtPoints } from '../lib/points.js';
 import { activateNotes, addReply, allDiscussions, notesActive, notesCounts, revealNote, setNotesPage, startNotesTool } from '../review/notes-tool.js';
 import { ALL_PAGES, PAGE_GROUPS, pageFor } from '../demo/pages.js';
-import { setChoice, useChoices } from '../design/choices.js';
+import { THEMES, setChoice, useChoices } from '../design/choices.js';
 
 const link = ({ isActive }) => (isActive ? 'active' : '');
 
@@ -485,6 +485,7 @@ function DiscussionsTab({ close }) {
 const TAB_KEY = 'isp-demo-tab';
 function DemoPanel() {
   const { state, dispatch, role } = useDemo();
+  const choices = useChoices();
   const [open, setOpenRaw] = useState(() => { try { return localStorage.getItem(DRAWER_KEY) === '1'; } catch { return false; } });
   const setOpen = (v) => { setOpenRaw(v); try { localStorage.setItem(DRAWER_KEY, v ? '1' : '0'); } catch { /* ignore */ } };
   const nav = useNavigate();
@@ -553,6 +554,12 @@ function DemoPanel() {
         </section>
         <section className="stack-sm" aria-labelledby="demo-ctl-h">
           <h3 id="demo-ctl-h" className="demo-h">Controls</h3>
+          <label className="stack-sm small" htmlFor="demo-theme">
+            Theme
+            <select id="demo-theme" className="input" value={choices.theme} onChange={(e) => setChoice('theme', e.target.value)}>
+              {THEMES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+            </select>
+          </label>
           <label className="row small">
             <input type="checkbox" checked={state.failNextPayment} onChange={(e) => dispatch({ type: 'SET_FAIL', on: e.target.checked })} />
             Make the next payment fail
