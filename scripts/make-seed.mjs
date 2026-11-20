@@ -50,8 +50,10 @@ const spaceRows = [
   ['s16', 'Kund (Madhyavarti), Jawahar Kala Kendra', 'courtyard', 26.87632, 75.80914, 'approved', 1, null, 'u-c1', 18],
   // Round 25: an already documented space at the kund's north edge, so documenting the
   // kund live has an overlap to answer (they share part of the area). 16 m north of the
-  // kund's centre, about 12 m across. Demo persona; not one of Sam's images.
-  ['s17', 'Shaded gallery on the north side of the kund, Jawahar Kala Kendra', 'threshold', 26.87646, 75.80914, 'approved', 3, null, 'u-c2', 6, { areaM: 6 }],
+  // kund's centre, about 12 m across. Demo persona; not one of Sam's images. Its name
+  // leaves out "Jawahar Kala Kendra" (round 27) so searching that in the walkthrough
+  // finds nothing: the kund clearly isn't on the platform yet.
+  ['s17', 'Shaded gallery on the north side of the kund', 'threshold', 26.87646, 75.80914, 'approved', 3, null, 'u-c2', 6, { areaM: 6 }],
 ];
 
 const qa = [

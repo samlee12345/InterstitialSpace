@@ -1578,7 +1578,7 @@ def run():
         expect(pg.locator("main .imgbox-real img").first).to_have_attribute("src", re.compile("jkk-spatial-diagram"))
         pg.goto(BASE + "/browse")
         pg.get_by_label("Search").fill("Jawahar")
-        expect(pg.locator("main a.card")).to_have_count(2)   # the kund and its gallery (round 25)
+        expect(pg.locator("main a.card")).to_have_count(1)   # the gallery (round 25) doesn't say Jawahar (round 27)
         expect(pg.locator("main a.card", has_text="Kund (Madhyavarti)").locator("img")).to_have_attribute("src", re.compile("jkk-kund-steps"))
         step("JKK kund: real photo on header, card and experience; real diagram on the tab and item page")
 
@@ -1597,7 +1597,8 @@ def run():
             expect(nxt).to_contain_text(re.compile("Documents the kund", re.I))
             switch("community member")
             pg.locator("#map-q").fill("Jawahar")
-            pg.locator(".map-search").get_by_role("button", name="Document a new space").click()
+            expect(pg.locator(".map-search")).to_contain_text("No space called “Jawahar” yet.")
+            pg.locator(".map-search").get_by_role("button", name="Add this place").click()
             expect(pg).to_have_url(re.compile("#/space/new"))
             pg.get_by_role("button", name=re.compile("Use the Jawahar Kala Kendra photo")).click()
             expect(pg.locator(".photo-tile img")).to_have_attribute("src", re.compile("jkk-kund-steps"))
@@ -1627,8 +1628,7 @@ def run():
         expect(pg.locator(".header")).to_contain_text("Community member 1")
         shot("00_start")
         pg.goto(BASE + "/browse"); pg.get_by_label("Search").fill("Jawahar")
-        expect(pg.locator("main a.card")).to_have_count(1)   # only the gallery next to it
-        expect(pg.locator("main a.card", has_text="Kund (Madhyavarti)")).to_have_count(0)
+        expect(pg.locator("main a.card")).to_have_count(0)   # nothing at Jawahar Kala Kendra yet
 
         # 1 document
         sid = document()

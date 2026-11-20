@@ -85,7 +85,7 @@ export function Walkthrough({ close }) {
   // Round 26: "Switch to … user" changes role and goes to the landing page; the tip says
   // where to go from there, so the demo is clicked through like a real visit.
   const TIPS = {
-    document: 'From the map: search “Jawahar”, then “Document a new space”. Photos: “Demo · Use the Jawahar Kala Kendra photo”. Questionnaire: “Demo · Fill with Jawahar Kala Kendra details”.',
+    document: 'From the map: search “Jawahar” (nothing there yet), then “Add this place”. Photos: “Demo · Use the Jawahar Kala Kendra photo”. Questionnaire: “Demo · Fill with Jawahar Kala Kendra details”.',
     approve: 'Header › Approvals, then Review on the kund’s row.',
     grow: 'Open the kund (search “Jawahar” on the map), then Spatial diagrams › Upload spatial diagram; “Demo · Add sample files” adds the real drawing. Or fast forward to the space with it all in place.',
     request: 'Account menu › Host a contest. Pick the kund, then fill the form or use Fill fields.',

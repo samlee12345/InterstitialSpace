@@ -2,7 +2,7 @@
 // when the kund is documented live during the demo. See DemoContext JKK_* actions and
 // the Walkthrough section of Demo controls.
 export const JKK_NAME = 'Kund (Madhyavarti), Jawahar Kala Kendra';
-// The kund itself (not other documented spaces at Jawahar Kala Kendra, like the gallery s17).
+// The kund itself (not other spaces there, like the gallery s17).
 export const isJkk = (space) => !!space && /^Kund\b.*Jawahar Kala Kendra/i.test(space.name || '');
 
 // Where the photo was taken: the centre of the kund (OpenStreetMap outline, way 1146531080).

@@ -200,6 +200,11 @@ been added. Use it to click through long forms quickly in the demo.
   timeline), on the contest page and on the space page.
 - **Map pins** are plain: solid for approved spaces, dashed and hollow for
   pending ones. Space cards show votes, redesigns and photos.
+- **Round 27.** The gallery next to the kund (s17) is now just "Shaded
+  gallery on the north side of the kund", without "Jawahar Kala Kendra", so
+  searching "Jawahar" in the walkthrough finds nothing and it's clear the
+  kund isn't on the platform yet. Step 1: search "Jawahar", then "Add this
+  place". The gallery still overlaps the kund on the Area step.
 - **Round 26: walkthrough role switches.** Each step's button is now
   "Switch to … user": it changes role and lands on the map, and the step's
   tip says where to click from there (e.g. Header › Approvals, then Review).
